@@ -66,6 +66,8 @@ public:
   void SerializeInformationField (Buffer::Iterator start) const;
   uint8_t DeserializeInformationField (Buffer::Iterator start, uint8_t length);
 
+  virtual void Print (std::ostream &os) const;
+  
 private:
   CapabilityInformation m_compatibility; //!< compatibility information, bit6 TSF RollOver flag is not supported
   uint64_t m_beaconinterval;  //!< beacon interval

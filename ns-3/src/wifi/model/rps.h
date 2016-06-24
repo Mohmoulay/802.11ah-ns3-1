@@ -115,6 +115,7 @@ public:
   void SerializeInformationField (Buffer::Iterator start) const;
   uint8_t DeserializeInformationField (Buffer::Iterator start, uint8_t length);
     
+  virtual void Print (std::ostream &os) const;
 
 private:
   RPS::RawAssignment assignment; //!< RawAssignment subfield

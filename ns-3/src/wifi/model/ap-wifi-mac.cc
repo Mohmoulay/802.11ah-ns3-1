@@ -102,6 +102,7 @@ ApWifiMac::GetTypeId (void)
                    MakeUintegerAccessor (&ApWifiMac::GetSlotNum,
                                          &ApWifiMac::SetSlotNum),
                    MakeUintegerChecker<uint32_t> ());
+    //.AddTraceSource("BeaconBroadcasted", "Fired when beacon is transmitted", )
   return tid;
 }
 

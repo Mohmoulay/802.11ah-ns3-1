@@ -72,6 +72,12 @@ S1gBeaconCompatibility::SerializeInformationField (Buffer::Iterator start) const
  start.WriteHtolsbU32 ((tsf_completion >> 32) & 0xffffffff);
 }
 
+void
+S1gBeaconCompatibility::Print(std::ostream& os) const {
+    os << "Interval: " << std::to_string(m_beaconinterval) << std::endl;
+    os << "TSF Completion: " << std::to_string(m_tsfcompletetion) << std::endl;
+}
+
 uint8_t
 S1gBeaconCompatibility::DeserializeInformationField (Buffer::Iterator start, uint8_t length)
 {

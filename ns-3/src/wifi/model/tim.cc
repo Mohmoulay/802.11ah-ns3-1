@@ -250,6 +250,19 @@ TIM::DeserializeInformationField (Buffer::Iterator start, uint8_t length)
   return length;
 }
 
+void 
+TIM::Print(std::ostream& os) const {
+    os << "DTIM Count: " << std::to_string(m_DTIMCount) << std::endl;
+    os << "DTIM Period: " << std::to_string(m_DTIMPeriod) << std::endl;
+    os << "Bitmap Control: " << std::to_string(m_BitmapControl) << std::endl;
+    
+    
+    os << "Partial VBitmap: ";
+    for(int i = 0; i < m_length;i++)
+        os << std::to_string(m_partialVBitmap[i]) << ((i != m_length -1) ? "," : "");
+    os << std::endl;
+}
+
 //ATTRIBUTE_HELPER_CPP (TIM);
 
 } //namespace ns3

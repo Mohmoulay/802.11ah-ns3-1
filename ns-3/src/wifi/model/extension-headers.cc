@@ -180,7 +180,23 @@ S1gBeaconHeader::GetInstanceTypeId (void) const
 void
 S1gBeaconHeader::Print (std::ostream &os) const
 {
-  // to do
+    os << "Timestamp: " << std::to_string(m_timestamp) << std::endl;
+    os << "Change seq: " << std::to_string(m_sequence) << std::endl;
+    os << "Next TBTT: " << std::to_string(m_tbtt) << std::endl;
+    os << "Compressed SSID: " << std::to_string(m_compressedssid) << std::endl;
+    os << "Access network: " << std::to_string(m_accessnetwork) << std::endl;
+    os << "Beacon compatibility: " << std::endl;
+    m_beaconcompatibility.Print(os);
+    os << "-------------" << std::endl;
+    os << "TIM:" << std::endl;
+    m_tim.Print(os);
+    os << "-------------" << std::endl;
+    os << "RPS:"  << std::endl;
+    m_rps.Print(os);
+    os << "-------------" << std::endl;
+    os << "Auth:" << std::endl;
+    m_auth.Print(os);
+    os << "-------------" << std::endl;
 }
 
 //suppose all subfield are present, change in future

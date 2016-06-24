@@ -60,6 +60,7 @@
 #include "ptr.h"
 #include "random-variable-stream-helper.h"
 #include "random-variable-stream.h"
+#include "realtime-simulator-impl.h"
 #include "ref-count-base.h"
 #include "rng-seed-manager.h"
 #include "rng-stream.h"
@@ -90,5 +91,6 @@
 #include "unused.h"
 #include "valgrind.h"
 #include "vector.h"
+#include "wall-clock-synchronizer.h"
 #include "watchdog.h"
 #endif

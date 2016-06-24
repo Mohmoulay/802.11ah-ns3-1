@@ -136,6 +136,8 @@ public:
   void SerializeInformationField (Buffer::Iterator start) const;
   uint8_t DeserializeInformationField (Buffer::Iterator start, uint8_t length);
     
+  virtual void Print (std::ostream &os) const;
+        
 
 private:
   uint8_t m_DTIMCount; //!< DTIM Count

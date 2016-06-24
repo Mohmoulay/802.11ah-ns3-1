@@ -178,6 +178,18 @@ RPS::~RPS ()
 {
 }
 
+
+void 
+RPS::Print(std::ostream& os) const  {
+    auto m_raw = GetRawAssignment();
+    os << "RAW Control: " << std::to_string(m_raw[0]) << std::endl;
+    os << "RAW Slot: " << std::to_string(m_raw[2] << 8 + m_raw[1]) << std::endl;
+    os << "RAW Start: " << std::to_string(m_raw[3]) << std::endl;
+    os << "RAW Group: " << std::to_string(((int)m_raw[6] >> 16) + ((int)m_raw[5] >> 8) + m_raw[4]) << std::endl;
+    os << "Channel index: " << std::to_string(((int)m_raw[8] << 16) + m_raw[7]) << std::endl;
+    os << "PRAW: " << std::to_string(((int)m_raw[11] >> 16) + ((int)m_raw[10] >> 8) + m_raw[9]) << std::endl;
+}
+
 //suppose all subfield of RAW Assignment are presented, 12 octets
 // change in future
 void
@@ -248,6 +260,7 @@ RPS::DeserializeInformationField (Buffer::Iterator start, uint8_t length)
   m_length = length;
   return length;
 }
+
 
 //ATTRIBUTE_HELPER_CPP (RPS);
 
