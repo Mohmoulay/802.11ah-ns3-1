@@ -28,6 +28,7 @@
 #include "amsdu-subframe-header.h"
 #include "supported-rates.h"
 #include "ns3/random-variable-stream.h"
+#include "extension-headers.h"
 
 namespace ns3 {
 
@@ -43,6 +44,13 @@ class ApWifiMac : public RegularWifiMac
 public:
   static TypeId GetTypeId (void);
 
+ TracedCallback<S1gBeaconHeader, RPS::RawAssignment> m_transmitBeaconTrace;
+ 
+ typedef void (* S1gBeaconTracedCallback)
+      (S1gBeaconHeader beacon, RPS::RawAssignment raw);
+
+  
+   
   ApWifiMac ();
   virtual ~ApWifiMac ();
 

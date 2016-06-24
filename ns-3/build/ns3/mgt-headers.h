@@ -165,7 +165,7 @@ public:
   /**
    * Set the AID.
    *
-   * \param AID the status code
+   * \param AID The association id
    */
   void SetAID (uint16_t aid);
   /**

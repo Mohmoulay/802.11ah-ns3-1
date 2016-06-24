@@ -22,6 +22,7 @@
 #include "ns3/mobility-module.h"
 #include "ns3/ipv4-global-routing-helper.h"
 #include "ns3/internet-module.h"
+#include "ns3/extension-headers.h"
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
@@ -228,6 +229,22 @@ PopulateArpCache() {
     }
 }
 
+void S1gBeaconTransmitted(S1gBeaconHeader beacon, RPS::RawAssignment raw) {
+
+    auto group = raw.GetRawGroup();
+
+
+    int page = group & 0x3;
+    int aIdStart = (group >> 2) & 1023;
+    int aIdEnd = (group >> 13) & 1023;
+    cout << "Beacon " << std::to_string(beacon.GetTIM().GetTIMCount()) << " ";
+    cout << "Page: " << std::to_string(page) << ", ";
+    cout << "aId start: " << std::to_string(aIdStart) << ", ";
+    cout << "aId end: " << std::to_string(aIdEnd);
+    cout << std::endl;
+
+}
+
 int main(int argc, char *argv[]) {
     double simulationTime = 10;
     uint32_t seed = 1;
@@ -332,15 +349,15 @@ int main(int argc, char *argv[]) {
     phy.Set("TxPowerStart", DoubleValue(30.0));
     phy.Set("RxNoiseFigure", DoubleValue(5));
     apDevice = wifi.Install(phy, mac, wifiApNode);
-    
+
     // ascii logging for all traffic the AP transmits or receives
     AsciiTraceHelper ascii;
-    
-    
     phy.EnableAscii(ascii.CreateFileStream("wifiahtracelog.tr"), apDevice.Get(0));
 
     Config::Set("/NodeList/*/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/BE_EdcaTxopN/Queue/MaxPacketNumber", UintegerValue(60000));
     Config::Set("/NodeList/*/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/BE_EdcaTxopN/Queue/MaxDelay", TimeValue(NanoSeconds(6000000000000)));
+
+    Config::ConnectWithoutContext("/NodeList/*/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::ApWifiMac/S1gBeaconBroadcasted", MakeCallback(&S1gBeaconTransmitted));
 
     // mobility.
     MobilityHelper mobility;
@@ -452,8 +469,6 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
-
 
 
 

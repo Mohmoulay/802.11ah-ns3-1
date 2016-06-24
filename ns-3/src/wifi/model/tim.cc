@@ -257,7 +257,7 @@ TIM::Print(std::ostream& os) const {
     os << "Bitmap Control: " << std::to_string(m_BitmapControl) << std::endl;
     
     
-    os << "Partial VBitmap: ";
+    os << "Partial VBitmap (length: " << std::to_string(m_length) << "):";
     for(int i = 0; i < m_length;i++)
         os << std::to_string(m_partialVBitmap[i]) << ((i != m_length -1) ? "," : "");
     os << std::endl;
