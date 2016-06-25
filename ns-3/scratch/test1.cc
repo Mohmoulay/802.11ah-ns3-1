@@ -93,6 +93,14 @@ GetAssocNum() {
     return AssocNum;
 }
 
+
+void
+PhyTxBeginTrace(std::string context, Ptr<const Packet> packet) {
+    
+    std::cout << context << " " << "TX begin " << *packet << std::endl;
+}
+
+
 void
 PhyRxErrorTrace(std::string context, Ptr<const Packet> packet, double snr) {
     std::cout << "PHYRXERROR snr=" << snr << " " << *packet << std::endl;
@@ -154,6 +162,7 @@ void GetQueuelen(uint32_t Nsta) {
 
 std::vector<ApplicationContainer> clientApps;
 
+
 void CheckAssoc(uint32_t Nsta, double simulationTime, NodeContainer wifiApNode, NodeContainer wifiStaNode, Ipv4InterfaceContainer apNodeInterface) {
     if (GetAssocNum() == Nsta) {
         std::cout << "Assoc Finished, AssocNum=" << AssocNum << ", time = " << Simulator::Now().GetMicroSeconds() << std::endl;
@@ -177,18 +186,30 @@ void CheckAssoc(uint32_t Nsta, double simulationTime, NodeContainer wifiApNode, 
 
             ApplicationContainer clientApp = myClient.Install(wifiStaNode.Get(i));
 
+
             clientApps.push_back(clientApp);
             clientApp.Start(Seconds(1 + randomStart));
             clientApp.Stop(Seconds(simulationTime + 1));
         }
         AppStartTime = Simulator::Now().GetSeconds() + 1; //clientApp start time
         Simulator::Schedule(Seconds(simulationTime + 1), &GetQueuelen, Nsta); //check before simulation stop
+        
+        Config::MatchContainer matches = Config::LookupMatches("/NodeList/*/ApplicationList/0/$ns3::UdpEchoClient");
+        
+        for(int i = 0; i < matches.GetN(); i++) {
+            cout << matches.GetMatchedPath(i) << std::endl;
+            cout << matches.Get(i)->GetInstanceTypeId().GetName() << std::endl;
+            
+        }
+   
+    
         //Simulator::Stop (Seconds (simulationTime+1)); //set stop time until no packet in queue
     } else {
         Simulator::Schedule(Seconds(1.0), &CheckAssoc, Nsta, simulationTime, wifiApNode, wifiStaNode, apNodeInterface);
     }
 
 }
+
 
 void
 PopulateArpCache() {
@@ -237,13 +258,14 @@ void S1gBeaconTransmitted(S1gBeaconHeader beacon, RPS::RawAssignment raw) {
     int page = group & 0x3;
     int aIdStart = (group >> 2) & 1023;
     int aIdEnd = (group >> 13) & 1023;
-    cout << "Beacon " << std::to_string(beacon.GetTIM().GetTIMCount()) << " ";
+ /*   cout << "Beacon " << std::to_string(beacon.GetTIM().GetTIMCount()) << " ";
     cout << "Page: " << std::to_string(page) << ", ";
     cout << "aId start: " << std::to_string(aIdStart) << ", ";
     cout << "aId end: " << std::to_string(aIdEnd);
     cout << std::endl;
-
+*/
 }
+
 
 int main(int argc, char *argv[]) {
     double simulationTime = 10;
@@ -354,11 +376,14 @@ int main(int argc, char *argv[]) {
     AsciiTraceHelper ascii;
     phy.EnableAscii(ascii.CreateFileStream("wifiahtracelog.tr"), apDevice.Get(0));
 
+    
     Config::Set("/NodeList/*/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/BE_EdcaTxopN/Queue/MaxPacketNumber", UintegerValue(60000));
     Config::Set("/NodeList/*/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/BE_EdcaTxopN/Queue/MaxDelay", TimeValue(NanoSeconds(6000000000000)));
 
-    Config::ConnectWithoutContext("/NodeList/*/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::ApWifiMac/S1gBeaconBroadcasted", MakeCallback(&S1gBeaconTransmitted));
-
+    Config::ConnectWithoutContext("/NodeList/*/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::ApWifiMac/S1gBeaconBroadcasted", MakeCallback(&S1gBeaconTransmitted));    
+    
+    Config::Connect("/NodeList/*/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeCallback(&PhyTxBeginTrace));
+    
     // mobility.
     MobilityHelper mobility;
     mobility.SetPositionAllocator("ns3::UniformDiscPositionAllocator",
@@ -400,6 +425,7 @@ int main(int argc, char *argv[]) {
         m_assocrecord->setstaid(kk);
         Config::Connect("/NodeList/" + strSTA + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/$ns3::StaWifiMac/Assoc", MakeCallback(&assoc_record::SetAssoc, m_assocrecord));
         Config::Connect("/NodeList/" + strSTA + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/$ns3::StaWifiMac/DeAssoc", MakeCallback(&assoc_record::UnsetAssoc, m_assocrecord));
+        
         assoc_vector.push_back(m_assocrecord);
     }
 

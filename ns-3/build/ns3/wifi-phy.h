@@ -1800,6 +1800,7 @@ static WifiMode GetOfdmRate86_666_7MbpsBW16MHz ();
    */
   virtual void SetChannelWidth (uint32_t channelwidth) = 0;
 
+
 private:
   /**
    * The trace source fired when a packet begins the transmission process on
@@ -1808,7 +1809,7 @@ private:
    * \see class CallBackTraceSource
    */
   TracedCallback<Ptr<const Packet> > m_phyTxBeginTrace;
-
+  
   /**
    * The trace source fired when a packet ends the transmission process on
    * the medium.

@@ -1,4 +1,4 @@
-./waf --run "scratch/test1"\
+./waf --run "scratch/ahsimulation/ahsimulation"\
 " --NRawSta=30"\
 " --NGroup=4"\
 " --SlotFormat=0"\
