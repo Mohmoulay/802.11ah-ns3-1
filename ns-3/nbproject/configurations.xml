@@ -4,12 +4,8 @@
     <df root="." name="0">
       <df name="scratch">
         <df name="ahsimulation">
-          <in>AssociationRecord.cpp</in>
-          <in>AssociationTracker.cpp</in>
           <in>Configuration.cc</in>
-          <in>Configuration_1.cc</in>
           <in>Helper.cc</in>
-          <in>NodeEntry.cpp</in>
           <in>main.cc</in>
           <in>main.h</in>
         </df>
@@ -1708,29 +1704,12 @@
           </incDir>
         </ccTool>
       </folder>
-      <item path="scratch/ahsimulation/AssociationRecord.cpp"
-            ex="false"
-            tool="1"
-            flavor2="4">
-      </item>
-      <item path="scratch/ahsimulation/AssociationTracker.cpp"
-            ex="false"
-            tool="1"
-            flavor2="4">
-      </item>
       <item path="scratch/ahsimulation/Configuration.cc"
             ex="false"
             tool="0"
             flavor2="2">
       </item>
-      <item path="scratch/ahsimulation/Configuration_1.cc"
-            ex="false"
-            tool="0"
-            flavor2="2">
-      </item>
       <item path="scratch/ahsimulation/Helper.cc" ex="false" tool="0" flavor2="2">
-      </item>
-      <item path="scratch/ahsimulation/NodeEntry.cpp" ex="false" tool="1" flavor2="4">
       </item>
       <item path="scratch/ahsimulation/main.cc" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">

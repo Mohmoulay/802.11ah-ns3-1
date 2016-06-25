@@ -97,7 +97,7 @@ GetAssocNum() {
 void
 PhyTxBeginTrace(std::string context, Ptr<const Packet> packet) {
     
-    std::cout << context << " " << "TX begin " << *packet << std::endl;
+   // std::cout << context << " " << "TX begin " << *packet << std::endl;
 }
 
 
@@ -364,12 +364,22 @@ int main(int argc, char *argv[]) {
             "SlotNum", UintegerValue(NRawSlotNum));
 
     NetDeviceContainer apDevice;
+    // setup physical layer
+    phy = YansWifiPhyHelper::Default();
+    phy.SetErrorRateModel("ns3::YansErrorRateModel");
+    phy.SetChannel(channel.Create());
+    phy.Set("ShortGuardEnabled", BooleanValue(false));
+    phy.Set("ChannelWidth", UintegerValue(bandWidth));
+    phy.Set("EnergyDetectionThreshold", DoubleValue(-116.0));
+    phy.Set("CcaMode1Threshold", DoubleValue(-119.0));
     phy.Set("TxGain", DoubleValue(3.0));
     phy.Set("RxGain", DoubleValue(3.0));
     phy.Set("TxPowerLevels", UintegerValue(1));
     phy.Set("TxPowerEnd", DoubleValue(30.0));
     phy.Set("TxPowerStart", DoubleValue(30.0));
     phy.Set("RxNoiseFigure", DoubleValue(5));
+    phy.Set("LdpcEnabled", BooleanValue(true));
+
     apDevice = wifi.Install(phy, mac, wifiApNode);
 
     // ascii logging for all traffic the AP transmits or receives
@@ -428,7 +438,7 @@ int main(int argc, char *argv[]) {
         
         assoc_vector.push_back(m_assocrecord);
     }
-
+/*
     // check BE_EdcaTxopN queue length of stations
     for (uint16_t i = 0; i < Nsta; i++) {
         Ptr<NetDevice> netDe;
@@ -442,10 +452,10 @@ int main(int argc, char *argv[]) {
         BE_edca->GetAttribute("Queue", ptr2);
         Ptr<WifiMacQueue> BE_edca_queue = ptr2.Get<WifiMacQueue> ();
         m_queue.push_back(BE_edca_queue);
-    }
+    }*/
 
-    Simulator::ScheduleNow(&UdpTraffic, UdpInterval, Nsta, payloadSize);
-    Simulator::Schedule(Seconds(1), &ReadQueue, m_queue);
+    //Simulator::ScheduleNow(&UdpTraffic, UdpInterval, Nsta, payloadSize);
+    //Simulator::Schedule(Seconds(1), &ReadQueue, m_queue);
     Simulator::Schedule(Seconds(1), &CheckAssoc, Nsta, simulationTime, wifiApNode, wifiStaNode, apNodeInterface);
 
 

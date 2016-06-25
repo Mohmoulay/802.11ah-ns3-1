@@ -23,7 +23,7 @@ using namespace ns3;
 
 Configuration config;
 
-YansWifiChannelHelper channel;
+Ptr<YansWifiChannel> channel;
 
 NodeContainer staNodes;
 NetDeviceContainer staDevices;
@@ -36,13 +36,13 @@ Ipv4InterfaceContainer apNodeInterfaces;
     
 vector<NodeEntry*> nodes;
 
-void configureSTANodes(Configuration& config, Ssid& ssid);
+void configureSTANodes(Ssid& ssid);
 
-void configureAPNode(Configuration& config, Ssid& ssid);
+void configureAPNode(Ssid& ssid);
 
 void configureIPStack();
 
-void configureNodes(Configuration& config);
+void configureNodes();
 
 void onSTAAssociated(int i);
     

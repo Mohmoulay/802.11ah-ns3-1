@@ -1250,19 +1250,11 @@
       </df>
       <df name="scratch">
         <df name="ahsimulation">
-          <in>AssociationRecord.cc</in>
-          <in>AssociationRecord.cpp</in>
-          <in>AssociationRecord.h</in>
-          <in>AssociationTracker.cc</in>
-          <in>AssociationTracker.cpp</in>
-          <in>AssociationTracker.h</in>
           <in>Configuration.cc</in>
           <in>Configuration.h</in>
-          <in>Configuration_1.cc</in>
           <in>Helper.cc</in>
           <in>Helper.h</in>
           <in>NodeEntry.cc</in>
-          <in>NodeEntry.cpp</in>
           <in>NodeEntry.h</in>
           <in>main.cc</in>
           <in>main.h</in>
