@@ -1706,10 +1706,14 @@
       </folder>
       <item path="scratch/ahsimulation/Configuration.cc"
             ex="false"
-            tool="0"
-            flavor2="2">
+            tool="1"
+            flavor2="8">
+        <ccTool flags="0">
+        </ccTool>
       </item>
-      <item path="scratch/ahsimulation/Helper.cc" ex="false" tool="0" flavor2="2">
+      <item path="scratch/ahsimulation/Helper.cc" ex="false" tool="1" flavor2="8">
+        <ccTool flags="0">
+        </ccTool>
       </item>
       <item path="scratch/ahsimulation/NodeEntry.cc" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">

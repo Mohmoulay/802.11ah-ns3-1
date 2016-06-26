@@ -128,7 +128,7 @@ void configureNodes() {
 
         NodeEntry* n = new NodeEntry(i);
         n->SetAssociatedCallback([ = ]{onSTAAssociated(i);});
-
+        
         nodes.push_back(n);
         // hook up Associated and Deassociated events
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/$ns3::StaWifiMac/Assoc", MakeCallback(&NodeEntry::SetAssociation, n));

@@ -53,6 +53,7 @@ public:
           void SetSlotDurationCount (uint16_t count);
           void SetSlotNum (uint16_t count);
  
+          void SetSlot(uint16_t value);
            
           void SetRawStart (uint8_t start);
           void SetRawGroup (uint32_t group);
@@ -95,19 +96,11 @@ public:
   RPS ();
   ~RPS ();
  
-   /**
-   * Set the Partial Virtual Bitmap.
-   *
-   * \Set the Partial Virtual Bitmap
-   */
   void SetRawAssignment (RPS::RawAssignment raw);
-  /**
-   * Return the Partial Virtual Bitmap.
-   *
-   * \Return the Partial Virtual Bitmap
-   */
   uint8_t * GetRawAssignment (void) const;  //to do, use std::vector
-    
+  
+  RPS::RawAssignment
+    GetRawAssigmentObj() const;
 
   WifiInformationElementId ElementId () const;
   uint8_t GetInformationFieldSize () const;
