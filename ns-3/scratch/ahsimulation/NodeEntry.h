@@ -32,6 +32,15 @@ public:
     void SetAssociation(std::string context, Mac48Address address);
     void UnsetAssociation(std::string context, Mac48Address address);
     
+    void OnPhyTxBegin(std::string context, Ptr<const Packet> packet);
+    void OnPhyTxEnd(std::string context,Ptr<const Packet> packet);
+    void OnPhyTxDrop(std::string context,Ptr<const Packet> packet);
+    
+    void OnPhyRxBegin(std::string context,Ptr<const Packet> packet);
+    void OnPhyRxEnd(std::string context,Ptr<const Packet> packet);
+    void OnPhyRxDrop(std::string context,Ptr<const Packet> packet);
+    
+    
     void SetAssociatedCallback(std::function<void()> assocCallback);
 };
 

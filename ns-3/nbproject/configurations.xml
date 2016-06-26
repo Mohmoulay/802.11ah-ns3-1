@@ -6,8 +6,8 @@
         <df name="ahsimulation">
           <in>Configuration.cc</in>
           <in>Helper.cc</in>
+          <in>NodeEntry.cc</in>
           <in>main.cc</in>
-          <in>main.h</in>
         </df>
         <df name="subdir">
           <in>scratch-simulator-subdir.cc</in>
@@ -1711,11 +1711,13 @@
       </item>
       <item path="scratch/ahsimulation/Helper.cc" ex="false" tool="0" flavor2="2">
       </item>
-      <item path="scratch/ahsimulation/main.cc" ex="false" tool="1" flavor2="8">
+      <item path="scratch/ahsimulation/NodeEntry.cc" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
         </ccTool>
       </item>
-      <item path="scratch/ahsimulation/main.h" ex="false" tool="3" flavor2="0">
+      <item path="scratch/ahsimulation/main.cc" ex="false" tool="1" flavor2="8">
+        <ccTool flags="0">
+        </ccTool>
       </item>
       <item path="scratch/s1g-mac-test.cc" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
