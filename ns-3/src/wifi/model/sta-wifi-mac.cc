@@ -902,9 +902,12 @@ StaWifiMac::Receive (Ptr<Packet> packet, const WifiMacHeader *hdr)
             }
           if (assocResp.GetStatusCode ().IsSuccess ())
             {
+              SetAID (assocResp.GetAID ());
+              
               SetState (ASSOCIATED);
               NS_LOG_DEBUG ("assoc completed");
-              SetAID (assocResp.GetAID ());
+              
+              std::cout << "AID is " << assocResp.GetAID () << std::endl;
               SupportedRates rates = assocResp.GetSupportedRates ();
               if (m_htSupported)
                 {

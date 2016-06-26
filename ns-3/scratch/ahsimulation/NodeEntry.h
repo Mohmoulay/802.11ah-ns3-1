@@ -22,6 +22,9 @@ private:
     
 public:
     int id;
+    
+    uint32_t aId;
+    
     bool isAssociated;
     
     NodeEntry(int id);

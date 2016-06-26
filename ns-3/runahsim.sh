@@ -12,7 +12,7 @@
 " --payloadSize=256"\
 " --BeaconInterval=100000"\
 " --UdpInterval=0.1"\
-" --Nsta=1"\
+" --Nsta=2"\
 " --file=\"./TestMac/mac-sta.txt\""\
 " --pcapfile="./TestMac/mac-sta" --seed=1"
 

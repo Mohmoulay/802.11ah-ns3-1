@@ -86,6 +86,10 @@ public:
    */
   void StartActiveAssociation (void);
 
+  /**
+   * Get Station AID.
+   */
+  uint32_t GetAID (void) const;
 
 private:
   /**
@@ -187,10 +191,7 @@ private:
    * \param aid the AID received from assoc response frame
    */
   void SetAID (uint32_t aid);
-  /**
-   * Get Station AID.
-   */
-  uint32_t GetAID (void) const;
+  
   void SetRawDuration (Time interval);
   Time GetRawDuration (void) const;
     
