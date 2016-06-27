@@ -27,6 +27,7 @@
 #include "ns3/event-id.h"
 #include "ns3/ptr.h"
 #include "ns3/ipv4-address.h"
+#include "ns3/traced-callback.h"
 
 namespace ns3 {
 
@@ -80,6 +81,9 @@ private:
   virtual void StartApplication (void);
   virtual void StopApplication (void);
 
+  TracedCallback<Ptr<const Packet> > m_packetSent;
+  
+  
   /**
    * \brief Send a packet
    */

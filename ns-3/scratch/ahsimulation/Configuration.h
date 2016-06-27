@@ -39,7 +39,9 @@ struct Configuration {
     string file = "./scratch/mac-sta.txt";
     string pcapfile = "./scratch/mac-s1g-slots";
 
+    string trafficInterval = "10000";
+    uint16_t trafficPacketSize = 256;
     Configuration();
     Configuration(int argc, char** argv);
-    
+
 };

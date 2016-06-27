@@ -128,23 +128,64 @@ void configureNodes() {
 
         NodeEntry* n = new NodeEntry(i);
         n->SetAssociatedCallback([ = ]{onSTAAssociated(i);});
-        
+
         nodes.push_back(n);
         // hook up Associated and Deassociated events
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/$ns3::StaWifiMac/Assoc", MakeCallback(&NodeEntry::SetAssociation, n));
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/$ns3::StaWifiMac/DeAssoc", MakeCallback(&NodeEntry::UnsetAssociation, n));
-        
-        // hook up TX
-        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeCallback(&NodeEntry::OnPhyTxBegin,n));
-        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxEnd", MakeCallback(&NodeEntry::OnPhyTxEnd,n));
-        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxDrop", MakeCallback(&NodeEntry::OnPhyTxDrop,n));
-        
-        // hook up RX
-        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeCallback(&NodeEntry::OnPhyRxBegin,n));
-        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxEnd", MakeCallback(&NodeEntry::OnPhyRxEnd,n));
-        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeCallback(&NodeEntry::OnPhyRxDrop,n));
 
-        
+        // hook up TX
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeCallback(&NodeEntry::OnPhyTxBegin, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxEnd", MakeCallback(&NodeEntry::OnPhyTxEnd, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxDrop", MakeCallback(&NodeEntry::OnPhyTxDrop, n));
+
+        // hook up RX
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeCallback(&NodeEntry::OnPhyRxBegin, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxEnd", MakeCallback(&NodeEntry::OnPhyRxEnd, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeCallback(&NodeEntry::OnPhyRxDrop, n));
+
+
+    }
+}
+
+void udpPacketReceived(Ptr<const Packet> packet, Address from) {
+     auto pCopy = packet->Copy();
+    SeqTsHeader seqTs;
+    pCopy->RemoveHeader (seqTs);
+    auto timeDiff = (Simulator::Now() - seqTs.GetTs());
+
+    int staId = -1;
+    for(int i = 0; i < staDevices.GetN(); i++) {
+    	if(staNodeInterfaces.GetAddress(i)  == InetSocketAddress::ConvertFrom (from).GetIpv4 ()) {
+    		staId = i;
+    		break;
+    	}
+    }
+    if(staId != -1)
+    	nodes[staId]->OnUdpPacketReceivedAtAP(packet);
+}
+
+void configureUDPServer() {
+    UdpServerHelper myServer(9);
+    auto serverApp = myServer.Install(apNodes);
+    serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&udpPacketReceived));
+    serverApp.Start(Seconds(0));
+
+}
+
+void configureUDPClients() {
+
+
+    UdpClientHelper clientHelper(apNodeInterfaces.GetAddress(0), 9); //address of remote node
+    clientHelper.SetAttribute("MaxPackets", UintegerValue(4294967295u));
+    clientHelper.SetAttribute("Interval", TimeValue(Time(config.trafficInterval))); //packets/s
+    clientHelper.SetAttribute("PacketSize", UintegerValue(config.trafficPacketSize));
+    for (uint16_t i = 0; i < config.Nsta; i++) {
+        ApplicationContainer clientApp = clientHelper.Install(staNodes.Get(i));
+        clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnUdpPacketSent, nodes[i]));
+
+        clientApp.Start(Seconds(0));
+        //clientApp.Stop(Seconds(simulationTime + 1));
     }
 }
 
@@ -158,6 +199,9 @@ void onSTAAssociated(int i) {
 
     if (nrOfSTAAssociated == config.Nsta) {
         // association complete, start sending packets
+
+        configureUDPServer();
+        configureUDPClients();
     }
 }
 
@@ -172,7 +216,7 @@ int main(int argc, char** argv) {
     channelBuilder.AddPropagationLoss("ns3::LogDistancePropagationLossModel", "Exponent", DoubleValue(3.76), "ReferenceLoss", DoubleValue(8.0), "ReferenceDistance", DoubleValue(1.0));
     channelBuilder.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
     channel = channelBuilder.Create();
-    
+
     Ssid ssid = Ssid("ns380211ah");
 
     // configure STA nodes

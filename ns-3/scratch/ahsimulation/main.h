@@ -44,6 +44,10 @@ void configureIPStack();
 
 void configureNodes();
 
+void configureUDPServer();
+
+void configureUDPClients();
+
 void onSTAAssociated(int i);
     
 int main(int argc, char** argv);

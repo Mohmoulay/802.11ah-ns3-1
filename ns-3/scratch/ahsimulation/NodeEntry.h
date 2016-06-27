@@ -42,7 +42,10 @@ public:
     void OnPhyRxBegin(std::string context,Ptr<const Packet> packet);
     void OnPhyRxEnd(std::string context,Ptr<const Packet> packet);
     void OnPhyRxDrop(std::string context,Ptr<const Packet> packet);
-    
+
+    void OnUdpPacketSent(Ptr<const Packet> packet);
+    void OnUdpPacketReceivedAtAP(Ptr<const Packet> packet);
+
     
     void SetAssociatedCallback(std::function<void()> assocCallback);
 };

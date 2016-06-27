@@ -28,6 +28,8 @@
 #include "ns3/ptr.h"
 #include "ns3/address.h"
 #include "packet-loss-counter.h"
+#include "ns3/traced-callback.h"
+
 namespace ns3 {
 /**
  * \ingroup applications
@@ -78,6 +80,11 @@ public:
    *  be a multiple of 8
    */
   void SetPacketWindowSize (uint16_t size);
+
+  typedef void (* PacketReceivedCallback)
+            (Ptr<const Packet>, Address from);
+
+
 protected:
   virtual void DoDispose (void);
 
@@ -85,6 +92,8 @@ private:
 
   virtual void StartApplication (void);
   virtual void StopApplication (void);
+  
+  TracedCallback<Ptr<const Packet>, Address> m_packetReceived;
 
   /**
    * \brief Handle a packet reception.
