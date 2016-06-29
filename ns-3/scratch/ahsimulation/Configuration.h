@@ -33,13 +33,10 @@ struct Configuration {
     string DataMode = "OfdmRate2_4MbpsBW1MHz";
     double datarate = 2.4;
     double bandWidth = 1;
-    string UdpInterval = "0.2";
-    string rho = "250.0";
-    string folder = "./scratch/";
-    string file = "./scratch/mac-sta.txt";
-    string pcapfile = "./scratch/mac-s1g-slots";
 
-    string trafficInterval = "10000";
+    string rho = "250.0";
+
+    string trafficInterval = "1000";
     uint16_t trafficPacketSize = 256;
     Configuration();
     Configuration(int argc, char** argv);

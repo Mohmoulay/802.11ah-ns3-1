@@ -13,5 +13,8 @@ long NodeStatistics::getNumberOfDroppedPackets() {
 }
 
 double NodeStatistics::getThroughputKbit() {
-	return (TotalPacketPayloadSize*8 / (1024)) / TotalPacketTimeOfFlight.GetSeconds();
+	if(TotalPacketTimeOfFlight.GetSeconds() > 0)
+		return (TotalPacketPayloadSize*8 / (1024)) / TotalPacketTimeOfFlight.GetSeconds();
+	else
+		return -1;
 }

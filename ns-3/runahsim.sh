@@ -7,12 +7,9 @@
 " --DataMode=\"OfdmRate650KbpsBW2MHz\""\
 " --datarate=0.65"\
 " --bandWidth=1"\
-" --rho=\"50\""\
-" --simulationTime=60"\
+" --rho=\"500\""\
+" --simulationTime=600"\
 " --payloadSize=256"\
 " --BeaconInterval=100000"\
-" --UdpInterval=0.1"\
-" --Nsta=20"\
-" --file=\"./TestMac/mac-sta.txt\""\
-" --pcapfile="./TestMac/mac-sta" --seed=1"
+" --Nsta=10"\
 

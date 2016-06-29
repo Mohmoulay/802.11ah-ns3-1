@@ -79,7 +79,7 @@ void NodeEntry::OnPhyRxEnd(std::string context, Ptr<const Packet> packet) {
 		//       cout << "[" << this->id << "] " <<  "Received S1g beacon " << endl;
 		auto raw = s1gBeaconHeader.GetRPS().GetRawAssigmentObj();
 
-
+		// TODO determine rx is doze or active
 		//s1gBeaconHeader.Print(cout);
 	}
 
@@ -93,7 +93,7 @@ void NodeEntry::OnPhyRxEnd(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet) {
-	cout << "[" << this->id << "] " << "Rx Dropped " << packet->GetUid() << endl;
+	//cout << "[" << this->id << "] " << "Rx Dropped " << packet->GetUid() << endl;
 
 	if(rxMap.find(packet->GetUid()) != txMap.end()) {
 		Time oldTime = rxMap[packet->GetUid()];
@@ -104,7 +104,7 @@ void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnUdpPacketSent(Ptr<const Packet> packet) {
-	cout << "[" << this->id << "] " << "UDP packet sent " << endl;
+	//cout << "[" << this->id << "] " << "UDP packet sent " << endl;
 
 	stats->get(this->id).NumberOfSentPackets++;
 }
@@ -115,8 +115,8 @@ void NodeEntry::OnUdpPacketReceivedAtAP(Ptr<const Packet> packet) {
 	pCopy->RemoveHeader(seqTs);
 	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
-	cout << "[" << this->id << "] " << "UDP packet received at AP after "
-			<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
+	//cout << "[" << this->id << "] " << "UDP packet received at AP after "
+	//		<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
 
 	stats->get(this->id).NumberOfSuccessfulPackets++;
 	stats->get(this->id).TotalPacketTimeOfFlight += timeDiff;
