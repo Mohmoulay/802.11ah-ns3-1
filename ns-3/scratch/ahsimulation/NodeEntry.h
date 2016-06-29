@@ -30,6 +30,8 @@ public:
     
     uint32_t aId;
     
+    double x;
+    double y;
     bool isAssociated;
     
     NodeEntry(int id, Statistics* stats);

@@ -35,17 +35,20 @@ int main(int argc, char** argv) {
     // configure tracing for associations & other metrics
     configureNodes();
 
+    // configure position of AP
     Ptr<MobilityModel> mobility1 = apNodes.Get(0)->GetObject<MobilityModel>();
     Vector apposition = mobility1->GetPosition();
     std::cout << "AP node, position = " << apposition << std::endl;
 
+    // configure position of stations
     int i = 0;
     while (i < config.Nsta) {
         Ptr<MobilityModel> mobility = staNodes.Get(i)->GetObject<MobilityModel>();
         Vector position = mobility->GetPosition();
         double distance = sqrt((position.x - apposition.x)*(position.x - apposition.x) + (position.y - apposition.y)*(position.y - apposition.y));
         std::cout << "Sta node#" << i << ", " << "position = " << position << "(distance to AP: " << distance << ")" << std::endl;
-
+        nodes[i]->x = position.x;
+        nodes[i]->y = position.y;
         i++;
     }
 
@@ -283,6 +286,7 @@ void printStatistics() {
 	cout << "" << endl;
 	for(int i = 0; i < config.Nsta; i++) {
 		cout << "Node " << std::to_string(i) << endl;
+		cout << "X: " << nodes[i]->x << ", Y: " << nodes[i]->y << endl;
 		cout << "--------------" << endl;
 
 		cout << "Total transmit time: " << std::to_string(stats.get(i).TotalTransmitTime.GetMilliSeconds()) << "ms" << endl;
