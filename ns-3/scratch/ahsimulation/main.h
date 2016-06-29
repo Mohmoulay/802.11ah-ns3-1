@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/applications-module.h"
@@ -17,9 +19,12 @@
 #include "Helper.h"
 #include "Configuration.h"
 #include "NodeEntry.h"
+#include "Statistics.h"
 
 using namespace std;
 using namespace ns3;
+
+Statistics stats;
 
 Configuration config;
 
@@ -33,7 +38,9 @@ NetDeviceContainer apDevices;
 
 Ipv4InterfaceContainer staNodeInterfaces;
 Ipv4InterfaceContainer apNodeInterfaces;
-    
+
+ApplicationContainer serverApp;
+
 vector<NodeEntry*> nodes;
 
 void configureSTANodes(Ssid& ssid);
@@ -51,3 +58,5 @@ void configureUDPClients();
 void onSTAAssociated(int i);
     
 int main(int argc, char** argv);
+
+void printStatistics();

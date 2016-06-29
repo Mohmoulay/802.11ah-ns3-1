@@ -3,6 +3,72 @@
 using namespace std;
 using namespace ns3;
 
+int main(int argc, char** argv) {
+
+    config = Configuration(argc, argv);
+    stats = Statistics(config.Nsta);
+
+
+    RngSeedManager::SetSeed(config.seed);
+
+    // setup wifi channel
+    YansWifiChannelHelper channelBuilder = YansWifiChannelHelper();
+    channelBuilder.AddPropagationLoss("ns3::LogDistancePropagationLossModel", "Exponent", DoubleValue(3.76), "ReferenceLoss", DoubleValue(8.0), "ReferenceDistance", DoubleValue(1.0));
+    channelBuilder.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
+    channel = channelBuilder.Create();
+
+    Ssid ssid = Ssid("ns380211ah");
+
+    // configure STA nodes
+    configureSTANodes(ssid);
+
+    // configure AP nodes
+    configureAPNode(ssid);
+
+    // configure IP addresses
+    configureIPStack();
+
+    // prepopulate routing tables and arp cache
+    Ipv4GlobalRoutingHelper::PopulateRoutingTables();
+    PopulateArpCache();
+
+    // configure tracing for associations & other metrics
+    configureNodes();
+
+    Ptr<MobilityModel> mobility1 = apNodes.Get(0)->GetObject<MobilityModel>();
+    Vector apposition = mobility1->GetPosition();
+    std::cout << "AP node, position = " << apposition << std::endl;
+
+    int i = 0;
+    while (i < config.Nsta) {
+        Ptr<MobilityModel> mobility = staNodes.Get(i)->GetObject<MobilityModel>();
+        Vector position = mobility->GetPosition();
+        double distance = sqrt((position.x - apposition.x)*(position.x - apposition.x) + (position.y - apposition.y)*(position.y - apposition.y));
+        std::cout << "Sta node#" << i << ", " << "position = " << position << "(distance to AP: " << distance << ")" << std::endl;
+
+        i++;
+    }
+
+
+    Simulator::Stop(Seconds(config.simulationTime));
+    Simulator::Run();
+    Simulator::Destroy();
+
+
+    stats.TotalSimulationTime = Simulator::Now();
+    printStatistics();
+
+    uint32_t totalPacketsThrough = DynamicCast<UdpServer> (serverApp.Get(0))->GetReceived();
+
+        int totalPacketsLost = DynamicCast<UdpServer> (serverApp.Get(0))->GetLost();
+
+        std::cout << "Nr of packets received " << totalPacketsThrough << std::endl;
+        std::cout << "Nr of packets lost " << totalPacketsLost << std::endl;
+
+
+    return (EXIT_SUCCESS);
+}
+
 void configureSTANodes(Ssid& ssid) {
     // create STA nodes
     staNodes.Create(config.Nsta);
@@ -23,7 +89,7 @@ void configureSTANodes(Ssid& ssid) {
     phy.Set("RxNoiseFigure", DoubleValue(3.0));
     phy.Set("LdpcEnabled", BooleanValue(true));
 
-    // setup S1g MAC 
+    // setup S1g MAC
     S1gWifiMacHelper mac = S1gWifiMacHelper::Default();
     mac.SetType("ns3::StaWifiMac",
             "Ssid", SsidValue(ssid),
@@ -126,7 +192,7 @@ void configureIPStack() {
 void configureNodes() {
     for (int i = 0; i < config.Nsta; i++) {
 
-        NodeEntry* n = new NodeEntry(i);
+        NodeEntry* n = new NodeEntry(i, &stats);
         n->SetAssociatedCallback([ = ]{onSTAAssociated(i);});
 
         nodes.push_back(n);
@@ -149,25 +215,27 @@ void configureNodes() {
 }
 
 void udpPacketReceived(Ptr<const Packet> packet, Address from) {
-     auto pCopy = packet->Copy();
+    auto pCopy = packet->Copy();
     SeqTsHeader seqTs;
-    pCopy->RemoveHeader (seqTs);
+    pCopy->RemoveHeader(seqTs);
     auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
     int staId = -1;
-    for(int i = 0; i < staDevices.GetN(); i++) {
-    	if(staNodeInterfaces.GetAddress(i)  == InetSocketAddress::ConvertFrom (from).GetIpv4 ()) {
-    		staId = i;
-    		break;
-    	}
+    for (int i = 0; i < staDevices.GetN(); i++) {
+        if (staNodeInterfaces.GetAddress(i) == InetSocketAddress::ConvertFrom(from).GetIpv4()) {
+            staId = i;
+            break;
+        }
     }
-    if(staId != -1)
-    	nodes[staId]->OnUdpPacketReceivedAtAP(packet);
+    if (staId != -1)
+        nodes[staId]->OnUdpPacketReceivedAtAP(packet);
+    else
+    	cout << "*** Node could not be determined from received packet at AP " << endl;
 }
 
 void configureUDPServer() {
     UdpServerHelper myServer(9);
-    auto serverApp = myServer.Install(apNodes);
+    serverApp = myServer.Install(apNodes);
     serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&udpPacketReceived));
     serverApp.Start(Seconds(0));
 
@@ -199,60 +267,46 @@ void onSTAAssociated(int i) {
 
     if (nrOfSTAAssociated == config.Nsta) {
         // association complete, start sending packets
+    	stats.TimeWhenEverySTAIsAssociated = Simulator::Now();
 
         configureUDPServer();
         configureUDPClients();
     }
 }
 
-int main(int argc, char** argv) {
 
-    config = Configuration(argc, argv);
+void printStatistics() {
+	cout << "Statistics" << endl;
+	cout << "----------" << endl;
+	cout << "Total simulation time: " << std::to_string(stats.TotalSimulationTime.GetMilliSeconds()) << "ms" << endl;
+	cout << "Time every station associated: " << std::to_string(stats.TimeWhenEverySTAIsAssociated.GetMilliSeconds()) << "ms" << endl;
+	cout << "" << endl;
+	for(int i = 0; i < config.Nsta; i++) {
+		cout << "Node " << std::to_string(i) << endl;
+		cout << "--------------" << endl;
 
-    RngSeedManager::SetSeed(config.seed);
+		cout << "Total transmit time: " << std::to_string(stats.get(i).TotalTransmitTime.GetMilliSeconds()) << "ms" << endl;
+		cout << "Total receive time: " << std::to_string(stats.get(i).TotalReceiveTime.GetMilliSeconds()) << "ms" << endl;
+		cout << "    Total active receive time: " << std::to_string(stats.get(i).TotalReceiveActiveTime.GetMilliSeconds()) << "ms" << endl;
+		cout << "    Total doze receive time: " << std::to_string(stats.get(i).TotalReceiveDozeTime.GetMilliSeconds()) << "ms" << endl;
 
-    // setup wifi channel
-    YansWifiChannelHelper channelBuilder = YansWifiChannelHelper();
-    channelBuilder.AddPropagationLoss("ns3::LogDistancePropagationLossModel", "Exponent", DoubleValue(3.76), "ReferenceLoss", DoubleValue(8.0), "ReferenceDistance", DoubleValue(1.0));
-    channelBuilder.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
-    channel = channelBuilder.Create();
+		cout << "Number of transmissions: " << std::to_string(stats.get(i).NumberOfTransmissions) << endl;
+		cout << "Number of transmissions dropped: " << std::to_string(stats.get(i).NumberOfTransmissionsDropped) << endl;
+		cout << "Number of receives: " << std::to_string(stats.get(i).NumberOfReceives) << endl;
+		cout << "Number of receives dropped: " << std::to_string(stats.get(i).NumberOfReceivesDropped) << endl;
 
-    Ssid ssid = Ssid("ns380211ah");
+		cout << "" << endl;
+		cout << "Number of UDP packets sent: " << std::to_string(stats.get(i).NumberOfSentPackets) << endl;
+		cout << "Number of UDP packets successful: " << std::to_string(stats.get(i).NumberOfSuccessfulPackets) << endl;
+		cout << "Number of UDP packets dropped: " << std::to_string(stats.get(i).getNumberOfDroppedPackets()) << endl;
+		cout << "Average UDP packet time of flight: " << std::to_string(stats.get(i).getAveragePacketTimeOfFlight().GetMicroSeconds()) << "µs" << endl;
 
-    // configure STA nodes
-    configureSTANodes(ssid);
+		cout << "" << endl;
+		cout << "Throughput: " << std::to_string(stats.get(i).getThroughputKbit()) << "Kbit" << endl;
+//		cout << "Total bytes: " << std::to_string(stats.get(i).TotalPacketPayloadSize) << "b" << endl;
+//		cout << "Total time: " << std::to_string(stats.get(i).TotalPacketTimeOfFlight.GetSeconds()) << "sec" << endl;
+		cout << "*********************" << endl;
 
-    // configure AP nodes
-    configureAPNode(ssid);
+	}
 
-    // configure IP addresses
-    configureIPStack();
-
-    // prepopulate routing tables and arp cache
-    Ipv4GlobalRoutingHelper::PopulateRoutingTables();
-    PopulateArpCache();
-
-    // configure tracing for associations & other metrics 
-    configureNodes();
-
-    Ptr<MobilityModel> mobility1 = apNodes.Get(0)->GetObject<MobilityModel>();
-    Vector apposition = mobility1->GetPosition();
-    std::cout << "AP node, position = " << apposition << std::endl;
-
-    int i = 0;
-    while (i < config.Nsta) {
-        Ptr<MobilityModel> mobility = staNodes.Get(i)->GetObject<MobilityModel>();
-        Vector position = mobility->GetPosition();
-        double distance = sqrt((position.x - apposition.x)*(position.x - apposition.x) + (position.y - apposition.y)*(position.y - apposition.y));
-        std::cout << "Sta node#" << i << ", " << "position = " << position << "(distance to AP: " << distance << ")" << std::endl;
-        i++;
-    }
-
-
-    Simulator::Stop(Seconds(10));
-    Simulator::Run();
-
-
-    return (EXIT_SUCCESS);
 }
-

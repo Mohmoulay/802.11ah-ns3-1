@@ -7,6 +7,8 @@
           <in>Configuration.cc</in>
           <in>Helper.cc</in>
           <in>NodeEntry.cc</in>
+          <in>NodeStatistics.h</in>
+          <in>Statistics.h</in>
           <in>main.cc</in>
         </df>
         <df name="subdir">
@@ -1718,6 +1720,13 @@
       <item path="scratch/ahsimulation/NodeEntry.cc" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
         </ccTool>
+      </item>
+      <item path="scratch/ahsimulation/NodeStatistics.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="scratch/ahsimulation/Statistics.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="scratch/ahsimulation/main.cc" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">

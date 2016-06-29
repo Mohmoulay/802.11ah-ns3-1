@@ -12,6 +12,7 @@
 #include "ns3/internet-module.h"
 #include "ns3/extension-headers.h"
 #include <functional>
+#include "Statistics.h"
 
 using namespace ns3;
 
@@ -19,6 +20,10 @@ using namespace ns3;
 class NodeEntry {
 private:
     std::function<void()> associatedCallback;
+    std::map<uint64_t, Time> txMap;
+    std::map<uint64_t, Time> rxMap;
+    
+    Statistics* stats;
     
 public:
     int id;
@@ -27,7 +32,7 @@ public:
     
     bool isAssociated;
     
-    NodeEntry(int id);
+    NodeEntry(int id, Statistics* stats);
 
     virtual ~NodeEntry();
 

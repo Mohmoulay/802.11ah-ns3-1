@@ -1258,6 +1258,10 @@
           <in>Helper.h</in>
           <in>NodeEntry.cc</in>
           <in>NodeEntry.h</in>
+          <in>NodeStatistics.cc</in>
+          <in>NodeStatistics.h</in>
+          <in>Statistics.cc</in>
+          <in>Statistics.h</in>
           <in>main.cc</in>
           <in>main.h</in>
         </df>
