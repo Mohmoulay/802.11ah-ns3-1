@@ -1,0 +1,16 @@
+body{
+    background-color:#CCC;
+}
+
+.left {
+    float:left;
+    background-color:red;
+}
+
+.right {
+    background-color:green;
+}
+
+.rightcontainer {
+
+}

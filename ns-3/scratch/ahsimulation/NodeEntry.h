@@ -19,22 +19,31 @@ using namespace ns3;
 
 class NodeEntry {
 private:
+
+	Ptr<Node> node;
+	Ptr<NetDevice> device;
+
     std::function<void()> associatedCallback;
     std::map<uint64_t, Time> txMap;
     std::map<uint64_t, Time> rxMap;
+    uint16_t lastBeaconAIDStart = 0;
+    uint16_t lastBeaconAIDEnd = 0;
     
     Statistics* stats;
     
+    void OnEndOfReceive(Ptr<const Packet> packet);
+
 public:
     int id;
     
-    uint32_t aId;
+    uint32_t aId = 0;
     
-    double x;
-    double y;
-    bool isAssociated;
+    double x = 0;
+    double y = 0;
+    bool isAssociated = false;
+    uint32_t queueLength = 0;
     
-    NodeEntry(int id, Statistics* stats);
+    NodeEntry(int id, Statistics* stats,Ptr<Node> node, Ptr<NetDevice> device);
 
     virtual ~NodeEntry();
 
@@ -53,6 +62,7 @@ public:
     void OnUdpPacketSent(Ptr<const Packet> packet);
     void OnUdpPacketReceivedAtAP(Ptr<const Packet> packet);
 
+    void UpdateQueueLength();
     
     void SetAssociatedCallback(std::function<void()> assocCallback);
 };

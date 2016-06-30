@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="https://code.jquery.com/jquery-1.11.3.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/main.js"></script>
+
+    <link rel="stylesheet" href="/css/index.css" />
+    <link rel="stylesheet" href="/css/bootstrap.css" />
+    <link rel="stylesheet" href="/css/bootstrap-theme.css" />
+</head>
+
+<body>
+
+    <div class="left">
+        <canvas id="canv" width="800" height="800"></canvas>
+    </div>
+    <div class="right">
+        <div class="rightcontainer">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title" id="nodeTitle"></h3>
+                        </div>
+                        <div class="panel-body">
+                            <table class="table">
+                                <tr>
+                                    <td>Position</td>
+                                    <td id="nodePosition">---</td>
+                                </tr>
+                                <tr>
+                                    <td>Total transmitted time (ms)</td>
+                                    <td id="nodeTotalTransmittedTime">---</td>
+                                </tr>
+                            </table>
+                            <div id="nodeChart"  style="min-width: 310px; height: 400px; margin: 0 auto">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+
+</body>
+
+</html>

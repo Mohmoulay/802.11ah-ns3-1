@@ -71,6 +71,24 @@ namespace ns3 {
         m_rawgroup = group;
     }
 
+    //     uint32_t rawinfo = (aid_end << 13) | (aid_start << 2) | page;
+
+    uint8_t
+	RPS::RawAssignment::GetRawGroupPage() const {
+    	return m_rawgroup & 0x03;
+    }
+
+    uint16_t
+	RPS::RawAssignment::GetRawGroupAIDStart()  const {
+    	return (m_rawgroup >> 2) & 0x07FF;
+    }
+
+    uint16_t
+	RPS::RawAssignment::GetRawGroupAIDEnd()  const {
+    	return (m_rawgroup >> 13) & 0x07FF;
+    }
+
+
     void
     RPS::RawAssignment::SetChannelInd(uint16_t channel) {
         m_channelind = channel;
@@ -179,9 +197,9 @@ namespace ns3 {
         os << "RAW Control: " << std::to_string(m_raw[0]) << std::endl;
         os << "RAW Slot: " << std::to_string(m_raw[2] << 8 + m_raw[1]) << std::endl;
         os << "RAW Start: " << std::to_string(m_raw[3]) << std::endl;
-        os << "RAW Group: " << std::to_string(((int) m_raw[6] >> 16) + ((int) m_raw[5] >> 8) + m_raw[4]) << std::endl;
+        os << "RAW Group: " << std::to_string(((int) m_raw[6] << 16) + ((int) m_raw[5] << 8) + m_raw[4]) << std::endl;
         os << "Channel index: " << std::to_string(((int) m_raw[8] << 16) + m_raw[7]) << std::endl;
-        os << "PRAW: " << std::to_string(((int) m_raw[11] >> 16) + ((int) m_raw[10] >> 8) + m_raw[9]) << std::endl;
+        os << "PRAW: " << std::to_string(((int) m_raw[11] << 16) + ((int) m_raw[10] << 8) + m_raw[9]) << std::endl;
     }
 
 
@@ -238,9 +256,9 @@ namespace ns3 {
         ass.SetSlot(slot);
 
         ass.SetRawStart(m_raw[3]);
-        ass.SetRawGroup(((int) m_raw[6] >> 16) + ((int) m_raw[5] >> 8) + m_raw[4]);
+        ass.SetRawGroup(((int) m_raw[6] << 16) + ((int) m_raw[5] << 8) + m_raw[4]);
         ass.SetChannelInd(((int) m_raw[8] << 16) + m_raw[7]);
-        ass.SetPRAW(((int) m_raw[11] >> 16) + ((int) m_raw[10] >> 8) + m_raw[9]);
+        ass.SetPRAW(((int) m_raw[11] << 16) + ((int) m_raw[10] << 8) + m_raw[9]);
         
         return ass;
     }

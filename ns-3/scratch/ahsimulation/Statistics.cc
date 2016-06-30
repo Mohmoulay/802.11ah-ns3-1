@@ -11,3 +11,7 @@ NodeStatistics& Statistics::get(int index) {
     return this->nodeStatistics.at(index);
 }
 
+int Statistics::getNumberOfNodes() const {
+    return this->nodeStatistics.size();
+}
+

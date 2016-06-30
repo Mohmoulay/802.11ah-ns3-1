@@ -18,6 +18,8 @@ public:
     Statistics(int nrOfNodes);
     NodeStatistics& get(int index);
 
+    int getNumberOfNodes() const;
+
 };
 
 #endif /* STATISTICS_H */

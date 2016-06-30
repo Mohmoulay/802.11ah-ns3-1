@@ -524,6 +524,7 @@ namespace ns3 {
                 aid_end = m_rawGroupInterval;
             }
             m_rps.SetRawAssignment(raw);
+
             beacon.SetRPS(m_rps);
 
             AuthenticationCtrl AuthenCtrl;

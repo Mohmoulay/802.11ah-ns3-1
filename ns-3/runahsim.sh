@@ -7,7 +7,7 @@
 " --DataMode=\"OfdmRate650KbpsBW2MHz\""\
 " --datarate=0.65"\
 " --bandWidth=1"\
-" --rho=\"500\""\
+" --rho=\"250\""\
 " --simulationTime=600"\
 " --payloadSize=256"\
 " --BeaconInterval=100000"\

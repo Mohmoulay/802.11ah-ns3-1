@@ -36,7 +36,7 @@ struct Configuration {
 
     string rho = "250.0";
 
-    string trafficInterval = "1000";
+    uint32_t trafficInterval = 10000;
     uint16_t trafficPacketSize = 256;
     Configuration();
     Configuration(int argc, char** argv);

@@ -19,14 +19,18 @@
 #include "Helper.h"
 #include "Configuration.h"
 #include "NodeEntry.h"
+#include "SimpleTCPClient.h"
 #include "Statistics.h"
+#include "SimulationEventManager.h"
 
 using namespace std;
 using namespace ns3;
 
 Statistics stats;
-
 Configuration config;
+
+SimulationEventManager eventManager;
+
 
 Ptr<YansWifiChannel> channel;
 
@@ -57,6 +61,10 @@ void configureUDPClients();
 
 void onSTAAssociated(int i);
     
+void updateNodesQueueLength();
+
 int main(int argc, char** argv);
 
 void printStatistics();
+
+void sendStatistics();

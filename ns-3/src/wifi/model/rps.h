@@ -70,6 +70,13 @@ public:
            
           uint8_t GetRawStart (void) const;
           uint32_t GetRawGroup (void) const;
+
+          uint8_t GetRawGroupPage() const;
+
+          uint16_t GetRawGroupAIDStart() const;
+
+          uint16_t GetRawGroupAIDEnd() const;
+
           uint16_t GetChannelInd (void) const;
           uint32_t GetPRAW (void) const;
           

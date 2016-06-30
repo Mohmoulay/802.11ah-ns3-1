@@ -3,11 +3,12 @@
 using namespace std;
 using namespace ns3;
 
+
 int main(int argc, char** argv) {
 
     config = Configuration(argc, argv);
     stats = Statistics(config.Nsta);
-
+    eventManager = SimulationEventManager("localhost", 7707);
 
     RngSeedManager::SetSeed(config.seed);
 
@@ -52,13 +53,22 @@ int main(int argc, char** argv) {
         i++;
     }
 
+    eventManager.onStart();
+
+    for(int i = 0; i < config.Nsta; i++)
+    	eventManager.onSTANodeCreated(*nodes[i]);
+
+    eventManager.onAPNodeCreated(apposition.x, apposition.y);
+
+    // start sending statistics every second
+    sendStatistics();
 
     Simulator::Stop(Seconds(config.simulationTime));
     Simulator::Run();
     Simulator::Destroy();
 
 
-    stats.TotalSimulationTime = Simulator::Now();
+    stats.TotalSimulationTime = Seconds(config.simulationTime);
     printStatistics();
 
     uint32_t totalPacketsThrough = DynamicCast<UdpServer> (serverApp.Get(0))->GetReceived();
@@ -195,7 +205,8 @@ void configureIPStack() {
 void configureNodes() {
     for (int i = 0; i < config.Nsta; i++) {
 
-        NodeEntry* n = new NodeEntry(i, &stats);
+
+        NodeEntry* n = new NodeEntry(i, &stats, staNodes.Get(i), staDevices.Get(i));
         n->SetAssociatedCallback([ = ]{onSTAAssociated(i);});
 
         nodes.push_back(n);
@@ -249,7 +260,7 @@ void configureUDPClients() {
 
     UdpClientHelper clientHelper(apNodeInterfaces.GetAddress(0), 9); //address of remote node
     clientHelper.SetAttribute("MaxPackets", UintegerValue(4294967295u));
-    clientHelper.SetAttribute("Interval", TimeValue(Time(config.trafficInterval))); //packets/s
+    clientHelper.SetAttribute("Interval", TimeValue(MilliSeconds(config.trafficInterval))); //packets/s
     clientHelper.SetAttribute("PacketSize", UintegerValue(config.trafficPacketSize));
     for (uint16_t i = 0; i < config.Nsta; i++) {
         ApplicationContainer clientApp = clientHelper.Install(staNodes.Get(i));
@@ -274,9 +285,18 @@ void onSTAAssociated(int i) {
 
         configureUDPServer();
         configureUDPClients();
+
+        updateNodesQueueLength();
     }
 }
 
+
+void updateNodesQueueLength() {
+	for(int i = 0; i < config.Nsta; i++)
+		nodes[i]->UpdateQueueLength();
+
+	Simulator::Schedule(Seconds(1), &updateNodesQueueLength);
+}
 
 void printStatistics() {
 	cout << "Statistics" << endl;
@@ -287,6 +307,7 @@ void printStatistics() {
 	for(int i = 0; i < config.Nsta; i++) {
 		cout << "Node " << std::to_string(i) << endl;
 		cout << "X: " << nodes[i]->x << ", Y: " << nodes[i]->y << endl;
+		cout << "Tx Remaining Queue size: " << nodes[i]->queueLength << endl;
 		cout << "--------------" << endl;
 
 		cout << "Total transmit time: " << std::to_string(stats.get(i).TotalTransmitTime.GetMilliSeconds()) << "ms" << endl;
@@ -310,7 +331,10 @@ void printStatistics() {
 //		cout << "Total bytes: " << std::to_string(stats.get(i).TotalPacketPayloadSize) << "b" << endl;
 //		cout << "Total time: " << std::to_string(stats.get(i).TotalPacketTimeOfFlight.GetSeconds()) << "sec" << endl;
 		cout << "*********************" << endl;
-
 	}
+}
 
+void sendStatistics() {
+	eventManager.onUpdateStatistics(stats);
+	Simulator::Schedule(Seconds(1), &sendStatistics);
 }

@@ -126,6 +126,11 @@
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
+    "command": "/usr/bin/g++ -std=c++0x -pthread -pthread -I. -I.. -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/libpng12 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libxml2 -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 -DHAVE_GTK2=1 -DHAVE_LIBXML2=1 ../scratch/ahsimulation/SimulationEventManager.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/scratch/ahsimulation/SimulationEventManager.cc.1.o", 
+    "file": "../scratch/ahsimulation/SimulationEventManager.cc"
+  }, 
+  {
+    "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
     "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -pthread -I. -I.. -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/libpng12 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libxml2 -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 -DHAVE_GTK2=1 -DHAVE_LIBXML2=1 ../src/mesh/model/dot11s/peer-management-protocol.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/mesh/model/dot11s/peer-management-protocol.cc.1.o", 
     "file": "../src/mesh/model/dot11s/peer-management-protocol.cc"
   }, 
@@ -326,6 +331,11 @@
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
+    "command": "/usr/bin/g++ -std=c++0x -pthread -pthread -I. -I.. -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/libpng12 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libxml2 -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 -DHAVE_GTK2=1 -DHAVE_LIBXML2=1 ../scratch/ahsimulation/StatisticsTCPClient.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/scratch/ahsimulation/StatisticsTCPClient.cc.1.o", 
+    "file": "../scratch/ahsimulation/StatisticsTCPClient.cc"
+  }, 
+  {
+    "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
     "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 ../src/wifi/helper/wifi-helper.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/wifi/helper/wifi-helper.cc.1.o", 
     "file": "../src/wifi/helper/wifi-helper.cc"
   }, 
@@ -423,6 +433,11 @@
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
     "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 ../src/wifi/model/dcf-manager.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/wifi/model/dcf-manager.cc.1.o", 
     "file": "../src/wifi/model/dcf-manager.cc"
+  }, 
+  {
+    "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
+    "command": "/usr/bin/g++ -std=c++0x -pthread -pthread -I. -I.. -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/libpng12 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libxml2 -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 -DHAVE_GTK2=1 -DHAVE_LIBXML2=1 ../scratch/ahsimulation/SimpleTCPClient.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/scratch/ahsimulation/SimpleTCPClient.cc.1.o", 
+    "file": "../scratch/ahsimulation/SimpleTCPClient.cc"
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
