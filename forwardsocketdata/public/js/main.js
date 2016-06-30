@@ -358,7 +358,7 @@ $(document).ready(function () {
     sim = new SimulationGUI(canvas);
     // connect to the nodejs server with a websocket
     console.log("Connecting to websocket");
-    var sock = io.connect("http://localhost:8080");
+    var sock = io.connect("http://" + window.location.host + "/");
     sock.on("connect", function (data) {
         console.log("Websocket connected, listening for events");
         evManager = new EventManager(sim, sock);

@@ -410,7 +410,7 @@ $(document).ready(function () {
 
     // connect to the nodejs server with a websocket
     console.log("Connecting to websocket");
-    var sock: SocketIO.Socket = io.connect("http://localhost:8080");
+    var sock: SocketIO.Socket = io.connect("http://" +  window.location.host + "/");
     sock.on("connect", function (data) {
         console.log("Websocket connected, listening for events");
         evManager = new EventManager(sim, sock);
