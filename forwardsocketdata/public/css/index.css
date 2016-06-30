@@ -4,13 +4,29 @@ body{
 
 .left {
     float:left;
-    background-color:red;
 }
 
 .right {
-    background-color:green;
 }
 
 .rightcontainer {
 
+}
+
+.canvasContainer {
+    position: relative;
+    width:800px;
+    height:800px;
+}
+
+.canvasContainer > canvas {
+    position: absolute;
+}
+
+.nodeProperty {
+    cursor: pointer;
+}
+
+.selected {
+    background-color:#CCC;
 }

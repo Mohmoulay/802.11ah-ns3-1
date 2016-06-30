@@ -21,12 +21,29 @@
 <body>
 
     <div class="left">
-        <canvas id="canv" width="800" height="800"></canvas>
+        <div class="canvasContainer">
+            <canvas id="canv" width="800" height="800"></canvas>
+            <canvas id="canvHeatmap" width="800" height="800"></canvas>
+        </div>
     </div>
     <div class="right">
         <div class="rightcontainer">
             <div class="row">
                 <div class="col-md-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Simulation</h3>
+                        </div>
+                        <div class="panel-body">
+                            <table class="table">
+                                <tr>
+                                    <td>Current time</td>
+                                    <td id="simCurrentTime">---</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             <h3 class="panel-title" id="nodeTitle"></h3>
@@ -37,9 +54,25 @@
                                     <td>Position</td>
                                     <td id="nodePosition">---</td>
                                 </tr>
-                                <tr>
-                                    <td>Total transmitted time (ms)</td>
-                                    <td id="nodeTotalTransmittedTime">---</td>
+                                <tr class="nodeProperty selected" data-property="totalTransmitTime">
+                                    <td>Total transmit time (ms)</td>
+                                    <td id="nodeTotalTransmitTime">---</td>
+                                </tr>
+                                <tr class="nodeProperty" data-property="totalReceiveTime">
+                                    <td>Total receive time (ms)</td>
+                                    <td id="nodeTotalReceiveTime">---</td>
+                                </tr>
+                                <tr class="nodeProperty" data-property="totalReceiveDozeTime">
+                                    <td>Total receive doze time (ms)</td>
+                                    <td id="nodeTotalReceiveDozeTime">---</td>
+                                </tr>
+                                <tr class="nodeProperty" data-property="totalReceiveActiveTime">
+                                    <td>Total receive active time (ms)</td>
+                                    <td id="nodeTotalReceiveActiveTime">---</td>
+                                </tr>
+                                <tr class="nodeProperty" data-property="throughputKbit">
+                                    <td>Throughput (kbit)</td>
+                                    <td id="nodeThroughputKbit">---</td>
                                 </tr>
                             </table>
                             <div id="nodeChart"  style="min-width: 310px; height: 400px; margin: 0 auto">

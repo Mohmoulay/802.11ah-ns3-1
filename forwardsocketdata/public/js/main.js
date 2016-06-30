@@ -12,17 +12,21 @@ var SimulationNode = (function () {
         this.x = 0;
         this.y = 0;
         this.type = "";
-        this.totalTransmittedTime = [];
+        this.totalTransmitTime = [];
+        this.totalReceiveTime = [];
+        this.totalReceiveDozeTime = [];
+        this.totalReceiveActiveTime = [];
+        this.throughputKbit = [];
     }
     return SimulationNode;
-}());
+})();
 var Value = (function () {
     function Value(timestamp, value) {
         this.timestamp = timestamp;
         this.value = value;
     }
     return Value;
-}());
+})();
 var APNode = (function (_super) {
     __extends(APNode, _super);
     function APNode() {
@@ -30,7 +34,7 @@ var APNode = (function (_super) {
         this.type = "AP";
     }
     return APNode;
-}(SimulationNode));
+})(SimulationNode);
 var STANode = (function (_super) {
     __extends(STANode, _super);
     function STANode() {
@@ -38,19 +42,19 @@ var STANode = (function (_super) {
         this.type = "STA";
     }
     return STANode;
-}(SimulationNode));
+})(SimulationNode);
 var Simulation = (function () {
     function Simulation() {
         this.nodes = [];
     }
     return Simulation;
-}());
+})();
 var SimulationGUI = (function () {
     function SimulationGUI(canvas) {
         this.canvas = canvas;
         this.simulation = new Simulation();
         this.selectedNode = 0;
-        this.selectedPropertyForChart = "totalTransmittedTime";
+        this.selectedPropertyForChart = "totalTransmitTime";
         this.animations = [];
         this.area = 2000;
         this.ctx = canvas.getContext("2d");
@@ -61,7 +65,7 @@ var SimulationGUI = (function () {
         this.drawNodes();
         for (var _i = 0, _a = this.animations; _i < _a.length; _i++) {
             var a = _a[_i];
-            a.draw(this.ctx);
+            a.draw(this.canvas, this.ctx, this.area);
         }
     };
     SimulationGUI.prototype.drawNodes = function () {
@@ -99,21 +103,33 @@ var SimulationGUI = (function () {
         if (id == this.selectedNode)
             this.updateNodeGUI(true);
     };
+    SimulationGUI.prototype.onSimulationTimeUpdated = function (time) {
+        $("#simCurrentTime").text(time);
+    };
+    SimulationGUI.prototype.changeNodeSelection = function (id) {
+        this.selectedNode = id;
+        this.updateNodeGUI(true);
+    };
     SimulationGUI.prototype.updateNodeGUI = function (full) {
         if (this.selectedNode < 0 || this.selectedNode >= this.simulation.nodes.length)
             return;
         var node = this.simulation.nodes[this.selectedNode];
         $("#nodeTitle").text("Node " + node.id);
         $("#nodePosition").text(node.x + "," + node.y);
-        if (node.totalTransmittedTime.length > 0)
-            $("#nodeTotalTransmittedTime").text(node.totalTransmittedTime[node.totalTransmittedTime.length - 1].value);
+        var propertyElements = $(".nodeProperty");
+        for (var i = 0; i < propertyElements.length; i++) {
+            var prop = $(propertyElements[i]).attr("data-property");
+            var values = node[prop];
+            if (values.length > 0)
+                $($(propertyElements[i]).find("td").get(1)).text(values[values.length - 1].value);
+        }
         if (full) {
             var values = node[this.selectedPropertyForChart];
             var selectedData = [];
             for (var i = 0; i < values.length; i++)
                 selectedData.push({ x: values[i].timestamp, y: values[i].value });
             var self_1 = this;
-            $('#nodeChart').highcharts({
+            $('#nodeChart').empty().highcharts({
                 chart: {
                     type: 'spline',
                     animation: "Highcharts.svg",
@@ -123,9 +139,16 @@ var SimulationGUI = (function () {
                             self_1.currentChart = this;
                         } }
                 },
+                plotOptions: {
+                    series: {
+                        animation: false,
+                        marker: { enabled: false }
+                    }
+                },
+                title: { text: self_1.selectedPropertyForChart },
                 xAxis: {
                     type: 'linear',
-                    tickPixelInterval: 10000000
+                    tickPixelInterval: 100,
                 },
                 yAxis: {
                     title: { text: 'Value' },
@@ -145,11 +168,11 @@ var SimulationGUI = (function () {
         else {
             var values = node[this.selectedPropertyForChart];
             var lastValue = values[values.length - 1];
-            this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value], true, true);
+            this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value], true, false);
         }
     };
     return SimulationGUI;
-}());
+})();
 var Animation = (function () {
     function Animation() {
         this.time = 0;
@@ -159,7 +182,7 @@ var Animation = (function () {
         this.time += dt;
     };
     return Animation;
-}());
+})();
 var BroadcastAnimation = (function (_super) {
     __extends(BroadcastAnimation, _super);
     function BroadcastAnimation(x, y) {
@@ -168,20 +191,21 @@ var BroadcastAnimation = (function (_super) {
         this.y = y;
         this.max_radius = 50;
         this.max_time = 1000;
+        this.color = new Color(255, 0, 0);
     }
-    BroadcastAnimation.prototype.draw = function (ctx) {
+    BroadcastAnimation.prototype.draw = function (canvas, ctx, area) {
         var radius = this.time / this.max_time * this.max_radius;
         this.color.a = 1 - this.time / this.max_time;
         ctx.strokeStyle = this.color.toString();
         ctx.beginPath();
-        ctx.arc(this.x, this.y, radius, 0, Math.PI * 2, false);
+        ctx.arc(this.x * (canvas.width / area), this.y * (canvas.width / area), radius, 0, Math.PI * 2, false);
         ctx.stroke();
     };
     BroadcastAnimation.prototype.isFinished = function () {
         return this.time >= this.max_time;
     };
     return BroadcastAnimation;
-}(Animation));
+})(Animation);
 var ReceivedAnimation = (function (_super) {
     __extends(ReceivedAnimation, _super);
     function ReceivedAnimation(x, y) {
@@ -190,21 +214,22 @@ var ReceivedAnimation = (function (_super) {
         this.y = y;
         this.max_radius = 10;
         this.max_time = 1000;
+        this.color = new Color(0, 255, 0);
     }
-    ReceivedAnimation.prototype.draw = function (ctx) {
+    ReceivedAnimation.prototype.draw = function (canvas, ctx, area) {
         var radius = (1 - this.time / this.max_time) * this.max_radius;
         this.color.a = 1 - this.time / this.max_time;
         ctx.strokeStyle = this.color.toString();
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, radius, 0, Math.PI * 2, false);
+        ctx.arc(this.x * (canvas.width / area), this.y * (canvas.width / area), radius, 0, Math.PI * 2, false);
         ctx.stroke();
     };
     ReceivedAnimation.prototype.isFinished = function () {
         return this.time >= this.max_time;
     };
     return ReceivedAnimation;
-}(Animation));
+})(Animation);
 var Color = (function () {
     function Color(r, g, b, a) {
         if (r === void 0) { r = 0; }
@@ -220,14 +245,14 @@ var Color = (function () {
         return "rgba(" + this.r + ", " + this.g + "," + this.b + ", " + this.a + ")";
     };
     return Color;
-}());
+})();
 var SimulationEvent = (function () {
     function SimulationEvent(time, parts) {
         this.time = time;
         this.parts = parts;
     }
     return SimulationEvent;
-}());
+})();
 var EventManager = (function () {
     function EventManager(sim, sock) {
         this.sim = sim;
@@ -235,7 +260,6 @@ var EventManager = (function () {
         var self = this;
         sock.on("entry", function (data) {
             self.onReceive(data);
-            console.log(data);
         });
     }
     EventManager.prototype.processEvents = function () {
@@ -246,10 +270,10 @@ var EventManager = (function () {
                     this.onStart();
                     break;
                 case 'stanodeadd':
-                    this.onNodeAdded(true, parseInt(ev.parts[2]), parseInt(ev.parts[3]), parseInt(ev.parts[4]));
+                    this.onNodeAdded(true, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]));
                     break;
                 case 'apnodeadd':
-                    this.onNodeAdded(false, -1, parseInt(ev.parts[2]), parseInt(ev.parts[3]));
+                    this.onNodeAdded(false, -1, parseFloat(ev.parts[2]), parseFloat(ev.parts[3]));
                     break;
                 case 'nodetx':
                     this.onNodeTx(parseInt(ev.parts[2]));
@@ -258,21 +282,22 @@ var EventManager = (function () {
                     this.onNodeRx(parseInt(ev.parts[2]));
                     break;
                 case 'nodestats':
-                    this.onStatsUpdated(ev.time, parseInt(ev.parts[2]), parseInt(ev.parts[3]));
+                    this.onStatsUpdated(ev.time, parseInt(ev.parts[2]), parseInt(ev.parts[3]), parseInt(ev.parts[4]), parseInt(ev.parts[5]), parseInt(ev.parts[6]), parseFloat(ev.parts[7]));
                     break;
                 default:
             }
+            this.sim.onSimulationTimeUpdated(ev.time);
             this.events.shift();
         }
     };
     EventManager.prototype.onReceive = function (line) {
         var parts = line.split(';');
         var time = parseInt(parts[0]);
+        time = time / (1000 * 1000); // ns -> ms
         var ev = new SimulationEvent(time, parts);
         this.events.push(ev);
     };
     EventManager.prototype.onStart = function () {
-        simTime = 0;
         this.sim.simulation.nodes = [];
     };
     EventManager.prototype.onNodeAdded = function (isSTA, id, x, y) {
@@ -299,19 +324,38 @@ var EventManager = (function () {
         sim.addAnimation(a);
         this.sim.addAnimation(a);
     };
-    EventManager.prototype.onStatsUpdated = function (timestamp, id, totalTransmitType) {
+    EventManager.prototype.hasIncreased = function (values) {
+        if (values.length >= 2) {
+            var oldVal = values[values.length - 2].value;
+            var newVal = values[values.length - 1].value;
+            return oldVal < newVal;
+        }
+        else
+            return false;
+    };
+    EventManager.prototype.onStatsUpdated = function (timestamp, id, totalTransmitTime, totalReceiveTime, totalReceiveDozeTime, totalReceiveActiveTime, throughputKbit) {
         // todo keep track of statistics
-        sim.simulation.nodes[id].totalTransmittedTime.push(new Value(timestamp, totalTransmitType));
+        var n = sim.simulation.nodes[id];
+        n.totalTransmitTime.push(new Value(timestamp, totalTransmitTime));
+        n.totalReceiveTime.push(new Value(timestamp, totalReceiveTime));
+        n.totalReceiveDozeTime.push(new Value(timestamp, totalReceiveDozeTime));
+        n.totalReceiveActiveTime.push(new Value(timestamp, totalReceiveActiveTime));
+        n.throughputKbit.push(new Value(timestamp, throughputKbit));
+        if (this.hasIncreased(n.totalTransmitTime)) {
+            sim.addAnimation(new BroadcastAnimation(n.x, n.y));
+        }
+        if (this.hasIncreased(n.totalReceiveActiveTime))
+            sim.addAnimation(new ReceivedAnimation(n.x, n.y));
         sim.onNodeUpdated(id);
     };
     return EventManager;
-}());
+})();
 var sim = null;
 var evManager = null;
-var simTime = 0;
 var time = new Date().getTime();
 $(document).ready(function () {
-    sim = new SimulationGUI($("#canv").get(0));
+    var canvas = $("#canv").get(0);
+    sim = new SimulationGUI(canvas);
     // connect to the nodejs server with a websocket
     console.log("Connecting to websocket");
     var sock = io.connect("http://localhost:8080");
@@ -321,13 +365,33 @@ $(document).ready(function () {
     }).on("error", function () {
         console.log("Unable to connect to server websocket endpoint");
     });
+    $(canvas).click(function (ev) {
+        var x = ev.clientX / (canvas.width / sim.area);
+        var y = ev.clientY / (canvas.width / sim.area);
+        var selectedNode = null;
+        for (var _i = 0, _a = sim.simulation.nodes; _i < _a.length; _i++) {
+            var n = _a[_i];
+            var dist = Math.sqrt(Math.pow((n.x - x), 2) + Math.pow((n.y - y), 2));
+            if (dist < 20) {
+                selectedNode = n;
+                break;
+            }
+        }
+        if (selectedNode != null)
+            sim.changeNodeSelection(selectedNode.id);
+    });
+    $(".nodeProperty").click(function (ev) {
+        $(".nodeProperty").removeClass("selected");
+        $(this).addClass("selected");
+        sim.selectedPropertyForChart = $(this).attr("data-property");
+        sim.updateNodeGUI(true);
+    });
     loop();
 });
 function loop() {
     sim.draw();
     var newTime = new Date().getTime();
     var dt = newTime - time;
-    simTime += dt;
     sim.update(dt);
     if (evManager != null) {
         try {
