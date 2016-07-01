@@ -1,3 +1,4 @@
+"use strict";
 var path = require("path");
 var net = require("net");
 var express = require("express");
@@ -84,7 +85,7 @@ var Program = (function () {
         }
     };
     return Program;
-})();
+}());
 exports.Program = Program;
 // export the main program
 exports.main = new Program();

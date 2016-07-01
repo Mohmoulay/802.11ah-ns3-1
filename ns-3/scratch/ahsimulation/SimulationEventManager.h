@@ -32,6 +32,8 @@ public:
 
 	void onSTANodeCreated(NodeEntry& node);
 
+	void onNodeAssociated(NodeEntry& node);
+
 	void onUpdateStatistics(Statistics& stats);
 
 	virtual ~SimulationEventManager();

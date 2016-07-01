@@ -11,22 +11,31 @@ var SimulationNode = (function () {
         this.id = -1;
         this.x = 0;
         this.y = 0;
+        this.aId = 0;
         this.type = "";
         this.totalTransmitTime = [];
         this.totalReceiveTime = [];
         this.totalReceiveDozeTime = [];
         this.totalReceiveActiveTime = [];
+        this.nrOfTransmissions = [];
+        this.nrOfTransmissionsDropped = [];
+        this.nrOfReceives = [];
+        this.nrOfReceivesDropped = [];
+        this.nrOfSentPackets = [];
+        this.nrOfSuccessfulPackets = [];
+        this.nrOfDroppedPackets = [];
+        this.avgPacketTimeOfFlight = [];
         this.throughputKbit = [];
     }
     return SimulationNode;
-})();
+}());
 var Value = (function () {
     function Value(timestamp, value) {
         this.timestamp = timestamp;
         this.value = value;
     }
     return Value;
-})();
+}());
 var APNode = (function (_super) {
     __extends(APNode, _super);
     function APNode() {
@@ -34,7 +43,7 @@ var APNode = (function (_super) {
         this.type = "AP";
     }
     return APNode;
-})(SimulationNode);
+}(SimulationNode));
 var STANode = (function (_super) {
     __extends(STANode, _super);
     function STANode() {
@@ -42,13 +51,13 @@ var STANode = (function (_super) {
         this.type = "STA";
     }
     return STANode;
-})(SimulationNode);
+}(SimulationNode));
 var Simulation = (function () {
     function Simulation() {
         this.nodes = [];
     }
     return Simulation;
-})();
+}());
 var SimulationGUI = (function () {
     function SimulationGUI(canvas) {
         this.canvas = canvas;
@@ -58,25 +67,89 @@ var SimulationGUI = (function () {
         this.animations = [];
         this.area = 2000;
         this.ctx = canvas.getContext("2d");
+        this.heatMapPalette = new Palette();
+        this.heatMapPalette.addColor(new Color(255, 0, 0, 1, 0));
+        this.heatMapPalette.addColor(new Color(255, 255, 0, 1, 0.5));
+        this.heatMapPalette.addColor(new Color(0, 255, 0, 1, 1));
     }
     SimulationGUI.prototype.draw = function () {
         this.ctx.fillStyle = "white";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.drawRange();
         this.drawNodes();
         for (var _i = 0, _a = this.animations; _i < _a.length; _i++) {
             var a = _a[_i];
             a.draw(this.canvas, this.ctx, this.area);
         }
     };
+    SimulationGUI.prototype.drawRange = function () {
+        this.ctx.strokeStyle = "#CCC";
+        for (var _i = 0, _a = this.simulation.nodes; _i < _a.length; _i++) {
+            var n = _a[_i];
+            if (n.type == "AP") {
+                for (var i = 1; i <= 10; i++) {
+                    var radius = 100 * i * (this.canvas.width / this.area);
+                    this.ctx.beginPath();
+                    this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), radius, 0, Math.PI * 2, false);
+                    this.ctx.stroke();
+                }
+            }
+        }
+    };
+    SimulationGUI.prototype.getMaxOfProperty = function (prop) {
+        var curMax = Number.MIN_VALUE;
+        if (prop != "") {
+            for (var _i = 0, _a = this.simulation.nodes; _i < _a.length; _i++) {
+                var n = _a[_i];
+                var values = n[this.selectedPropertyForChart];
+                if (values.length > 0) {
+                    var value = values[values.length - 1].value;
+                    if (curMax < value)
+                        curMax = value;
+                }
+            }
+            return curMax;
+        }
+        else
+            return 0;
+    };
+    SimulationGUI.prototype.getColorForNode = function (n, curMax) {
+        if (this.selectedPropertyForChart != "") {
+            var el = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "']").get(0));
+            var type = el.attr("data-type");
+            if (typeof type != "undefined" && type != "") {
+                var min = parseInt(el.attr("data-min"));
+                var max = void 0;
+                if (el.attr("data-max") == "*")
+                    max = curMax;
+                else
+                    max = parseInt(el.attr("data-max"));
+                var values = n[this.selectedPropertyForChart];
+                if (values.length > 0) {
+                    var value = values[values.length - 1];
+                    var alpha = (value.value - min) / (max - min);
+                    if (type == "LOWER_IS_BETTER")
+                        return this.heatMapPalette.getColorAt(1 - alpha).toString();
+                    else
+                        return this.heatMapPalette.getColorAt(alpha).toString();
+                }
+            }
+        }
+        return "black";
+    };
     SimulationGUI.prototype.drawNodes = function () {
-        this.ctx.fillStyle = "black";
+        var curMax = this.getMaxOfProperty(this.selectedPropertyForChart);
         for (var _i = 0, _a = this.simulation.nodes; _i < _a.length; _i++) {
             var n = _a[_i];
             this.ctx.beginPath();
-            if (n.type == "AP")
+            if (n.type == "AP") {
+                this.ctx.fillStyle = "black";
                 this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 6, 0, Math.PI * 2, false);
-            else
+            }
+            else {
+                this.ctx.fillStyle = this.getColorForNode(n, curMax);
                 this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 3, 0, Math.PI * 2, false);
+            }
             this.ctx.fill();
         }
     };
@@ -103,6 +176,10 @@ var SimulationGUI = (function () {
         if (id == this.selectedNode)
             this.updateNodeGUI(true);
     };
+    SimulationGUI.prototype.onNodeAssociated = function (id) {
+        var n = this.simulation.nodes[id];
+        this.addAnimation(new AssociatedAnimation(n.x, n.y));
+    };
     SimulationGUI.prototype.onSimulationTimeUpdated = function (time) {
         $("#simCurrentTime").text(time);
     };
@@ -116,6 +193,7 @@ var SimulationGUI = (function () {
         var node = this.simulation.nodes[this.selectedNode];
         $("#nodeTitle").text("Node " + node.id);
         $("#nodePosition").text(node.x + "," + node.y);
+        $("#nodeAID").text(node.aId);
         var propertyElements = $(".nodeProperty");
         for (var i = 0; i < propertyElements.length; i++) {
             var prop = $(propertyElements[i]).attr("data-property");
@@ -137,7 +215,8 @@ var SimulationGUI = (function () {
                     events: {
                         load: function () {
                             self_1.currentChart = this;
-                        } }
+                        }
+                    }
                 },
                 plotOptions: {
                     series: {
@@ -172,87 +251,14 @@ var SimulationGUI = (function () {
         }
     };
     return SimulationGUI;
-})();
-var Animation = (function () {
-    function Animation() {
-        this.time = 0;
-        this.color = new Color();
-    }
-    Animation.prototype.update = function (dt) {
-        this.time += dt;
-    };
-    return Animation;
-})();
-var BroadcastAnimation = (function (_super) {
-    __extends(BroadcastAnimation, _super);
-    function BroadcastAnimation(x, y) {
-        _super.call(this);
-        this.x = x;
-        this.y = y;
-        this.max_radius = 50;
-        this.max_time = 1000;
-        this.color = new Color(255, 0, 0);
-    }
-    BroadcastAnimation.prototype.draw = function (canvas, ctx, area) {
-        var radius = this.time / this.max_time * this.max_radius;
-        this.color.a = 1 - this.time / this.max_time;
-        ctx.strokeStyle = this.color.toString();
-        ctx.beginPath();
-        ctx.arc(this.x * (canvas.width / area), this.y * (canvas.width / area), radius, 0, Math.PI * 2, false);
-        ctx.stroke();
-    };
-    BroadcastAnimation.prototype.isFinished = function () {
-        return this.time >= this.max_time;
-    };
-    return BroadcastAnimation;
-})(Animation);
-var ReceivedAnimation = (function (_super) {
-    __extends(ReceivedAnimation, _super);
-    function ReceivedAnimation(x, y) {
-        _super.call(this);
-        this.x = x;
-        this.y = y;
-        this.max_radius = 10;
-        this.max_time = 1000;
-        this.color = new Color(0, 255, 0);
-    }
-    ReceivedAnimation.prototype.draw = function (canvas, ctx, area) {
-        var radius = (1 - this.time / this.max_time) * this.max_radius;
-        this.color.a = 1 - this.time / this.max_time;
-        ctx.strokeStyle = this.color.toString();
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(this.x * (canvas.width / area), this.y * (canvas.width / area), radius, 0, Math.PI * 2, false);
-        ctx.stroke();
-    };
-    ReceivedAnimation.prototype.isFinished = function () {
-        return this.time >= this.max_time;
-    };
-    return ReceivedAnimation;
-})(Animation);
-var Color = (function () {
-    function Color(r, g, b, a) {
-        if (r === void 0) { r = 0; }
-        if (g === void 0) { g = 0; }
-        if (b === void 0) { b = 0; }
-        if (a === void 0) { a = 1; }
-        this.r = r;
-        this.g = g;
-        this.b = b;
-        this.a = a;
-    }
-    Color.prototype.toString = function () {
-        return "rgba(" + this.r + ", " + this.g + "," + this.b + ", " + this.a + ")";
-    };
-    return Color;
-})();
+}());
 var SimulationEvent = (function () {
     function SimulationEvent(time, parts) {
         this.time = time;
         this.parts = parts;
     }
     return SimulationEvent;
-})();
+}());
 var EventManager = (function () {
     function EventManager(sim, sock) {
         this.sim = sim;
@@ -270,10 +276,13 @@ var EventManager = (function () {
                     this.onStart();
                     break;
                 case 'stanodeadd':
-                    this.onNodeAdded(true, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]));
+                    this.onNodeAdded(true, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseInt(ev.parts[5]));
+                    break;
+                case 'stanodeassoc':
+                    this.onNodeAssociated(parseInt(ev.parts[2]), parseInt(ev.parts[3]));
                     break;
                 case 'apnodeadd':
-                    this.onNodeAdded(false, -1, parseFloat(ev.parts[2]), parseFloat(ev.parts[3]));
+                    this.onNodeAdded(false, -1, parseFloat(ev.parts[2]), parseFloat(ev.parts[3]), -1);
                     break;
                 case 'nodetx':
                     this.onNodeTx(parseInt(ev.parts[2]));
@@ -282,7 +291,26 @@ var EventManager = (function () {
                     this.onNodeRx(parseInt(ev.parts[2]));
                     break;
                 case 'nodestats':
-                    this.onStatsUpdated(ev.time, parseInt(ev.parts[2]), parseInt(ev.parts[3]), parseInt(ev.parts[4]), parseInt(ev.parts[5]), parseInt(ev.parts[6]), parseFloat(ev.parts[7]));
+                    /*send({"nodestats", std::to_string(i),
+                std::to_string(stats.get(i).TotalTransmitTime.GetMilliSeconds()),
+                std::to_string(stats.get(i).TotalReceiveTime.GetMilliSeconds()),
+                std::to_string(stats.get(i).TotalReceiveDozeTime.GetMilliSeconds()),
+                std::to_string(stats.get(i).TotalReceiveActiveTime.GetMilliSeconds()),
+    
+                std::to_string(stats.get(i).NumberOfTransmissions),
+                std::to_string(stats.get(i).NumberOfTransmissionsDropped),
+                std::to_string(stats.get(i).NumberOfReceives),
+                std::to_string(stats.get(i).NumberOfReceivesDropped),
+    
+                std::to_string(stats.get(i).NumberOfSentPackets),
+                std::to_string(stats.get(i).NumberOfSuccessfulPackets),
+                std::to_string(stats.get(i).NumberOfDroppedPackets),
+    
+                std::to_string(stats.get(i).getAveragePacketTimeOfFlight().GetMilliSeconds()),
+                std::to_string(stats.get(i).getThroughputKbit())
+            });
+                */
+                    this.onStatsUpdated(ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]));
                     break;
                 default:
             }
@@ -300,13 +328,19 @@ var EventManager = (function () {
     EventManager.prototype.onStart = function () {
         this.sim.simulation.nodes = [];
     };
-    EventManager.prototype.onNodeAdded = function (isSTA, id, x, y) {
+    EventManager.prototype.onNodeAdded = function (isSTA, id, x, y, aId) {
         var n = isSTA ? new STANode() : new APNode();
         n.id = id;
         n.x = x;
         n.y = y;
+        n.aId = aId;
         this.sim.simulation.nodes.push(n);
         this.sim.onNodeAdded(id);
+    };
+    EventManager.prototype.onNodeAssociated = function (id, aId) {
+        var n = this.sim.simulation.nodes[id];
+        n.aId = aId;
+        this.sim.onNodeAssociated(id);
     };
     EventManager.prototype.onNodeTx = function (id) {
         var n = this.sim.simulation.nodes[id];
@@ -333,23 +367,31 @@ var EventManager = (function () {
         else
             return false;
     };
-    EventManager.prototype.onStatsUpdated = function (timestamp, id, totalTransmitTime, totalReceiveTime, totalReceiveDozeTime, totalReceiveActiveTime, throughputKbit) {
+    EventManager.prototype.onStatsUpdated = function (timestamp, id, totalTransmitTime, totalReceiveTime, totalReceiveDozeTime, totalReceiveActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, throughputKbit) {
         // todo keep track of statistics
         var n = sim.simulation.nodes[id];
         n.totalTransmitTime.push(new Value(timestamp, totalTransmitTime));
         n.totalReceiveTime.push(new Value(timestamp, totalReceiveTime));
         n.totalReceiveDozeTime.push(new Value(timestamp, totalReceiveDozeTime));
         n.totalReceiveActiveTime.push(new Value(timestamp, totalReceiveActiveTime));
+        n.nrOfTransmissions.push(new Value(timestamp, nrOfTransmissions));
+        n.nrOfTransmissionsDropped.push(new Value(timestamp, nrOfTransmissionsDropped));
+        n.nrOfReceives.push(new Value(timestamp, nrOfReceives));
+        n.nrOfReceivesDropped.push(new Value(timestamp, nrOfReceivesDropped));
+        n.nrOfSentPackets.push(new Value(timestamp, nrOfSentPackets));
+        n.nrOfSuccessfulPackets.push(new Value(timestamp, nrOfSuccessfulPackets));
+        n.nrOfDroppedPackets.push(new Value(timestamp, nrOfDroppedPackets));
+        n.avgPacketTimeOfFlight.push(new Value(timestamp, avgPacketTimeOfFlight));
         n.throughputKbit.push(new Value(timestamp, throughputKbit));
         if (this.hasIncreased(n.totalTransmitTime)) {
             sim.addAnimation(new BroadcastAnimation(n.x, n.y));
         }
-        if (this.hasIncreased(n.totalReceiveActiveTime))
-            sim.addAnimation(new ReceivedAnimation(n.x, n.y));
+        //if(this.hasIncreased(n.totalReceiveActiveTime))
+        //   sim.addAnimation(new ReceivedAnimation(n.x, n.y));
         sim.onNodeUpdated(id);
     };
     return EventManager;
-})();
+}());
 var sim = null;
 var evManager = null;
 var time = new Date().getTime();
@@ -404,4 +446,153 @@ function loop() {
     time = newTime;
     window.setTimeout(loop, 25);
 }
+var Animation = (function () {
+    function Animation() {
+        this.time = 0;
+        this.color = new Color(0, 0, 0, 1, 0);
+    }
+    Animation.prototype.update = function (dt) {
+        this.time += dt;
+    };
+    return Animation;
+}());
+var BroadcastAnimation = (function (_super) {
+    __extends(BroadcastAnimation, _super);
+    function BroadcastAnimation(x, y) {
+        _super.call(this);
+        this.x = x;
+        this.y = y;
+        this.max_radius = 50;
+        this.max_time = 1000;
+        this.color = new Color(255, 0, 0);
+    }
+    BroadcastAnimation.prototype.draw = function (canvas, ctx, area) {
+        var radius = this.time / this.max_time * this.max_radius;
+        this.color.alpha = 1 - this.time / this.max_time;
+        ctx.strokeStyle = this.color.toString();
+        ctx.beginPath();
+        ctx.arc(this.x * (canvas.width / area), this.y * (canvas.width / area), radius, 0, Math.PI * 2, false);
+        ctx.stroke();
+    };
+    BroadcastAnimation.prototype.isFinished = function () {
+        return this.time >= this.max_time;
+    };
+    return BroadcastAnimation;
+}(Animation));
+var ReceivedAnimation = (function (_super) {
+    __extends(ReceivedAnimation, _super);
+    function ReceivedAnimation(x, y) {
+        _super.call(this);
+        this.x = x;
+        this.y = y;
+        this.max_radius = 10;
+        this.max_time = 1000;
+        this.color = new Color(0, 255, 0);
+    }
+    ReceivedAnimation.prototype.draw = function (canvas, ctx, area) {
+        var radius = (1 - this.time / this.max_time) * this.max_radius;
+        this.color.alpha = 1 - this.time / this.max_time;
+        ctx.strokeStyle = this.color.toString();
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(this.x * (canvas.width / area), this.y * (canvas.width / area), radius, 0, Math.PI * 2, false);
+        ctx.stroke();
+    };
+    ReceivedAnimation.prototype.isFinished = function () {
+        return this.time >= this.max_time;
+    };
+    return ReceivedAnimation;
+}(Animation));
+var AssociatedAnimation = (function (_super) {
+    __extends(AssociatedAnimation, _super);
+    function AssociatedAnimation(x, y) {
+        _super.call(this);
+        this.x = x;
+        this.y = y;
+        this.max_time = 3000;
+    }
+    AssociatedAnimation.prototype.draw = function (canvas, ctx, area) {
+        var offset = this.time / this.max_time * Math.PI * 2;
+        this.color.alpha = 1 - this.time / this.max_time;
+        ctx.strokeStyle = this.color.toString();
+        ctx.beginPath();
+        ctx.setLineDash(([10, 2]));
+        ctx.lineWidth = 3;
+        ctx.arc(this.x * (canvas.width / area), this.y * (canvas.width / area), 10, offset, offset + Math.PI * 2, false);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.lineWidth = 1;
+    };
+    AssociatedAnimation.prototype.isFinished = function () {
+        return this.time >= this.max_time;
+    };
+    return AssociatedAnimation;
+}(Animation));
+var Color = (function () {
+    function Color(red, green, blue, alpha, position) {
+        if (alpha === void 0) { alpha = 1; }
+        if (position === void 0) { position = 0; }
+        this.red = Math.floor(red);
+        this.green = Math.floor(green);
+        this.blue = Math.floor(blue);
+        this.alpha = alpha;
+        this.position = Math.round(position * 100) / 100;
+    }
+    Color.prototype.toString = function () {
+        return "rgba(" + this.red + ", " + this.green + "," + this.blue + ", " + this.alpha + ")";
+    };
+    return Color;
+}());
+var Palette = (function () {
+    function Palette() {
+        this.colors = [];
+        this.lookup = [];
+    }
+    Palette.prototype.buildLookup = function () {
+        this.lookup = [];
+        for (var i = 0; i < 1000; i++)
+            this.lookup.push(this.getColorAt(i / 1000));
+    };
+    ;
+    Palette.prototype.getColorFromLookupAt = function (position) {
+        var idx;
+        if (isNaN(position))
+            idx = 0;
+        else
+            idx = Math.floor(position * this.lookup.length);
+        if (idx < 0)
+            idx = 0;
+        if (idx >= this.lookup.length)
+            idx = this.lookup.length - 1;
+        return this.lookup[idx];
+    };
+    ;
+    Palette.prototype.getColorAt = function (position) {
+        if (position < this.colors[0].position)
+            return this.colors[0];
+        if (position >= this.colors[this.colors.length - 1].position)
+            return this.colors[this.colors.length - 1];
+        for (var i = 0; i < this.colors.length; i++) {
+            if (position >= this.colors[i].position && position < this.colors[i + 1].position) {
+                var relColorAlpha = (position - this.colors[i].position) / (this.colors[i + 1].position - this.colors[i].position);
+                var red = this.colors[i].red * (1 - relColorAlpha) + this.colors[i + 1].red * (relColorAlpha);
+                var green = this.colors[i].green * (1 - relColorAlpha) + this.colors[i + 1].green * (relColorAlpha);
+                var blue = this.colors[i].blue * (1 - relColorAlpha) + this.colors[i + 1].blue * (relColorAlpha);
+                return new Color(red, green, blue, 1, position);
+            }
+        }
+    };
+    Palette.prototype.addColor = function (c) {
+        this.colors.push(c);
+    };
+    Palette.prototype.drawTo = function (ctx, width, height) {
+        for (var i = 0; i < width; i++) {
+            var pos = i / width;
+            var c = this.getColorFromLookupAt(pos);
+            ctx.fillStyle = "rgb(" + c.red + "," + c.green + "," + c.blue + ")";
+            ctx.fillRect(i, 0, 1, height);
+        }
+    };
+    return Palette;
+}());
 //# sourceMappingURL=main.js.map

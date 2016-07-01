@@ -26,7 +26,11 @@ void SimulationEventManager::onAPNodeCreated(double x, double y) {
 }
 
 void SimulationEventManager::onSTANodeCreated(NodeEntry& node) {
-	send({"stanodeadd", std::to_string(node.id), std::to_string(node.x), std::to_string(node.y)});
+	send({"stanodeadd", std::to_string(node.id), std::to_string(node.x), std::to_string(node.y), std::to_string(node.aId)});
+}
+
+void SimulationEventManager::onNodeAssociated(NodeEntry& node) {
+	send({"stanodeassoc", std::to_string(node.id), std::to_string(node.aId)});
 }
 
 void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
@@ -36,6 +40,14 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 			std::to_string(stats.get(i).TotalReceiveTime.GetMilliSeconds()),
 			std::to_string(stats.get(i).TotalReceiveDozeTime.GetMilliSeconds()),
 			std::to_string(stats.get(i).TotalReceiveActiveTime.GetMilliSeconds()),
+			std::to_string(stats.get(i).NumberOfTransmissions),
+			std::to_string(stats.get(i).NumberOfTransmissionsDropped),
+			std::to_string(stats.get(i).NumberOfReceives),
+			std::to_string(stats.get(i).NumberOfReceivesDropped),
+			std::to_string(stats.get(i).NumberOfSentPackets),
+			std::to_string(stats.get(i).NumberOfSuccessfulPackets),
+			std::to_string(stats.get(i).getNumberOfDroppedPackets()),
+			std::to_string(stats.get(i).getAveragePacketTimeOfFlight().GetMilliSeconds()),
 			std::to_string(stats.get(i).getThroughputKbit())
 		});
 	}

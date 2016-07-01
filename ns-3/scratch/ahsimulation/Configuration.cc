@@ -26,7 +26,7 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("rho", "maximal distance between AP and stations", rho);
 
     cmd.AddValue("visualizerIP", "IP or hostname for the visualizer server, leave empty to not send data", visualizerIP);
-    cmd.AddValue("visualizerPort", "Port for the visualizer server", rho);
+    cmd.AddValue("visualizerPort", "Port for the visualizer server", visualizerPort);
 
 
     cmd.Parse(argc, argv);

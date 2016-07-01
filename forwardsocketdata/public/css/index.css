@@ -30,3 +30,8 @@ body{
 .selected {
     background-color:#CCC;
 }
+
+.scrollTable {
+    max-height:250px;
+    overflow-y:scroll;
+}

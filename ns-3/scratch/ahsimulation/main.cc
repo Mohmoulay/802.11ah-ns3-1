@@ -8,6 +8,7 @@ int main(int argc, char** argv) {
 
     config = Configuration(argc, argv);
     stats = Statistics(config.Nsta);
+
     eventManager = SimulationEventManager(config.visualizerIP, config.visualizerPort);
 
     RngSeedManager::SetSeed(config.seed);
@@ -125,12 +126,6 @@ void configureSTANodes(Ssid& ssid) {
             "rho", StringValue(config.rho));
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(staNodes);
-
-    // ascii logging for all traffic the AP transmits or receives
-    AsciiTraceHelper ascii;
-    phy.EnableAscii(ascii.CreateFileStream("wifiahstatracelog_.tr"), staDevices.Get(0));
-
-
 }
 
 void configureAPNode(Ssid& ssid) {
@@ -182,11 +177,6 @@ void configureAPNode(Ssid& ssid) {
     mobilityAp.SetPositionAllocator(positionAlloc);
     mobilityAp.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobilityAp.Install(apNodes);
-
-    // ascii logging for all traffic the AP transmits or receives
-    AsciiTraceHelper ascii;
-    phy.EnableAscii(ascii.CreateFileStream("wifiahtracelog.tr"), apDevices.Get(0));
-
 }
 
 void configureIPStack() {
@@ -275,6 +265,9 @@ void configureUDPClients() {
 
 void onSTAAssociated(int i) {
     cout << "Node " << std::to_string(i) << " is associated" << endl;
+
+    eventManager.onNodeAssociated(*nodes[i]);
+
     int nrOfSTAAssociated = 0;
     for (int i = 0; i < config.Nsta; i++) {
         if (nodes[i]->isAssociated)

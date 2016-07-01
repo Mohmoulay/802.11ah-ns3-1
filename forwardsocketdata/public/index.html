@@ -49,32 +49,73 @@
                             <h3 class="panel-title" id="nodeTitle"></h3>
                         </div>
                         <div class="panel-body">
-                            <table class="table">
-                                <tr>
-                                    <td>Position</td>
-                                    <td id="nodePosition">---</td>
-                                </tr>
-                                <tr class="nodeProperty selected" data-property="totalTransmitTime">
-                                    <td>Total transmit time (ms)</td>
-                                    <td id="nodeTotalTransmitTime">---</td>
-                                </tr>
-                                <tr class="nodeProperty" data-property="totalReceiveTime">
-                                    <td>Total receive time (ms)</td>
-                                    <td id="nodeTotalReceiveTime">---</td>
-                                </tr>
-                                <tr class="nodeProperty" data-property="totalReceiveDozeTime">
-                                    <td>Total receive doze time (ms)</td>
-                                    <td id="nodeTotalReceiveDozeTime">---</td>
-                                </tr>
-                                <tr class="nodeProperty" data-property="totalReceiveActiveTime">
-                                    <td>Total receive active time (ms)</td>
-                                    <td id="nodeTotalReceiveActiveTime">---</td>
-                                </tr>
-                                <tr class="nodeProperty" data-property="throughputKbit">
-                                    <td>Throughput (kbit)</td>
-                                    <td id="nodeThroughputKbit">---</td>
-                                </tr>
-                            </table>
+                            <div class="scrollTable">
+                                <table class="table">
+                                    <tr>
+                                        <td>Position</td>
+                                        <td id="nodePosition">---</td>
+                                    </tr>
+                                    <tr>
+                                        <td>AID</td>
+                                        <td id="nodeAID">---</td>
+                                    </tr>
+                                    <tr class="nodeProperty" data-property="avgPacketTimeOfFlight" data-min="0" data-max="500" data-type="LOWER_IS_BETTER">
+                                        <td>Average packet time of flight (ms)</td>
+                                        <td id="nodeAvgPacketTimeOfFlight">---</td>
+                                    </tr>
+                                    <tr class="nodeProperty" data-property="throughputKbit" data-min="0" data-max="500" data-type="HIGHER_IS_BETTER">
+                                        <td>Throughput (kbit)</td>
+                                        <td id="nodeThroughputKbit">---</td>
+                                    </tr>                                
+                                    <tr class="nodeProperty selected" data-property="totalTransmitTime">
+                                        <td>Total transmit time (ms)</td>
+                                        <td id="nodeTotalTransmitTime">---</td>
+                                    </tr>
+                                    <tr class="nodeProperty" data-property="totalReceiveTime">
+                                        <td>Total receive time (ms)</td>
+                                        <td id="nodeTotalReceiveTime">---</td>
+                                    </tr>
+                                    <tr class="nodeProperty" data-property="totalReceiveDozeTime">
+                                        <td>Total receive doze time (ms)</td>
+                                        <td id="nodeTotalReceiveDozeTime">---</td>
+                                    </tr>
+                                    <tr class="nodeProperty" data-property="totalReceiveActiveTime">
+                                        <td>Total receive active time (ms)</td>
+                                        <td id="nodeTotalReceiveActiveTime">---</td>
+                                    </tr>
+
+                                    <tr class="nodeProperty" data-property="nrOfTransmissions">
+                                        <td>Number of transmission</td>
+                                        <td id="nodeNrOfTransmissions">---</td>
+                                    </tr>
+                                    <tr class="nodeProperty" data-property="nrOfTransmissionsDropped">
+                                        <td>Number of transmissions dropped</td>
+                                        <td id="nodeNrOfTransmissionsDropped">---</td>
+                                    </tr>
+                                    <tr class="nodeProperty" data-property="nrOfReceives">
+                                        <td>Number of receives</td>
+                                        <td id="nodeNrOfReceives">---</td>
+                                    </tr>
+                                    <tr class="nodeProperty" data-property="nrOfReceivesDropped">
+                                        <td>Number of receives dropped</td>
+                                        <td id="nodeNrOfReceivesDropped">---</td>
+                                    </tr>
+
+                                    <tr class="nodeProperty" data-property="nrOfSentPackets">
+                                        <td>Number of sent packets</td>
+                                        <td id="nodeNrOfSentPackets">---</td>
+                                    </tr>
+                                    <tr class="nodeProperty" data-property="nrOfSuccessfulPackets">
+                                        <td>Number of succ. packets received at AP</td>
+                                        <td id="nodeNrOfSuccessfulPackets">---</td>
+                                    </tr>                                
+                                    <!-- use data-max="*" to automatically determine the max value present -->
+                                    <tr class="nodeProperty" data-property="nrOfDroppedPackets" data-min="0" data-max="*"" data-type="LOWER_IS_BETTER">
+                                        <td>Number of dropped packets</td>
+                                        <td id="nodeNrOfDroppedPackets">---</td>
+                                    </tr>                                
+                                </table>
+                            </div>
                             <div id="nodeChart"  style="min-width: 310px; height: 400px; margin: 0 auto">
                             </div>
                         </div>
