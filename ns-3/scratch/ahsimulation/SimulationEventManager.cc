@@ -16,8 +16,23 @@ SimulationEventManager::SimulationEventManager(string hostname, int port)
 	: hostname(hostname), port(port) {
 }
 
-void SimulationEventManager::onStart() {
-	send({"start"});
+void SimulationEventManager::onStart(Configuration& config) {
+	send({"start",
+		  std::to_string(config.NRawSta),
+		  std::to_string(config.NGroup),
+		  std::to_string(config.SlotFormat),
+		  std::to_string(config.NRawSlotCount),
+		  std::to_string(config.NRawSlotNum),
+
+		  config.DataMode,
+		  std::to_string(config.datarate),
+		  std::to_string(config.bandWidth),
+
+		  std::to_string(config.trafficInterval),
+		  std::to_string(config.trafficPacketSize),
+
+		  std::to_string(config.BeaconInterval)
+	});
 }
 
 

@@ -32,6 +32,6 @@ body{
 }
 
 .scrollTable {
-    max-height:250px;
+    max-height:190px;
     overflow-y:scroll;
 }

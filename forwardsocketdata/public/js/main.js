@@ -54,9 +54,15 @@ var STANode = (function (_super) {
     }
     return STANode;
 }(SimulationNode));
+var SimulationConfiguration = (function () {
+    function SimulationConfiguration() {
+    }
+    return SimulationConfiguration;
+}());
 var Simulation = (function () {
     function Simulation() {
         this.nodes = [];
+        this.config = new SimulationConfiguration();
     }
     return Simulation;
 }());
@@ -214,6 +220,11 @@ var SimulationGUI = (function () {
             $("#nodeAID").text(node.aId);
             $("#nodeGroupNumber").text(node.groupNumber);
         }
+        var configElements = $(".configProperty");
+        for (var i = 0; i < configElements.length; i++) {
+            var prop = $(configElements[i]).attr("data-property");
+            $($(configElements[i]).find("td").get(1)).text(this.simulation.config[prop]);
+        }
         var propertyElements = $(".nodeProperty");
         for (var i = 0; i < propertyElements.length; i++) {
             var prop = $(propertyElements[i]).attr("data-property");
@@ -311,7 +322,7 @@ var EventManager = (function () {
             var ev = this.events[0];
             switch (ev.parts[1]) {
                 case 'start':
-                    this.onStart();
+                    this.onStart(parseInt(ev.parts[2]), parseInt(ev.parts[3]), ev.parts[4], parseInt(ev.parts[5]), parseInt(ev.parts[6]), ev.parts[7], parseFloat(ev.parts[8]), parseFloat(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]));
                     break;
                 case 'stanodeadd':
                     this.onNodeAdded(true, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseInt(ev.parts[5]));
@@ -363,8 +374,20 @@ var EventManager = (function () {
         var ev = new SimulationEvent(time, parts);
         this.events.push(ev);
     };
-    EventManager.prototype.onStart = function () {
+    EventManager.prototype.onStart = function (aidRAWRange, numberOfRAWGroups, RAWSlotFormat, numberOfRAWSlots, RAWSlotDuration, dataMode, dataRate, bandwidth, trafficInterval, trafficPacketsize, beaconInterval) {
         this.sim.simulation.nodes = [];
+        var config = this.sim.simulation.config;
+        config.AIDRAWRange = aidRAWRange;
+        config.numberOfRAWGroups = numberOfRAWGroups;
+        config.RAWSlotFormat = RAWSlotFormat;
+        config.numberOfRAWSlots = numberOfRAWSlots;
+        config.RAWSlotDuration = RAWSlotDuration;
+        config.dataMode = dataMode;
+        config.dataRate = dataRate;
+        config.bandwidth = bandwidth;
+        config.trafficInterval = trafficInterval;
+        config.trafficPacketsize = trafficPacketsize;
+        config.beaconInterval = beaconInterval;
     };
     EventManager.prototype.onNodeAdded = function (isSTA, id, x, y, aId) {
         var n = isSTA ? new STANode() : new APNode();

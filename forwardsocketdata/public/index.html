@@ -35,12 +35,63 @@
                             <h3 class="panel-title">Simulation</h3>
                         </div>
                         <div class="panel-body">
-                            <table class="table">
-                                <tr>
-                                    <td>Current time</td>
-                                    <td id="simCurrentTime">---</td>
-                                </tr>
-                            </table>
+                            <div class="scrollTable">
+                                <table class="table">
+                                    <tr>
+                                        <td>Current time</td>
+                                        <td id="simCurrentTime">---</td>
+                                    </tr>
+                               
+                                    <tr class="configProperty" data-property="AIDRAWRange">
+                                        <td>AID RAW range</td>
+                                        <td>---</td>
+                                    </tr>
+                                    <tr class="configProperty" data-property="numberOfRAWGroups">
+                                        <td>Number of RAW groups</td>
+                                        <td>---</td>
+                                    </tr>
+
+                                    <tr class="configProperty" data-property="RAWSlotFormat">
+                                        <td>RAW Slot format</td>
+                                        <td>---</td>
+                                    </tr>
+                                    <tr class="configProperty" data-property="numberOfRAWSlots">
+                                        <td>Number of slots in RAW</td>
+                                        <td>---</td>
+                                    </tr>
+                                    <tr class="configProperty" data-property="RAWSlotDuration">
+                                        <td>RAW Slot duration (in µs)</td>
+                                        <td>---</td>
+                                    </tr>
+                              
+                                    <tr class="configProperty" data-property="dataMode">
+                                        <td>Data Mode</td>
+                                        <td>---</td>
+                                    </tr>
+                                    <tr class="configProperty" data-property="dataRate">
+                                        <td>Data rate (in Kbps)</td>
+                                        <td>---</td>
+                                    </tr>
+                                    <tr class="configProperty" data-property="bandwidth">
+                                        <td>Bandwidth (in MHz)</td>
+                                        <td>---</td>
+                                    </tr>
+                               
+                                    <tr class="configProperty" data-property="trafficInterval">
+                                        <td>UDP Traffic interval (in ms)</td>
+                                        <td>---</td>
+                                    </tr>
+                                    <tr class="configProperty" data-property="trafficPacketsize">
+                                        <td>UDP Traffic Packet size (in bytes)</td>
+                                        <td>---</td>
+                                    </tr>
+                               
+                                    <tr class="configProperty" data-property="beaconInterval">
+                                        <td>Beacon interval (in µs)</td>
+                                        <td>---</td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
@@ -68,7 +119,7 @@
                                     <tr class="nodeProperty" data-property="throughputKbit" data-min="0" data-max="500" data-type="HIGHER_IS_BETTER">
                                         <td>Throughput (kbit)</td>
                                         <td id="nodeThroughputKbit">---</td>
-                                    </tr>                                
+                                    </tr>
                                     <tr class="nodeProperty selected" data-property="totalTransmitTime">
                                         <td>Total transmit time (ms)</td>
                                         <td id="nodeTotalTransmitTime">---</td>
@@ -110,11 +161,11 @@
                                     <tr class="nodeProperty" data-property="nrOfSuccessfulPackets">
                                         <td>Number of succ. packets received at AP</td>
                                         <td id="nodeNrOfSuccessfulPackets">---</td>
-                                    </tr>                                
+                                    </tr>
                                     <!-- use data-max="*" to automatically determine the max value present -->
-                                    <tr class="nodeProperty" data-property="nrOfDroppedPackets" data-min="0" data-max="*"" data-type="LOWER_IS_BETTER">
+                                    <tr class="nodeProperty" data-property="nrOfDroppedPackets" data-min="0" data-max="*" " data-type="LOWER_IS_BETTER ">
                                         <td>Number of dropped packets</td>
-                                        <td id="nodeNrOfDroppedPackets">---</td>
+                                        <td id="nodeNrOfDroppedPackets ">---</td>
                                     </tr>                       
                                 </table>
                             </div>

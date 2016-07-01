@@ -10,7 +10,7 @@
 
 #include "NodeEntry.h"
 #include "Statistics.h"
-
+#include "Configuration.h"
 
 class SimulationEventManager {
 
@@ -26,7 +26,7 @@ public:
 	SimulationEventManager(string hostname, int port);
 
 
-	void onStart();
+	void onStart(Configuration& config);
 
 	void onAPNodeCreated(double x, double y);
 

@@ -6,27 +6,29 @@ Configuration::Configuration() {
 
 Configuration::Configuration(int argc, char** argv) {
     CommandLine cmd;
-    cmd.AddValue("seed", "random seed", seed);
-    cmd.AddValue("simulationTime", "Simulation time in seconds", simulationTime);
-    cmd.AddValue("payloadSize", "Size of payload", payloadSize);
+    cmd.AddValue("Seed", "random seed", seed);
+    cmd.AddValue("SimulationTime", "Simulation time in seconds", simulationTime);
+
     cmd.AddValue("Nsta", "number of total stations", Nsta);
     cmd.AddValue("NRawSta", "number of stations supporting RAW", NRawSta);
     cmd.AddValue("SlotFormat", "format of NRawSlotCount", SlotFormat);
-    cmd.AddValue("NRawSlotCount", "number of stations supporting RAW", NRawSlotCount);
-    cmd.AddValue("NRawSlotNum", "number of stations supporting RAW", NRawSlotNum);
+    cmd.AddValue("NRawSlotCount", "RAW slot duration", NRawSlotCount);
+    cmd.AddValue("NRawSlotNum", "number of slots per RAW", NRawSlotNum);
     cmd.AddValue("NGroup", "number of RAW group", NGroup);
 
     cmd.AddValue("BeaconInterval", "Beacon interval time in us", BeaconInterval);
+
     cmd.AddValue("TrafficInterval", "Traffic interval time in ms", trafficInterval);
+    cmd.AddValue("TrafficPacketSize", "Size of packets to send in bytes", trafficPacketSize);
 
     cmd.AddValue("DataMode", "Date mode", DataMode);
-    cmd.AddValue("datarate", "data rate in Mbps", datarate);
-    cmd.AddValue("bandWidth", "bandwidth in MHz", bandWidth);
+    cmd.AddValue("Datarate", "data rate in Mbps", datarate);
+    cmd.AddValue("BandWidth", "bandwidth in MHz", bandWidth);
 
-    cmd.AddValue("rho", "maximal distance between AP and stations", rho);
+    cmd.AddValue("Rho", "maximal distance between AP and stations", rho);
 
-    cmd.AddValue("visualizerIP", "IP or hostname for the visualizer server, leave empty to not send data", visualizerIP);
-    cmd.AddValue("visualizerPort", "Port for the visualizer server", visualizerPort);
+    cmd.AddValue("VisualizerIP", "IP or hostname for the visualizer server, leave empty to not send data", visualizerIP);
+    cmd.AddValue("VisualizerPort", "Port for the visualizer server", visualizerPort);
 
 
     cmd.Parse(argc, argv);

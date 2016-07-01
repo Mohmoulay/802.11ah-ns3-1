@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
         i++;
     }
 
-    eventManager.onStart();
+    eventManager.onStart(config);
 
     for(int i = 0; i < config.Nsta; i++)
     	eventManager.onSTANodeCreated(*nodes[i]);

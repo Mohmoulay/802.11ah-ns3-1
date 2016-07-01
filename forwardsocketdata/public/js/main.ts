@@ -47,13 +47,33 @@ class APNode extends SimulationNode {
 class STANode extends SimulationNode {
     type: string = "STA";
 
-    isAssociated:boolean=  false;
+    isAssociated: boolean = false;
+}
+
+
+class SimulationConfiguration {
+
+    AIDRAWRange: number;
+    numberOfRAWGroups: number;
+
+    RAWSlotFormat: string;
+    numberOfRAWSlots: number;
+    RAWSlotDuration: number;
+
+    dataMode: string;
+    dataRate: number;
+    bandwidth: number;
+
+    trafficInterval: number;
+    trafficPacketsize: number;
+
+    beaconInterval: number;
 }
 
 class Simulation {
 
     nodes: SimulationNode[] = [];
-
+    config: SimulationConfiguration = new SimulationConfiguration();
 }
 
 class SimulationGUI {
@@ -70,7 +90,7 @@ class SimulationGUI {
     private currentChart: HighchartsChartObject;
 
     private heatMapPalette: Palette;
-    private rawGroupColors:Color[] = [ new Color(0,0,255), new Color(0,128,255), new Color(0,255,128), new Color(0,255,255), new Color(128,0,255), new Color(255,0,255) ];
+    private rawGroupColors: Color[] = [new Color(0, 0, 255), new Color(0, 128, 255), new Color(0, 255, 128), new Color(0, 255, 255), new Color(128, 0, 255), new Color(255, 0, 255)];
 
     constructor(private canvas: HTMLCanvasElement) {
         this.ctx = <CanvasRenderingContext2D>canvas.getContext("2d");
@@ -149,7 +169,7 @@ class SimulationGUI {
             }
         }
 
-        if(n.type == "STA" && !(<STANode>n).isAssociated)
+        if (n.type == "STA" && !(<STANode>n).isAssociated)
             return "black";
         else
             return this.rawGroupColors[n.groupNumber % this.rawGroupColors.length].toString();
@@ -233,12 +253,18 @@ class SimulationGUI {
 
         $("#nodeTitle").text("Node " + node.id);
         $("#nodePosition").text(node.x + "," + node.y);
-        if(node.type == "STA" && !(<STANode>node).isAssociated) {
+        if (node.type == "STA" && !(<STANode>node).isAssociated) {
             $("#nodeAID").text("Not associated");
         }
         else {
             $("#nodeAID").text(node.aId);
             $("#nodeGroupNumber").text(node.groupNumber);
+        }
+
+        var configElements = $(".configProperty");
+        for (let i = 0; i < configElements.length; i++) {
+            let prop = $(configElements[i]).attr("data-property");
+            $($(configElements[i]).find("td").get(1)).text(this.simulation.config[prop]);
         }
 
         var propertyElements = $(".nodeProperty");
@@ -311,13 +337,13 @@ class SimulationGUI {
             if (!showDeltas)
                 this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value], true, false);
             else {
-                if(values.length >= 2) {
-                    let beforeLastValue = values[values.length-2];
+                if (values.length >= 2) {
+                    let beforeLastValue = values[values.length - 2];
                     this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value - beforeLastValue.value], true, false);
                 }
                 else
-                    this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value], true, false);                
-            } 
+                    this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value], true, false);
+            }
         }
     }
 }
@@ -346,7 +372,9 @@ class EventManager {
 
             switch (ev.parts[1]) {
                 case 'start':
-                    this.onStart();
+                    this.onStart(parseInt(ev.parts[2]), parseInt(ev.parts[3]), ev.parts[4], parseInt(ev.parts[5]),
+                        parseInt(ev.parts[6]), ev.parts[7], parseFloat(ev.parts[8]), parseFloat(ev.parts[9]),
+                        parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]));
                     break;
 
                 case 'stanodeadd':
@@ -414,9 +442,38 @@ class EventManager {
         this.events.push(ev);
     }
 
-    onStart() {
+    onStart(aidRAWRange: number, numberOfRAWGroups: number, RAWSlotFormat: string, numberOfRAWSlots: number, RAWSlotDuration: number,
+        dataMode: string, dataRate: number, bandwidth: number, trafficInterval: number, trafficPacketsize: number, beaconInterval: number) {
         this.sim.simulation.nodes = [];
+        let config = this.sim.simulation.config;
+        config.AIDRAWRange = aidRAWRange;
+        config.numberOfRAWGroups = numberOfRAWGroups;
+        config.RAWSlotFormat = RAWSlotFormat;
+        config.numberOfRAWSlots = numberOfRAWSlots;
+        config.RAWSlotDuration = RAWSlotDuration;
+        config.dataMode = dataMode;
+        config.dataRate = dataRate;
+        config.bandwidth = bandwidth;
+        config.trafficInterval = trafficInterval;
+        config.trafficPacketsize = trafficPacketsize;
+        config.beaconInterval = beaconInterval;
     }
+
+    AIDRAWRange: number;
+    numberOfRAWGroups: number;
+
+    RAWSlotFormat: string;
+    numberOfRAWSlots: number;
+    RAWSlotDuration: number;
+
+    dataMode: string;
+    dataRate: number;
+    bandwidth: number;
+
+    trafficInterval: number;
+    trafficPacketsize: number;
+
+    beaconInterval: number;
 
     onNodeAdded(isSTA: boolean, id: number, x: number, y: number, aId: number) {
         let n: SimulationNode = isSTA ? new STANode() : new APNode();
@@ -527,8 +584,8 @@ $(document).ready(function () {
     });
 
     $(canvas).click(ev => {
-        let x = (ev.clientX-$(canvas).offset().left) / (canvas.width / sim.area);
-        let y = (ev.clientY-$(canvas).offset().top) / (canvas.width / sim.area);
+        let x = (ev.clientX - $(canvas).offset().left) / (canvas.width / sim.area);
+        let y = (ev.clientY - $(canvas).offset().top) / (canvas.width / sim.area);
 
         let selectedNode: SimulationNode = null;
         for (let n of sim.simulation.nodes) {

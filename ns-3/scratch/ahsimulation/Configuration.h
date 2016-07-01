@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/applications-module.h"
@@ -21,7 +23,6 @@ using namespace std;
 struct Configuration {
     double simulationTime = 10;
     uint32_t seed = 1;
-    uint32_t payloadSize = 100;
     uint32_t Nsta = 1;
     uint32_t NRawSta = 1;
     uint32_t SlotFormat = 1;
@@ -29,8 +30,8 @@ struct Configuration {
     uint32_t NRawSlotNum = 1;
     uint32_t NGroup = 1;
     uint32_t BeaconInterval = 102400;
-    bool OutputPosition = true;
-    string DataMode = "OfdmRate2_4MbpsBW1MHz";
+
+	string DataMode = "OfdmRate2_4MbpsBW1MHz";
     double datarate = 2.4;
     double bandWidth = 1;
 
