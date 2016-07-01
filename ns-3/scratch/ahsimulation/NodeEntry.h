@@ -28,7 +28,7 @@ private:
     std::map<uint64_t, Time> rxMap;
     uint16_t lastBeaconAIDStart = 0;
     uint16_t lastBeaconAIDEnd = 0;
-    
+
     Statistics* stats;
     
     void OnEndOfReceive(Ptr<const Packet> packet);
@@ -37,6 +37,7 @@ public:
     int id;
     
     uint32_t aId = 0;
+    uint8_t rawGroupNumber = 0;
     
     double x = 0;
     double y = 0;

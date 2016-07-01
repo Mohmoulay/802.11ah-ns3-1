@@ -59,6 +59,10 @@
                                         <td>AID</td>
                                         <td id="nodeAID">---</td>
                                     </tr>
+                                    <tr>
+                                        <td>Node group</td>
+                                        <td id="nodeGroupNumber">---</td>
+                                    </tr>
                                     <tr class="nodeProperty" data-property="avgPacketTimeOfFlight" data-min="0" data-max="500" data-type="LOWER_IS_BETTER">
                                         <td>Average packet time of flight (ms)</td>
                                         <td id="nodeAvgPacketTimeOfFlight">---</td>
@@ -113,8 +117,14 @@
                                     <tr class="nodeProperty" data-property="nrOfDroppedPackets" data-min="0" data-max="*"" data-type="LOWER_IS_BETTER">
                                         <td>Number of dropped packets</td>
                                         <td id="nodeNrOfDroppedPackets">---</td>
-                                    </tr>                                
+                                    </tr>                       
                                 </table>
+                            </div>
+                            <div>
+                                <label>
+                                    Show delta's
+                                    <input id="chkShowDeltas" type="checkbox"></input>
+                                </label>
                             </div>
                             <div id="nodeChart"  style="min-width: 310px; height: 400px; margin: 0 auto">
                             </div>

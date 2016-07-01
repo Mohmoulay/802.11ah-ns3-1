@@ -12,7 +12,8 @@ abstract class SimulationNode {
 
     x: number = 0;
     y: number = 0;
-    aId:number = 0;
+    aId: number = 0;
+    groupNumber: number = 0;
 
     type: string = "";
 
@@ -102,42 +103,42 @@ class SimulationGUI {
         }
     }
 
-    private getMaxOfProperty(prop:string):number {
-        let curMax:number = Number.MIN_VALUE;
-        if(prop != "") {
-            for(let n of this.simulation.nodes) {
+    private getMaxOfProperty(prop: string): number {
+        let curMax: number = Number.MIN_VALUE;
+        if (prop != "") {
+            for (let n of this.simulation.nodes) {
                 let values = (<Value[]>n[this.selectedPropertyForChart]);
-                if(values.length > 0) {
-                    let value = values[values.length-1].value;
-                    if(curMax < value) curMax = value;
+                if (values.length > 0) {
+                    let value = values[values.length - 1].value;
+                    if (curMax < value) curMax = value;
                 }
             }
             return curMax;
         }
-        else 
+        else
             return 0;
 
     }
-    private getColorForNode(n: SimulationNode, curMax:number): string {
+    private getColorForNode(n: SimulationNode, curMax: number): string {
         if (this.selectedPropertyForChart != "") {
             let el = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "']").get(0));
             let type = el.attr("data-type");
             if (typeof type != "undefined" && type != "") {
                 let min = parseInt(el.attr("data-min"));
-                let max:number;
-                if(el.attr("data-max") == "*")
+                let max: number;
+                if (el.attr("data-max") == "*")
                     max = curMax;
                 else
                     max = parseInt(el.attr("data-max"));
 
-                
-                let values = (<Value[]>n[this.selectedPropertyForChart]);
-                if(values.length > 0) {
-                    let value = values[values.length-1];
 
-                    let alpha = (value.value - min) / (max-min);
-                    if(type == "LOWER_IS_BETTER")
-                        return this.heatMapPalette.getColorAt(1-alpha).toString();
+                let values = (<Value[]>n[this.selectedPropertyForChart]);
+                if (values.length > 0) {
+                    let value = values[values.length - 1];
+
+                    let alpha = (value.value - min) / (max - min);
+                    if (type == "LOWER_IS_BETTER")
+                        return this.heatMapPalette.getColorAt(1 - alpha).toString();
                     else
                         return this.heatMapPalette.getColorAt(alpha).toString();
                 }
@@ -161,10 +162,18 @@ class SimulationGUI {
             else {
                 this.ctx.fillStyle = this.getColorForNode(n, curMax);
                 this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 3, 0, Math.PI * 2, false);
+            }
+            this.ctx.fill();
 
+            if (this.selectedNode == n.id) {
+                this.ctx.beginPath();
+                this.ctx.strokeStyle = "blue";
+                this.ctx.lineWidth = 3;
+                this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 8, 0, Math.PI * 2, false);
+                this.ctx.stroke();
+                this.ctx.lineWidth = 1;
             }
 
-            this.ctx.fill();
         }
     }
 
@@ -197,7 +206,7 @@ class SimulationGUI {
 
     onNodeAssociated(id: number) {
         let n = this.simulation.nodes[id];
-        this.addAnimation(new AssociatedAnimation(n.x,n.y));
+        this.addAnimation(new AssociatedAnimation(n.x, n.y));
     }
 
     onSimulationTimeUpdated(time: number) {
@@ -218,6 +227,7 @@ class SimulationGUI {
         $("#nodeTitle").text("Node " + node.id);
         $("#nodePosition").text(node.x + "," + node.y);
         $("#nodeAID").text(node.aId);
+        $("#nodeGroupNumber").text(node.aId);
 
         var propertyElements = $(".nodeProperty");
         for (let i = 0; i < propertyElements.length; i++) {
@@ -227,11 +237,21 @@ class SimulationGUI {
                 $($(propertyElements[i]).find("td").get(1)).text(values[values.length - 1].value);
         }
 
+        let showDeltas: boolean = $("#chkShowDeltas").prop("checked");
+
         if (full) {
             let values = <Value[]>node[this.selectedPropertyForChart];
             var selectedData = [];
-            for (let i = 0; i < values.length; i++)
-                selectedData.push({ x: values[i].timestamp, y: values[i].value });
+
+            if (!showDeltas) {
+                for (let i = 0; i < values.length; i++)
+                    selectedData.push({ x: values[i].timestamp, y: values[i].value });
+            }
+            else {
+                selectedData.push({ x: values[0].timestamp, y: values[0].value });
+                for (let i = 1; i < values.length; i++)
+                    selectedData.push({ x: values[i].timestamp, y: values[i].value - values[i - 1].value });
+            }
 
             let self = this;
             $('#nodeChart').empty().highcharts({
@@ -275,7 +295,16 @@ class SimulationGUI {
         else {
             let values = <Value[]>node[this.selectedPropertyForChart];
             let lastValue = values[values.length - 1];
-            this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value], true, false);
+            if (!showDeltas)
+                this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value], true, false);
+            else {
+                if(values.length >= 2) {
+                    let beforeLastValue = values[values.length-2];
+                    this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value - beforeLastValue.value], true, false);
+                }
+                else
+                    this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value], true, false);                
+            } 
         }
     }
 }
@@ -312,7 +341,7 @@ class EventManager {
                     break;
 
                 case 'stanodeassoc':
-                    this.onNodeAssociated(parseInt(ev.parts[2]), parseInt(ev.parts[3]));
+                    this.onNodeAssociated(parseInt(ev.parts[2]), parseInt(ev.parts[3]), parseInt(ev.parts[4]));
                     break;
 
                 case 'apnodeadd':
@@ -376,21 +405,22 @@ class EventManager {
         this.sim.simulation.nodes = [];
     }
 
-    onNodeAdded(isSTA: boolean, id: number, x: number, y: number, aId:number) {
+    onNodeAdded(isSTA: boolean, id: number, x: number, y: number, aId: number) {
         let n: SimulationNode = isSTA ? new STANode() : new APNode();
         n.id = id;
         n.x = x;
         n.y = y;
-    	n.aId = aId;
+        n.aId = aId;
 
         this.sim.simulation.nodes.push(n);
 
         this.sim.onNodeAdded(id);
     }
 
-    onNodeAssociated(id:number, aId:number) {
+    onNodeAssociated(id: number, aId: number, groupNumber: number) {
         let n = this.sim.simulation.nodes[id];
         n.aId = aId;
+        n.groupNumber = groupNumber;
         this.sim.onNodeAssociated(id);
     }
 
@@ -504,6 +534,11 @@ $(document).ready(function () {
 
         sim.updateNodeGUI(true);
     });
+
+    $("#chkShowDeltas").change(function (ev) {
+        sim.updateNodeGUI(true);
+    });
+
     loop();
 });
 
@@ -542,7 +577,7 @@ function loop() {
 abstract class Animation {
 
     protected time: number = 0;
-    color: Color = new Color(0, 0, 0,1,0);
+    color: Color = new Color(0, 0, 0, 1, 0);
     abstract draw(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, area: number);
 
     update(dt: number) {

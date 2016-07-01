@@ -252,19 +252,23 @@ void configureUDPClients() {
 
     UdpClientHelper clientHelper(apNodeInterfaces.GetAddress(0), 9); //address of remote node
     clientHelper.SetAttribute("MaxPackets", UintegerValue(4294967295u));
-    clientHelper.SetAttribute("Interval", TimeValue(MilliSeconds(config.trafficInterval))); //packets/s
+    clientHelper.SetAttribute("Interval", TimeValue(MilliSeconds(config.trafficInterval)));
     clientHelper.SetAttribute("PacketSize", UintegerValue(config.trafficPacketSize));
     for (uint16_t i = 0; i < config.Nsta; i++) {
         ApplicationContainer clientApp = clientHelper.Install(staNodes.Get(i));
         clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnUdpPacketSent, nodes[i]));
 
-        clientApp.Start(Seconds(0));
+
+        double random = (rand() % (config.trafficInterval/1000*4)) / (double)4;
+        clientApp.Start(Seconds(0+random));
         //clientApp.Stop(Seconds(simulationTime + 1));
     }
 }
 
 void onSTAAssociated(int i) {
     cout << "Node " << std::to_string(i) << " is associated" << endl;
+
+    nodes[i]->rawGroupNumber = (nodes[i]->aId / config.NRawSta) * config.NGroup;
 
     eventManager.onNodeAssociated(*nodes[i]);
 
@@ -275,6 +279,7 @@ void onSTAAssociated(int i) {
     }
 
     if (nrOfSTAAssociated == config.Nsta) {
+    	cout << "All stations associated, configuring UDP clients & server" << endl;
         // association complete, start sending packets
     	stats.TimeWhenEverySTAIsAssociated = Simulator::Now();
 

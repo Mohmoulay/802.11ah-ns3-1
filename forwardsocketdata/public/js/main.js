@@ -12,6 +12,7 @@ var SimulationNode = (function () {
         this.x = 0;
         this.y = 0;
         this.aId = 0;
+        this.groupNumber = 0;
         this.type = "";
         this.totalTransmitTime = [];
         this.totalReceiveTime = [];
@@ -151,6 +152,14 @@ var SimulationGUI = (function () {
                 this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 3, 0, Math.PI * 2, false);
             }
             this.ctx.fill();
+            if (this.selectedNode == n.id) {
+                this.ctx.beginPath();
+                this.ctx.strokeStyle = "blue";
+                this.ctx.lineWidth = 3;
+                this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 8, 0, Math.PI * 2, false);
+                this.ctx.stroke();
+                this.ctx.lineWidth = 1;
+            }
         }
     };
     SimulationGUI.prototype.update = function (dt) {
@@ -194,6 +203,7 @@ var SimulationGUI = (function () {
         $("#nodeTitle").text("Node " + node.id);
         $("#nodePosition").text(node.x + "," + node.y);
         $("#nodeAID").text(node.aId);
+        $("#nodeGroupNumber").text(node.aId);
         var propertyElements = $(".nodeProperty");
         for (var i = 0; i < propertyElements.length; i++) {
             var prop = $(propertyElements[i]).attr("data-property");
@@ -201,11 +211,19 @@ var SimulationGUI = (function () {
             if (values.length > 0)
                 $($(propertyElements[i]).find("td").get(1)).text(values[values.length - 1].value);
         }
+        var showDeltas = $("#chkShowDeltas").prop("checked");
         if (full) {
             var values = node[this.selectedPropertyForChart];
             var selectedData = [];
-            for (var i = 0; i < values.length; i++)
-                selectedData.push({ x: values[i].timestamp, y: values[i].value });
+            if (!showDeltas) {
+                for (var i = 0; i < values.length; i++)
+                    selectedData.push({ x: values[i].timestamp, y: values[i].value });
+            }
+            else {
+                selectedData.push({ x: values[0].timestamp, y: values[0].value });
+                for (var i = 1; i < values.length; i++)
+                    selectedData.push({ x: values[i].timestamp, y: values[i].value - values[i - 1].value });
+            }
             var self_1 = this;
             $('#nodeChart').empty().highcharts({
                 chart: {
@@ -247,7 +265,16 @@ var SimulationGUI = (function () {
         else {
             var values = node[this.selectedPropertyForChart];
             var lastValue = values[values.length - 1];
-            this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value], true, false);
+            if (!showDeltas)
+                this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value], true, false);
+            else {
+                if (values.length >= 2) {
+                    var beforeLastValue = values[values.length - 2];
+                    this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value - beforeLastValue.value], true, false);
+                }
+                else
+                    this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value], true, false);
+            }
         }
     };
     return SimulationGUI;
@@ -279,7 +306,7 @@ var EventManager = (function () {
                     this.onNodeAdded(true, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseInt(ev.parts[5]));
                     break;
                 case 'stanodeassoc':
-                    this.onNodeAssociated(parseInt(ev.parts[2]), parseInt(ev.parts[3]));
+                    this.onNodeAssociated(parseInt(ev.parts[2]), parseInt(ev.parts[3]), parseInt(ev.parts[4]));
                     break;
                 case 'apnodeadd':
                     this.onNodeAdded(false, -1, parseFloat(ev.parts[2]), parseFloat(ev.parts[3]), -1);
@@ -337,9 +364,10 @@ var EventManager = (function () {
         this.sim.simulation.nodes.push(n);
         this.sim.onNodeAdded(id);
     };
-    EventManager.prototype.onNodeAssociated = function (id, aId) {
+    EventManager.prototype.onNodeAssociated = function (id, aId, groupNumber) {
         var n = this.sim.simulation.nodes[id];
         n.aId = aId;
+        n.groupNumber = groupNumber;
         this.sim.onNodeAssociated(id);
     };
     EventManager.prototype.onNodeTx = function (id) {
@@ -426,6 +454,9 @@ $(document).ready(function () {
         $(".nodeProperty").removeClass("selected");
         $(this).addClass("selected");
         sim.selectedPropertyForChart = $(this).attr("data-property");
+        sim.updateNodeGUI(true);
+    });
+    $("#chkShowDeltas").change(function (ev) {
         sim.updateNodeGUI(true);
     });
     loop();

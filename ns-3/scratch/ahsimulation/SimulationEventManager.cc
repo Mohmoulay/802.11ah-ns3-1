@@ -30,7 +30,7 @@ void SimulationEventManager::onSTANodeCreated(NodeEntry& node) {
 }
 
 void SimulationEventManager::onNodeAssociated(NodeEntry& node) {
-	send({"stanodeassoc", std::to_string(node.id), std::to_string(node.aId)});
+	send({"stanodeassoc", std::to_string(node.id), std::to_string(node.aId), std::to_string(node.rawGroupNumber)});
 }
 
 void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
