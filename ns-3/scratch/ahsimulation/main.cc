@@ -8,7 +8,7 @@ int main(int argc, char** argv) {
 
     config = Configuration(argc, argv);
     stats = Statistics(config.Nsta);
-    eventManager = SimulationEventManager("localhost", 7707);
+    eventManager = SimulationEventManager(config.visualizerIP, config.visualizerPort);
 
     RngSeedManager::SetSeed(config.seed);
 
@@ -224,6 +224,8 @@ void configureNodes() {
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxEnd", MakeCallback(&NodeEntry::OnPhyRxEnd, n));
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeCallback(&NodeEntry::OnPhyRxDrop, n));
 
+        // hook up PHY State change
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/State/State", MakeCallback(&NodeEntry::OnPhyStateChange, n));
 
     }
 }

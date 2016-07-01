@@ -160,25 +160,25 @@ namespace ns3 {
                 &YansWifiPhy::SetStbc),
                 MakeBooleanChecker())
                 .AddAttribute("GreenfieldEnabled",
-                "Whether or not STBC is enabled.",
+                "Whether or not Greenfield is enabled.",
                 BooleanValue(false),
                 MakeBooleanAccessor(&YansWifiPhy::GetGreenfield,
                 &YansWifiPhy::SetGreenfield),
                 MakeBooleanChecker())
                 .AddAttribute("S1g1MfieldEnabled",
-                "Whether or not STBC is enabled.",
+                "Whether or not S1g1M is enabled.",
                 BooleanValue(false),
                 MakeBooleanAccessor(&YansWifiPhy::GetS1g1Mfield,
                 &YansWifiPhy::SetS1g1Mfield),
                 MakeBooleanChecker())
                 .AddAttribute("S1gShortfieldEnabled",
-                "Whether or not STBC is enabled.",
+                "Whether or not S1gShort is enabled.",
                 BooleanValue(true), // for test, temporarily
                 MakeBooleanAccessor(&YansWifiPhy::GetS1gShortfield,
                 &YansWifiPhy::SetS1gShortfield),
                 MakeBooleanChecker())
                 .AddAttribute("S1gLongfieldEnabled",
-                "Whether or not STBC is enabled.",
+                "Whether or not S1gLong is enabled.",
                 BooleanValue(false),
                 MakeBooleanAccessor(&YansWifiPhy::GetS1gLongfield,
                 &YansWifiPhy::SetS1gLongfield),
@@ -754,9 +754,8 @@ maybeCcaBusy:
     YansWifiPhy::NotifyTxBegin(Ptr<const Packet> packet, Time duration) {
         WifiPhy::NotifyTxBegin(packet);
 
-        auto time = Simulator::Now() + duration;
-        //std::cout << Simulator::Now() << " Scheduling end tx " << time << std::endl;
-        Simulator::Schedule(time, &OnTxEnd, this, packet);
+        //std::cout << this->m_device->GetAddress() << " " << Simulator::Now().GetMicroSeconds() << " Scheduling end tx " << time.GetMicroSeconds()  << std::endl;
+        Simulator::Schedule(duration, &OnTxEnd, this, packet);
     }
 
     uint32_t

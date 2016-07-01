@@ -34,6 +34,9 @@ struct Configuration {
     double datarate = 2.4;
     double bandWidth = 1;
 
+    string visualizerIP = "";
+    int visualizerPort = 7707;
+
     string rho = "250.0";
 
     uint32_t trafficInterval = 10000;

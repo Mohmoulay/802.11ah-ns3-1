@@ -32,25 +32,30 @@ void SimulationEventManager::onSTANodeCreated(NodeEntry& node) {
 void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 	for(int i = 0; i < stats.getNumberOfNodes(); i++) {
 		send({"nodestats", std::to_string(i),
-			std::to_string(stats.get(i).TotalTransmitTime.GetMilliSeconds())
+			std::to_string(stats.get(i).TotalTransmitTime.GetMilliSeconds()),
+			std::to_string(stats.get(i).TotalReceiveTime.GetMilliSeconds()),
+			std::to_string(stats.get(i).TotalReceiveDozeTime.GetMilliSeconds()),
+			std::to_string(stats.get(i).TotalReceiveActiveTime.GetMilliSeconds()),
+			std::to_string(stats.get(i).getThroughputKbit())
 		});
 	}
 }
 
 void SimulationEventManager::send(vector<string> str) {
+	if(this->hostname != "") {
+		int sockfd = stat_connect(this->hostname.c_str(), std::to_string(this->port).c_str());
+		if(sockfd == -1)
+			return;
 
-	int sockfd = stat_connect(this->hostname.c_str(), std::to_string(this->port).c_str());
-	if(sockfd == -1)
-		return;
-
-	std::stringstream s;
-	s << Simulator::Now().GetNanoSeconds() << ";";
-	for(int i = 0; i < str.size(); i++) {
-		s << str[i] << ((i != str.size()) ? ";" : "");
+		std::stringstream s;
+		s << Simulator::Now().GetNanoSeconds() << ";";
+		for(int i = 0; i < str.size(); i++) {
+			s << str[i] << ((i != str.size()) ? ";" : "");
+		}
+		s << "\n";
+		stat_send(sockfd, string(s.str()).c_str());
+		stat_close(sockfd);
 	}
-	s << "\n";
-	stat_send(sockfd, string(s.str()).c_str());
-	stat_close(sockfd);
 }
 
 SimulationEventManager::~SimulationEventManager() {

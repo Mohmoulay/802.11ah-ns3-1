@@ -59,6 +59,8 @@ public:
     void OnPhyRxEnd(std::string context,Ptr<const Packet> packet);
     void OnPhyRxDrop(std::string context,Ptr<const Packet> packet);
 
+    void OnPhyStateChange(std::string context, const Time start, const Time duration, const WifiPhy::State state);
+
     void OnUdpPacketSent(Ptr<const Packet> packet);
     void OnUdpPacketReceivedAtAP(Ptr<const Packet> packet);
 

@@ -8,8 +8,8 @@
 " --datarate=0.65"\
 " --bandWidth=1"\
 " --rho=\"250\""\
-" --simulationTime=600"\
+" --simulationTime=100"\
 " --payloadSize=256"\
 " --BeaconInterval=100000"\
-" --Nsta=10"\
+" --Nsta=10"
 

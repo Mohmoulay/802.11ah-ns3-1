@@ -31,13 +31,20 @@ void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 }
 
 void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
-	//  cout << "[" << this->id << "] " << "Begin Tx " << packet->GetUid() << endl;
+	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+			//<< "µs " << "Begin Tx " << packet->GetUid() << endl;
 	txMap.emplace(packet->GetUid(), Simulator::Now());
+
+	if (txMap.size() > 1)
+		cout << "warning: more than 1 transmission active: " << txMap.size()
+				<< " transmissions" << endl;
+
 	stats->get(this->id).NumberOfTransmissions++;
 }
 
 void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
-	//  cout << "[" << this->id << "] " <<  "End Tx " << packet->GetUid() << endl;
+	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+		//	<< "µs " << "End Tx " << packet->GetUid() << endl;
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
 		Time oldTime = txMap[packet->GetUid()];
@@ -62,6 +69,10 @@ void NodeEntry::OnPhyRxBegin(std::string context, Ptr<const Packet> packet) {
 	// cout << "[" << this->id << "] " <<  "Begin Rx " << packet->GetUid() << endl;
 	rxMap.emplace(packet->GetUid(), Simulator::Now());
 	stats->get(this->id).NumberOfReceives++;
+
+	if (rxMap.size() > 1)
+			cout << "warning: more than 1 receive active: " << rxMap.size()
+					<< " transmissions" << endl;
 }
 
 void NodeEntry::OnPhyRxEnd(std::string context, Ptr<const Packet> packet) {
@@ -119,6 +130,36 @@ void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet) {
 	this->OnEndOfReceive(packet);
 
 	stats->get(this->id).NumberOfReceivesDropped++;
+}
+
+void NodeEntry::OnPhyStateChange(std::string context, const Time start,
+		const Time duration, const WifiPhy::State state) {
+
+/*	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << "State change, new state is ";
+
+	switch (state) {
+	case WifiPhy::State::IDLE:
+		cout << "IDLE";
+		break;
+	case WifiPhy::State::TX:
+		cout << "TX";
+		break;
+	case WifiPhy::State::RX:
+		cout << "RX";
+		break;
+	case WifiPhy::State::SLEEP:
+		cout << "SLEEP";
+		break;
+	case WifiPhy::State::SWITCHING:
+		cout << "SWITCHING";
+		break;
+	case WifiPhy::State::CCA_BUSY:
+		cout << "CCA_BUSY";
+		break;
+
+	}
+	cout << endl;
+*/
 }
 
 void NodeEntry::OnUdpPacketSent(Ptr<const Packet> packet) {
