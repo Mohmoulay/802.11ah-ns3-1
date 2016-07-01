@@ -266,9 +266,9 @@ void configureUDPClients() {
 }
 
 void onSTAAssociated(int i) {
-    cout << "Node " << std::to_string(i) << " is associated" << endl;
 
-    nodes[i]->rawGroupNumber = (nodes[i]->aId / config.NRawSta) * config.NGroup;
+    nodes[i]->rawGroupNumber = (nodes[i]->aId / (config.NRawSta / config.NGroup));
+	cout << "Node " << std::to_string(i) << " is associated and has aId " << nodes[i]->aId << " and falls in RAW group " << std::to_string(nodes[i]->rawGroupNumber) << endl;
 
     eventManager.onNodeAssociated(*nodes[i]);
 

@@ -33,6 +33,7 @@ abstract class SimulationNode {
 
     avgPacketTimeOfFlight: Value[] = [];
     throughputKbit: Value[] = [];
+
 }
 
 class Value {
@@ -45,11 +46,13 @@ class APNode extends SimulationNode {
 
 class STANode extends SimulationNode {
     type: string = "STA";
+
+    isAssociated:boolean=  false;
 }
 
 class Simulation {
 
-    nodes: STANode[] = [];
+    nodes: SimulationNode[] = [];
 
 }
 
@@ -67,6 +70,7 @@ class SimulationGUI {
     private currentChart: HighchartsChartObject;
 
     private heatMapPalette: Palette;
+    private rawGroupColors:Color[] = [ new Color(0,0,255), new Color(0,128,255), new Color(0,255,128), new Color(0,255,255), new Color(128,0,255), new Color(255,0,255) ];
 
     constructor(private canvas: HTMLCanvasElement) {
         this.ctx = <CanvasRenderingContext2D>canvas.getContext("2d");
@@ -145,7 +149,10 @@ class SimulationGUI {
             }
         }
 
-        return "black";
+        if(n.type == "STA" && !(<STANode>n).isAssociated)
+            return "black";
+        else
+            return this.rawGroupColors[n.groupNumber % this.rawGroupColors.length].toString();
     }
 
     private drawNodes() {
@@ -226,8 +233,13 @@ class SimulationGUI {
 
         $("#nodeTitle").text("Node " + node.id);
         $("#nodePosition").text(node.x + "," + node.y);
-        $("#nodeAID").text(node.aId);
-        $("#nodeGroupNumber").text(node.aId);
+        if(node.type == "STA" && !(<STANode>node).isAssociated) {
+            $("#nodeAID").text("Not associated");
+        }
+        else {
+            $("#nodeAID").text(node.aId);
+            $("#nodeGroupNumber").text(node.groupNumber);
+        }
 
         var propertyElements = $(".nodeProperty");
         for (let i = 0; i < propertyElements.length; i++) {
@@ -254,6 +266,7 @@ class SimulationGUI {
             }
 
             let self = this;
+            let title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
             $('#nodeChart').empty().highcharts({
                 chart: {
                     type: 'spline',
@@ -271,7 +284,7 @@ class SimulationGUI {
                         marker: { enabled: false }
                     }
                 },
-                title: { text: self.selectedPropertyForChart },
+                title: { text: title },
                 xAxis: {
                     type: 'linear',
                     tickPixelInterval: 100,
@@ -421,6 +434,8 @@ class EventManager {
         let n = this.sim.simulation.nodes[id];
         n.aId = aId;
         n.groupNumber = groupNumber;
+        (<STANode>n).isAssociated = true;
+
         this.sim.onNodeAssociated(id);
     }
 
@@ -512,8 +527,8 @@ $(document).ready(function () {
     });
 
     $(canvas).click(ev => {
-        let x = ev.clientX / (canvas.width / sim.area);
-        let y = ev.clientY / (canvas.width / sim.area);
+        let x = (ev.clientX-$(canvas).offset().left) / (canvas.width / sim.area);
+        let y = (ev.clientY-$(canvas).offset().top) / (canvas.width / sim.area);
 
         let selectedNode: SimulationNode = null;
         for (let n of sim.simulation.nodes) {

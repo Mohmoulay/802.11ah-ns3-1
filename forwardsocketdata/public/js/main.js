@@ -50,6 +50,7 @@ var STANode = (function (_super) {
     function STANode() {
         _super.apply(this, arguments);
         this.type = "STA";
+        this.isAssociated = false;
     }
     return STANode;
 }(SimulationNode));
@@ -67,6 +68,7 @@ var SimulationGUI = (function () {
         this.selectedPropertyForChart = "totalTransmitTime";
         this.animations = [];
         this.area = 2000;
+        this.rawGroupColors = [new Color(0, 0, 255), new Color(0, 128, 255), new Color(0, 255, 128), new Color(0, 255, 255), new Color(128, 0, 255), new Color(255, 0, 255)];
         this.ctx = canvas.getContext("2d");
         this.heatMapPalette = new Palette();
         this.heatMapPalette.addColor(new Color(255, 0, 0, 1, 0));
@@ -136,7 +138,10 @@ var SimulationGUI = (function () {
                 }
             }
         }
-        return "black";
+        if (n.type == "STA" && !n.isAssociated)
+            return "black";
+        else
+            return this.rawGroupColors[n.groupNumber % this.rawGroupColors.length].toString();
     };
     SimulationGUI.prototype.drawNodes = function () {
         var curMax = this.getMaxOfProperty(this.selectedPropertyForChart);
@@ -202,8 +207,13 @@ var SimulationGUI = (function () {
         var node = this.simulation.nodes[this.selectedNode];
         $("#nodeTitle").text("Node " + node.id);
         $("#nodePosition").text(node.x + "," + node.y);
-        $("#nodeAID").text(node.aId);
-        $("#nodeGroupNumber").text(node.aId);
+        if (node.type == "STA" && !node.isAssociated) {
+            $("#nodeAID").text("Not associated");
+        }
+        else {
+            $("#nodeAID").text(node.aId);
+            $("#nodeGroupNumber").text(node.groupNumber);
+        }
         var propertyElements = $(".nodeProperty");
         for (var i = 0; i < propertyElements.length; i++) {
             var prop = $(propertyElements[i]).attr("data-property");
@@ -225,6 +235,7 @@ var SimulationGUI = (function () {
                     selectedData.push({ x: values[i].timestamp, y: values[i].value - values[i - 1].value });
             }
             var self_1 = this;
+            var title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
             $('#nodeChart').empty().highcharts({
                 chart: {
                     type: 'spline',
@@ -242,7 +253,7 @@ var SimulationGUI = (function () {
                         marker: { enabled: false }
                     }
                 },
-                title: { text: self_1.selectedPropertyForChart },
+                title: { text: title },
                 xAxis: {
                     type: 'linear',
                     tickPixelInterval: 100,
@@ -368,6 +379,7 @@ var EventManager = (function () {
         var n = this.sim.simulation.nodes[id];
         n.aId = aId;
         n.groupNumber = groupNumber;
+        n.isAssociated = true;
         this.sim.onNodeAssociated(id);
     };
     EventManager.prototype.onNodeTx = function (id) {
@@ -436,8 +448,8 @@ $(document).ready(function () {
         console.log("Unable to connect to server websocket endpoint");
     });
     $(canvas).click(function (ev) {
-        var x = ev.clientX / (canvas.width / sim.area);
-        var y = ev.clientY / (canvas.width / sim.area);
+        var x = (ev.clientX - $(canvas).offset().left) / (canvas.width / sim.area);
+        var y = (ev.clientY - $(canvas).offset().top) / (canvas.width / sim.area);
         var selectedNode = null;
         for (var _i = 0, _a = sim.simulation.nodes; _i < _a.length; _i++) {
             var n = _a[_i];
