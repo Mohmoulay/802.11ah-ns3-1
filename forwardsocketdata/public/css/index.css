@@ -2,17 +2,6 @@ body{
     background-color:#CCC;
 }
 
-.left {
-    float:left;
-}
-
-.right {
-}
-
-.rightcontainer {
-
-}
-
 .canvasContainer {
     position: relative;
     width:800px;
@@ -34,4 +23,14 @@ body{
 .scrollTable {
     max-height:190px;
     overflow-y:scroll;
+}
+
+.col-fixed-800{
+    width:800px;
+    position:fixed;
+    height:100%;
+}
+
+.col-offset-800 {
+    padding-left:815px !important;
 }

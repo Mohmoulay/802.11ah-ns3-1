@@ -42,7 +42,7 @@ export class Program {
         let self = this;
         net.createServer(sock => {
             sock.on("data", (data) => self.onDataReceived(data));
-        }).listen(LISTENER_PORT);        
+        }).listen(LISTENER_PORT);
     }
     /**
      * Sets up the express stack, returns the http server that it creates
@@ -67,6 +67,8 @@ export class Program {
         let io = socket.listen(server);
         io.on("connection", sock => {
 
+            this.onWebClientConnected(sock);
+
             this.activeSockets.push(sock);
             sock.on("close", () => {
                 let idx = this.activeSockets.indexOf(sock);
@@ -80,10 +82,10 @@ export class Program {
 
     private buffer: string = "";
 
-      /**
-     * Fired when the client has received data. Append the received data to the buffer
-     * and split on newlines (\n delimiter). As soon as a full line is received, process it
-     */
+    /**
+   * Fired when the client has received data. Append the received data to the buffer
+   * and split on newlines (\n delimiter). As soon as a full line is received, process it
+   */
     private onDataReceived(data: string) {
         this.buffer += data;
 
@@ -105,9 +107,26 @@ export class Program {
         }
     }
 
-    private processMessage(line:string) {
+    private onWebClientConnected(sock:SocketIO.Socket) {
+        for(let initLine of this.simulationInitializationLines) {
+            sock.emit("entry", initLine);
+        }
+    }
+
+    simulationInitializationLines: string[] = [];
+    private processMessage(line: string) {
+
+        // retain config & base data to allow users to jump in simulation when it's already busy
+        var parts = line.split(';');
+        if (parts[1] == "start") {
+            this.simulationInitializationLines = [];
+            this.simulationInitializationLines.push(line);
+        }
+        else if (parts[1] == "stanodeadd" || parts[1] == "apnodeadd" || parts[1] == "stanodeassoc")
+            this.simulationInitializationLines.push(line);
+
         for (let s of this.activeSockets) {
-            s.emit("entry",line);
+            s.emit("entry", line);
         }
     }
 }

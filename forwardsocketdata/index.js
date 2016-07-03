@@ -1,4 +1,3 @@
-"use strict";
 var path = require("path");
 var net = require("net");
 var express = require("express");
@@ -12,6 +11,7 @@ var Program = (function () {
         // a list of active connections from the website
         this.activeSockets = [];
         this.buffer = "";
+        this.simulationInitializationLines = [];
         this.initialize();
     }
     /**
@@ -47,6 +47,7 @@ var Program = (function () {
         console.log("Listening for websocket requests...");
         var io = socket.listen(server);
         io.on("connection", function (sock) {
+            _this.onWebClientConnected(sock);
             _this.activeSockets.push(sock);
             sock.on("close", function () {
                 var idx = _this.activeSockets.indexOf(sock);
@@ -78,14 +79,28 @@ var Program = (function () {
                 stop = true;
         }
     };
+    Program.prototype.onWebClientConnected = function (sock) {
+        for (var _i = 0, _a = this.simulationInitializationLines; _i < _a.length; _i++) {
+            var initLine = _a[_i];
+            sock.emit("entry", initLine);
+        }
+    };
     Program.prototype.processMessage = function (line) {
+        // retain config & base data to allow users to jump in simulation when it's already busy
+        var parts = line.split(';');
+        if (parts[1] == "start") {
+            this.simulationInitializationLines = [];
+            this.simulationInitializationLines.push(line);
+        }
+        else if (parts[1] == "stanodeadd" || parts[1] == "apnodeadd" || parts[1] == "stanodeassoc")
+            this.simulationInitializationLines.push(line);
         for (var _i = 0, _a = this.activeSockets; _i < _a.length; _i++) {
             var s = _a[_i];
             s.emit("entry", line);
         }
     };
     return Program;
-}());
+})();
 exports.Program = Program;
 // export the main program
 exports.main = new Program();
