@@ -59,6 +59,8 @@ class SimulationConfiguration {
     trafficPacketsize: number;
 
     beaconInterval: number;
+
+    name:string = "";
 }
  
  

@@ -19,7 +19,7 @@ class EventManager {
                 case 'start':
                     this.onStart(parseInt(ev.parts[2]), parseInt(ev.parts[3]), ev.parts[4], parseInt(ev.parts[5]),
                         parseInt(ev.parts[6]), ev.parts[7], parseFloat(ev.parts[8]), parseFloat(ev.parts[9]),
-                        parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]));
+                        parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), ev.parts[13]);
                     break;
 
                 case 'stanodeadd':
@@ -80,7 +80,8 @@ class EventManager {
     }
 
     onStart(aidRAWRange: number, numberOfRAWGroups: number, RAWSlotFormat: string, numberOfRAWSlots: number, RAWSlotDuration: number,
-        dataMode: string, dataRate: number, bandwidth: number, trafficInterval: number, trafficPacketsize: number, beaconInterval: number) {
+        dataMode: string, dataRate: number, bandwidth: number, trafficInterval: number, trafficPacketsize: number, beaconInterval: number,
+        name:string) {
         this.sim.simulation.nodes = [];
         let config = this.sim.simulation.config;
         config.AIDRAWRange = aidRAWRange;
@@ -94,6 +95,7 @@ class EventManager {
         config.trafficInterval = trafficInterval;
         config.trafficPacketsize = trafficPacketsize;
         config.beaconInterval = beaconInterval;
+        config.name = name;
     }
 
     onNodeAdded(isSTA: boolean, id: number, x: number, y: number, aId: number) {

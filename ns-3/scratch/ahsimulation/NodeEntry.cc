@@ -120,7 +120,7 @@ void NodeEntry::OnEndOfReceive(Ptr<const Packet> packet) {
 		// the same as having the radio active during the RAW duration for potential
 		// Rx.
 
-		if (aId >= lastBeaconAIDStart && aId < lastBeaconAIDEnd) {
+		if (aId >= lastBeaconAIDStart && aId <= lastBeaconAIDEnd) {
 			// the last beacon received was a beacon for a RAW slot for the current station
 			stats->get(this->id).TotalReceiveActiveTime += (Simulator::Now()
 					- oldTime);

@@ -17,7 +17,7 @@ class SimulationGUI {
 
     area: number = 2000;
 
-    private currentChart: HighchartsChartObject;
+    private currentChart: HighchartsChartObject = null;
 
     private heatMapPalette: Palette;
     private rawGroupColors: Color[] = [new Color(0, 0, 255), new Color(0, 128, 255), new Color(0, 255, 128), new Color(0, 255, 255), new Color(128, 0, 255), new Color(255, 0, 255)];
@@ -181,6 +181,8 @@ class SimulationGUI {
 
         let node = this.simulation.nodes[this.selectedNode];
 
+        $("#simulationName").text(this.simulation.config.name);
+
         $("#nodeTitle").text("Node " + node.id);
         $("#nodePosition").text(node.x + "," + node.y);
         if (node.type == "STA" && !(<STANode>node).isAssociated) {
@@ -209,7 +211,7 @@ class SimulationGUI {
 
         let values = <Value[]>node[this.selectedPropertyForChart];
         if (values.length > 0) {
-            if (full) {
+            if (this.currentChart == null || full) {
 
                 var selectedData = [];
 

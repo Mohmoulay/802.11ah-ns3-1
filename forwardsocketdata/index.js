@@ -1,3 +1,5 @@
+"use strict";
+var fs = require("fs");
 var path = require("path");
 var net = require("net");
 var express = require("express");
@@ -12,6 +14,7 @@ var Program = (function () {
         this.activeSockets = [];
         this.buffer = "";
         this.simulationInitializationLines = [];
+        this.simulationName = "";
         this.initialize();
     }
     /**
@@ -90,6 +93,10 @@ var Program = (function () {
         var parts = line.split(';');
         if (parts[1] == "start") {
             this.simulationInitializationLines = [];
+            this.simulationName = parts[parts.length - 1] + ".nss";
+            if (this.simulationName != "") {
+                fs.unlinkSync(path.resolve(__dirname, "simulations", this.simulationName));
+            }
             this.simulationInitializationLines.push(line);
         }
         else if (parts[1] == "stanodeadd" || parts[1] == "apnodeadd" || parts[1] == "stanodeassoc")
@@ -98,9 +105,13 @@ var Program = (function () {
             var s = _a[_i];
             s.emit("entry", line);
         }
+        if (this.simulationName != "") {
+            //console.log("Writing to file " + path.resolve(__dirname, "simulations", this.simulationName));        
+            fs.appendFileSync(path.resolve(__dirname, "simulations", this.simulationName), line + "\n");
+        }
     };
     return Program;
-})();
+}());
 exports.Program = Program;
 // export the main program
 exports.main = new Program();

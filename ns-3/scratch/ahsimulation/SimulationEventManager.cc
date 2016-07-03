@@ -31,7 +31,9 @@ void SimulationEventManager::onStart(Configuration& config) {
 		  std::to_string(config.trafficInterval),
 		  std::to_string(config.trafficPacketSize),
 
-		  std::to_string(config.BeaconInterval)
+		  std::to_string(config.BeaconInterval),
+
+		  config.name
 	});
 }
 
@@ -77,7 +79,7 @@ void SimulationEventManager::send(vector<string> str) {
 		std::stringstream s;
 		s << Simulator::Now().GetNanoSeconds() << ";";
 		for(int i = 0; i < str.size(); i++) {
-			s << str[i] << ((i != str.size()) ? ";" : "");
+			s << str[i] << ((i != str.size()-1) ? ";" : "");
 		}
 		s << "\n";
 		stat_send(sockfd, string(s.str()).c_str());

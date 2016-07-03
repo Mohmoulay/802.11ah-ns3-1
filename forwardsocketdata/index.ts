@@ -114,12 +114,20 @@ export class Program {
     }
 
     simulationInitializationLines: string[] = [];
+    simulationName:string = "";
     private processMessage(line: string) {
 
+        
         // retain config & base data to allow users to jump in simulation when it's already busy
         var parts = line.split(';');
         if (parts[1] == "start") {
             this.simulationInitializationLines = [];
+            this.simulationName = parts[parts.length-1] + ".nss";
+            
+            if(this.simulationName != "") {
+                fs.unlinkSync(path.resolve(__dirname, "simulations", this.simulationName));
+            }
+            
             this.simulationInitializationLines.push(line);
         }
         else if (parts[1] == "stanodeadd" || parts[1] == "apnodeadd" || parts[1] == "stanodeassoc")
@@ -127,6 +135,11 @@ export class Program {
 
         for (let s of this.activeSockets) {
             s.emit("entry", line);
+        }
+
+        if(this.simulationName != "") {
+        //console.log("Writing to file " + path.resolve(__dirname, "simulations", this.simulationName));        
+            fs.appendFileSync(path.resolve(__dirname, "simulations", this.simulationName), line + "\n");
         }
     }
 }

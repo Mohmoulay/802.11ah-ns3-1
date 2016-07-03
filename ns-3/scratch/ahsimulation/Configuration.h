@@ -21,28 +21,30 @@ using namespace ns3;
 using namespace std;
 
 struct Configuration {
-    double simulationTime = 10;
-    uint32_t seed = 1;
-    uint32_t Nsta = 1;
-    uint32_t NRawSta = 1;
-    uint32_t SlotFormat = 1;
-    uint32_t NRawSlotCount = 829;
-    uint32_t NRawSlotNum = 1;
-    uint32_t NGroup = 1;
-    uint32_t BeaconInterval = 102400;
+	double simulationTime = 10;
+	uint32_t seed = 1;
+	uint32_t Nsta = 1;
+	uint32_t NRawSta = 1;
+	uint32_t SlotFormat = 1;
+	uint32_t NRawSlotCount = 829;
+	uint32_t NRawSlotNum = 1;
+	uint32_t NGroup = 1;
+	uint32_t BeaconInterval = 102400;
 
 	string DataMode = "OfdmRate2_4MbpsBW1MHz";
-    double datarate = 2.4;
-    double bandWidth = 1;
+	double datarate = 2.4;
+	double bandWidth = 1;
 
-    string visualizerIP = "";
-    int visualizerPort = 7707;
+	string visualizerIP = "";
+	int visualizerPort = 7707;
 
-    string rho = "250.0";
+	string rho = "250.0";
 
-    uint32_t trafficInterval = 10000;
-    uint16_t trafficPacketSize = 256;
-    Configuration();
-    Configuration(int argc, char** argv);
+	string name = "";
+
+	uint32_t trafficInterval = 10000;
+	uint16_t trafficPacketSize = 256;
+	Configuration();
+	Configuration(int argc, char** argv);
 
 };

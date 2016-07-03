@@ -30,6 +30,8 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("VisualizerIP", "IP or hostname for the visualizer server, leave empty to not send data", visualizerIP);
     cmd.AddValue("VisualizerPort", "Port for the visualizer server", visualizerPort);
 
+    cmd.AddValue("Name", "Name of the simulation", name);
+
 
     cmd.Parse(argc, argv);
 }
