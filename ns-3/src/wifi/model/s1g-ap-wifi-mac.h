@@ -39,12 +39,13 @@ namespace ns3 {
 
 struct PendingData {
 
-	PendingData(Mac48Address from, Mac48Address to, Ptr<const Packet> packet) : from(from), to(to), packet(packet) {
+	PendingData(Mac48Address from, Mac48Address to, Ptr<const Packet>* packet)
+		: from(from), to(to), packet(packet) {
 
 	}
 	Mac48Address from;
 	Mac48Address to;
-	Ptr<const Packet> packet;
+	Ptr<const Packet>* packet;
 };
 
 /**
@@ -263,7 +264,7 @@ private:
 
   std::map<Mac48Address, uint16_t> macToAIDMap;
 
-  std::vector<std::queue<PendingData> > pendingDataForStations;
+  std::vector<std::queue<PendingData>> pendingDataForStations;
 
   Ptr<DcaTxop> m_beaconDca;                  //!< Dedicated DcaTxop for beacons
   Time m_beaconInterval;                     //!< Interval between beacons
