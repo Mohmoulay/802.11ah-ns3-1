@@ -267,6 +267,9 @@ namespace ns3 {
         //QosUtilsMapTidToAc()), so we use that as our default here.
         uint8_t tid = 0;
 
+        uint16_t aId = macToAIDMap[to];
+        pendingDataSizeForStations[aId-1]--;
+
         //If we are a QoS AP then we attempt to get a TID for this packet
         if (m_qosSupported) {
             tid = QosUtilsGetTidForPacket(packet);
@@ -336,14 +339,15 @@ namespace ns3 {
         	ConstCast<Packet> (packet)->RemoveAllPacketTags();
 
         	uint16_t aId = macToAIDMap[to];
+        	pendingDataSizeForStations[aId-1]++;
         	if(aId >= current_aid_start && aId <= current_aid_end) {
         		// send it through directly
         		// technically it should be scheduled to the correct RAW slot
-        		std::cout << "sending data directly" << std::endl;
+        		//std::cout << "sending data directly" << std::endl;
         		ForwardDown(packet, from, to);
         	}
         	else {
-        		std::cout << "enqueuing data for " << aId << std::endl;
+        		//std::cout << "enqueuing data for " << aId << std::endl;
         		//this->pendingDataForStations.at(aId-1).push(std::move(PendingData(from,to, &packet)));
 
         		// determine when the next raw window hits for this packet
@@ -571,8 +575,7 @@ namespace ns3 {
             	std::vector<bool> map(8, false);
 
             	for(int i = 0; i < this->m_totalStaNum; i++) {
-                	std::queue<PendingData>& q = pendingDataForStations.at(i);
-                	if(q.size() > 0) {
+                	if(pendingDataSizeForStations.at(i) > 0) {
                 		int group =  i / m_rawGroupInterval;
                 		map[group] = true;
                 	}
@@ -590,27 +593,6 @@ namespace ns3 {
 
             m_transmitBeaconTrace(beacon, raw);
 
-            // send pending data for the current RAW
-
-
-            auto ubound = (current_aid_end >= pendingDataForStations.size()) ? pendingDataForStations.size() : current_aid_end;
-            for(int i = current_aid_start; i <= ubound; i++) {
-            	std::queue<PendingData>& q = pendingDataForStations.at(i-1);
-            	while(!q.empty()) {
-
-
-            		std::cout << "Sending packet in queue for aId " << i << std::endl;
-            		PendingData data =  q.front();
-
-            		Ptr<const Packet> p = *(data.packet);
-            		(ConstCast<Packet>)(p)->RemoveAllByteTags();
-					(ConstCast<Packet>)(p)->RemoveAllPacketTags();
-
-            		std::cout << "Packet to send: " << p << std::endl;
-            		ForwardDown(p, data.from, data.to);
-            		q.pop();
-            	}
-            }
 
             current_aid_start += m_rawGroupInterval;
 		    current_aid_end += m_rawGroupInterval;
@@ -839,7 +821,7 @@ namespace ns3 {
 
         m_nrOfTIMGroups = ceil(m_totalStaNum / (float)m_rawGroupInterval);
         // initialize queue
-        pendingDataForStations = std::vector<std::queue< PendingData> >(m_totalStaNum);
+        pendingDataSizeForStations = std::vector<int>(m_totalStaNum, 0);
 
         current_aid_start = 1;
         current_aid_end = m_rawGroupInterval;

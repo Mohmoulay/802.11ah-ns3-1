@@ -203,8 +203,8 @@ void NodeEntry::OnUdpPacketSent(Ptr<const Packet> packet) {
 
 void NodeEntry::OnUdpEchoPacketReceived(Ptr<const Packet> packet,
 		Address from) {
-	cout << "Echo packet received back from AP ("
-			<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ")" << endl;
+	//cout << "Echo packet received back from AP ("
+		//	<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ")" << endl;
 
 	auto pCopy = packet->Copy();
 	SeqTsHeader seqTs;
