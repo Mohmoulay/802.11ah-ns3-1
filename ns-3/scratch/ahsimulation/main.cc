@@ -128,7 +128,7 @@ void configureAPNode(Ssid& ssid) {
 
     // setup mac
     S1gWifiMacHelper mac = S1gWifiMacHelper::Default();
-    mac.SetType("ns3::ApWifiMac",
+    mac.SetType("ns3::S1gApWifiMac",
             "Ssid", SsidValue(ssid),
             "BeaconInterval", TimeValue(MicroSeconds(config.BeaconInterval)),
             "NRawGroupStas", UintegerValue(NGroupStas),

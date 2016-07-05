@@ -55,6 +55,7 @@
 #include "regular-wifi-mac.h"
 #include "rps.h"
 #include "rraa-wifi-manager.h"
+#include "s1g-ap-wifi-mac.h"
 #include "s1g-beacon-compatibility.h"
 #include "s1g-wifi-mac-helper.h"
 #include "snr-tag.h"
