@@ -346,7 +346,6 @@ DcaTxop::RawStart (void)
 
   auto nrOfSlots = m_rng->GetNext (0, m_dcf->GetCw ());
 
-  std::cout << "Backing off for " << nrOfSlots << " slots" << std::endl;
   m_dcf->StartBackoffNow (nrOfSlots);
   StartAccessIfNeededRaw (); //how about remove it?
 }

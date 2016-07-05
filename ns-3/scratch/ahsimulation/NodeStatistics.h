@@ -22,12 +22,17 @@ public:
     long NumberOfSuccessfulPackets = 0;
     long NumberOfSentPackets = 0;
     
+    long NumberOfSuccessfulRoundtripPackets = 0;
+
     long getNumberOfDroppedPackets();
 
     Time TotalPacketSentReceiveTime = Time();
     long TotalPacketPayloadSize = 0;
     
+    Time TotalPacketRoundtripTime = Time();
+
     Time getAveragePacketSentReceiveTime();
+    Time getAveragePacketRoundTripTime();
 
     double getGoodputKbit();
 };

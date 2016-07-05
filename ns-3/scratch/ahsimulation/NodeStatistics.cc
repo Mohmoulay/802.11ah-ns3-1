@@ -8,6 +8,13 @@ Time NodeStatistics::getAveragePacketSentReceiveTime() {
 		return Time();
 }
 
+Time NodeStatistics::getAveragePacketRoundTripTime() {
+	if(NumberOfSuccessfulRoundtripPackets > 0)
+		return TotalPacketRoundtripTime / NumberOfSuccessfulRoundtripPackets;
+	else
+		return Time();
+}
+
 long NodeStatistics::getNumberOfDroppedPackets() {
 	return NumberOfSentPackets - NumberOfSuccessfulPackets;
 }

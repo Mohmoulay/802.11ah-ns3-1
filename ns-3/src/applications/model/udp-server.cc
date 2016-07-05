@@ -42,18 +42,21 @@ NS_OBJECT_ENSURE_REGISTERED(UdpServer);
 
 TypeId UdpServer::GetTypeId(void) {
 	static TypeId tid =
-			TypeId("ns3::UdpServer").SetParent<Application>().SetGroupName(
-					"Applications").AddConstructor<UdpServer>().AddAttribute(
-					"Port", "Port on which we listen for incoming packets.",
+			TypeId("ns3::UdpServer")
+			.SetParent<Application>()
+			.SetGroupName("Applications")
+			.AddConstructor<UdpServer>()
+			.AddAttribute("Port", "Port on which we listen for incoming packets.",
 					UintegerValue(100),
 					MakeUintegerAccessor(&UdpServer::m_port),
-					MakeUintegerChecker<uint16_t>()).AddAttribute(
-					"PacketWindowSize",
+					MakeUintegerChecker<uint16_t>())
+			.AddAttribute("PacketWindowSize",
 					"The size of the window used to compute the packet loss. This value should be a multiple of 8.",
 					UintegerValue(32),
 					MakeUintegerAccessor(&UdpServer::GetPacketWindowSize,
 							&UdpServer::SetPacketWindowSize),
-					MakeUintegerChecker<uint16_t>(8, 256)).AddTraceSource("Rx",
+					MakeUintegerChecker<uint16_t>(8, 256))
+				.AddTraceSource("Rx",
 					"A packet is received",
 					MakeTraceSourceAccessor(&UdpServer::m_packetReceived),
 					"ns3::UdpServer::PacketReceivedCallback");

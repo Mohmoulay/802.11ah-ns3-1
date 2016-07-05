@@ -27,6 +27,7 @@
 #include "ns3/packet.h"
 #include "ns3/uinteger.h"
 #include "ns3/trace-source-accessor.h"
+#include "seq-ts-header.h"
 #include "udp-echo-client.h"
 
 namespace ns3 {
@@ -70,6 +71,10 @@ UdpEchoClient::GetTypeId (void)
     .AddTraceSource ("Tx", "A new packet is created and is sent",
                      MakeTraceSourceAccessor (&UdpEchoClient::m_txTrace),
                      "ns3::Packet::TracedCallback")
+	.AddTraceSource("Rx",
+					"An echo packet is received",
+					MakeTraceSourceAccessor(&UdpEchoClient::m_packetReceived),
+					"ns3::UdpEchoClient::PacketReceivedCallback");
   ;
   return tid;
 }
@@ -307,6 +312,12 @@ UdpEchoClient::Send (void)
       //
       p = Create<Packet> (m_size);
     }
+
+  // add sequence header to the packet
+  SeqTsHeader seqTs;
+  seqTs.SetSeq (m_sent);
+  p->AddHeader (seqTs);
+
   // call to the trace sinks before the packet is actually sent,
   // so that tags added to the packet can be sent as well
   m_txTrace (p);
@@ -339,6 +350,9 @@ UdpEchoClient::HandleRead (Ptr<Socket> socket)
   Address from;
   while ((packet = socket->RecvFrom (from)))
     {
+
+	  m_packetReceived(packet, from);
+
       if (InetSocketAddress::IsMatchingType (from))
         {
           NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s client received " << packet->GetSize () << " bytes from " <<

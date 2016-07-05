@@ -72,14 +72,6 @@ int main(int argc, char** argv) {
     stats.TotalSimulationTime = Seconds(config.simulationTime);
     printStatistics();
 
-    uint32_t totalPacketsThrough = DynamicCast<UdpServer> (serverApp.Get(0))->GetReceived();
-
-        int totalPacketsLost = DynamicCast<UdpServer> (serverApp.Get(0))->GetLost();
-
-        std::cout << "Nr of packets received " << totalPacketsThrough << std::endl;
-        std::cout << "Nr of packets lost " << totalPacketsLost << std::endl;
-
-
     return (EXIT_SUCCESS);
 }
 
@@ -220,14 +212,9 @@ void configureNodes() {
     }
 }
 
-void udpPacketReceived(Ptr<const Packet> packet, Address from) {
-    auto pCopy = packet->Copy();
-    SeqTsHeader seqTs;
-    pCopy->RemoveHeader(seqTs);
-    auto timeDiff = (Simulator::Now() - seqTs.GetTs());
-
+void udpPacketReceivedAtServer(Ptr<const Packet> packet, Address from) {
     int staId = -1;
-    for (int i = 0; i < staDevices.GetN(); i++) {
+    for (int i = 0; i < staNodeInterfaces.GetN(); i++) {
         if (staNodeInterfaces.GetAddress(i) == InetSocketAddress::ConvertFrom(from).GetIpv4()) {
             staId = i;
             break;
@@ -239,12 +226,35 @@ void udpPacketReceived(Ptr<const Packet> packet, Address from) {
     	cout << "*** Node could not be determined from received packet at AP " << endl;
 }
 
+/*void udpPacketReceivedAtClient(Ptr<const Packet> packet, Address from) {
+    int apId = -1;
+    for (int i = 0; i < apNodeInterfaces.GetN(); i++) {
+        if (apNodeInterfaces.GetAddress(i) == InetSocketAddress::ConvertFrom(from).GetIpv4()) {
+        	apId = i;
+            break;
+        }
+    }
+
+    if (apId != -1)
+        nodes[staId]->OnUdpPacketReceivedAtAP(packet);
+    else
+    	cout << "Echo packet received at client is not coming from AP" << endl;
+}*/
+
+
 void configureUDPServer() {
     UdpServerHelper myServer(9);
     serverApp = myServer.Install(apNodes);
-    serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&udpPacketReceived));
+    serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&udpPacketReceivedAtServer));
     serverApp.Start(Seconds(0));
 
+}
+
+void configureUDPEchoServer() {
+    UdpEchoServerHelper myServer(9);
+    serverApp = myServer.Install(apNodes);
+    serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&udpPacketReceivedAtServer));
+    serverApp.Start(Seconds(0));
 }
 
 void configureUDPClients() {
@@ -265,6 +275,23 @@ void configureUDPClients() {
     }
 }
 
+void configureUDPEchoClients() {
+	UdpEchoClientHelper clientHelper(apNodeInterfaces.GetAddress(0), 9); //address of remote node
+	clientHelper.SetAttribute("MaxPackets", UintegerValue(4294967295u));
+	clientHelper.SetAttribute("Interval", TimeValue(MilliSeconds(config.trafficInterval)));
+	clientHelper.SetAttribute("PacketSize", UintegerValue(config.trafficPacketSize));
+	for (uint16_t i = 0; i < config.Nsta; i++) {
+		ApplicationContainer clientApp = clientHelper.Install(staNodes.Get(i));
+		clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnUdpPacketSent, nodes[i]));
+		clientApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&NodeEntry::OnUdpEchoPacketReceived, nodes[i]));
+
+		double random = (rand() % (config.trafficInterval/1000*4)) / (double)4;
+		clientApp.Start(Seconds(0+random));
+		//clientApp.Stop(Seconds(simulationTime + 1));
+	}
+}
+
+
 void onSTAAssociated(int i) {
 
     nodes[i]->rawGroupNumber = (nodes[i]->aId / (config.NRawSta / config.NGroup));
@@ -283,8 +310,10 @@ void onSTAAssociated(int i) {
         // association complete, start sending packets
     	stats.TimeWhenEverySTAIsAssociated = Simulator::Now();
 
-        configureUDPServer();
-        configureUDPClients();
+        //configureUDPServer();
+        //configureUDPClients();
+    	configureUDPEchoServer();
+    	configureUDPEchoClients();
 
         updateNodesQueueLength();
     }
@@ -324,7 +353,11 @@ void printStatistics() {
 		cout << "Number of UDP packets sent: " << std::to_string(stats.get(i).NumberOfSentPackets) << endl;
 		cout << "Number of UDP packets successful: " << std::to_string(stats.get(i).NumberOfSuccessfulPackets) << endl;
 		cout << "Number of UDP packets dropped: " << std::to_string(stats.get(i).getNumberOfDroppedPackets()) << endl;
-		cout << "Average UDP packet time of flight: " << std::to_string(stats.get(i).getAveragePacketSentReceiveTime().GetMicroSeconds()) << "µs" << endl;
+
+		cout << "Number of UDP roundtrip packets successful: " << std::to_string(stats.get(i).NumberOfSuccessfulRoundtripPackets) << endl;
+
+		cout << "Average UDP packet sent/receive time: " << std::to_string(stats.get(i).getAveragePacketSentReceiveTime().GetMicroSeconds()) << "µs" << endl;
+		cout << "Average UDP packet roundtrip time: " << std::to_string(stats.get(i).getAveragePacketRoundTripTime().GetMicroSeconds()) << "µs" << endl;
 
 		cout << "" << endl;
 		cout << "Goodput: " << std::to_string(stats.get(i).getGoodputKbit()) << "Kbit" << endl;

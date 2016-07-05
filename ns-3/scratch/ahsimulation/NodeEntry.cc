@@ -31,36 +31,34 @@ void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 }
 
 void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
-	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
-			<< "µs " << "Begin Tx " << packet->GetUid() << endl;
+	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+	//		<< "µs " << "Begin Tx " << packet->GetUid() << endl;
 	txMap.emplace(packet->GetUid(), Simulator::Now());
-
 
 	if (txMap.size() > 1)
 		cout << "warning: more than 1 transmission active: " << txMap.size()
 				<< " transmissions" << endl;
 
-
-	if (aId >= lastBeaconAIDStart && aId <= lastBeaconAIDEnd) {
-		Time timeDiff = (Simulator::Now() - this->lastBeaconReceivedOn);
-		cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << "µs" << " Tx started after " << timeDiff.GetMicroSeconds() << "µs since last s1g beacon" << endl;
-	}
+	/*if (aId >= lastBeaconAIDStart && aId <= lastBeaconAIDEnd) {
+	 Time timeDiff = (Simulator::Now() - this->lastBeaconReceivedOn);
+	 cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << "µs" << " Tx started after " << timeDiff.GetMicroSeconds() << "µs since last s1g beacon" << endl;
+	 }*/
 
 	stats->get(this->id).NumberOfTransmissions++;
 }
 
 void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
-	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
-		 << "µs " << "End Tx " << packet->GetUid() << endl;
+	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+	// << "µs " << "End Tx " << packet->GetUid() << endl;
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
 		Time oldTime = txMap[packet->GetUid()];
 		txMap.erase(packet->GetUid());
 		stats->get(this->id).TotalTransmitTime += (Simulator::Now() - oldTime);
-	}
-	else
-		 cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
-			  <<" End tx for packet " << packet->GetUid() << " without a begin tx" << endl;
+	} else
+		cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+				<< " End tx for packet " << packet->GetUid()
+				<< " without a begin tx" << endl;
 }
 
 void NodeEntry::OnPhyTxDrop(std::string context, Ptr<const Packet> packet) {
@@ -70,28 +68,28 @@ void NodeEntry::OnPhyTxDrop(std::string context, Ptr<const Packet> packet) {
 		Time oldTime = txMap[packet->GetUid()];
 		txMap.erase(packet->GetUid());
 		stats->get(this->id).TotalTransmitTime += (Simulator::Now() - oldTime);
-	}
-	else
-			 cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
-				  <<" End tx for packet " << packet->GetUid() << " without a begin tx" << endl;
+	} else
+		cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+				<< " End tx for packet " << packet->GetUid()
+				<< " without a begin tx" << endl;
 	stats->get(this->id).NumberOfTransmissionsDropped++;
 }
 
 void NodeEntry::OnPhyRxBegin(std::string context, Ptr<const Packet> packet) {
 	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
-		    //<< " Begin Rx " << packet->GetUid() << endl;
+	//<< " Begin Rx " << packet->GetUid() << endl;
 
 	rxMap.emplace(packet->GetUid(), Simulator::Now());
 	stats->get(this->id).NumberOfReceives++;
 
 	if (rxMap.size() > 1)
-			cout << "warning: more than 1 receive active: " << rxMap.size()
-					<< " receives" << endl;
+		cout << "warning: more than 1 receive active: " << rxMap.size()
+				<< " receives" << endl;
 }
 
 void NodeEntry::OnPhyRxEnd(std::string context, Ptr<const Packet> packet) {
-	 //cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
-	    //<< " End Rx " << packet->GetUid() << endl;
+	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+	//<< " End Rx " << packet->GetUid() << endl;
 	this->OnEndOfReceive(packet);
 }
 
@@ -139,8 +137,7 @@ void NodeEntry::OnEndOfReceive(Ptr<const Packet> packet) {
 		}
 
 		//s1gBeaconHeader.Print(cout);
-	}
-	else {
+	} else {
 		// this can happen when the state is SWITCHING, TX, RX when receiving the message preamble.
 		// The begin RxBegin will not be triggered, but an RxDrop will be generated
 
@@ -160,32 +157,31 @@ void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet) {
 void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 		const Time duration, const WifiPhy::State state) {
 
+	/*cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << "State change, new state is ";
 
-	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << "State change, new state is ";
+	 switch (state) {
+	 case WifiPhy::State::IDLE:
+	 cout << "IDLE";
+	 break;
+	 case WifiPhy::State::TX:
+	 cout << "TX";
+	 break;
+	 case WifiPhy::State::RX:
+	 cout << "RX";
+	 break;
+	 case WifiPhy::State::SLEEP:
+	 cout << "SLEEP";
+	 break;
+	 case WifiPhy::State::SWITCHING:
+	 cout << "SWITCHING";
+	 break;
+	 case WifiPhy::State::CCA_BUSY:
+	 cout << "CCA_BUSY";
+	 break;
 
-	switch (state) {
-	case WifiPhy::State::IDLE:
-		cout << "IDLE";
-		break;
-	case WifiPhy::State::TX:
-		cout << "TX";
-		break;
-	case WifiPhy::State::RX:
-		cout << "RX";
-		break;
-	case WifiPhy::State::SLEEP:
-		cout << "SLEEP";
-		break;
-	case WifiPhy::State::SWITCHING:
-		cout << "SWITCHING";
-		break;
-	case WifiPhy::State::CCA_BUSY:
-		cout << "CCA_BUSY";
-		break;
-
-	}
-	cout << endl;
-
+	 }
+	 cout << endl;
+	 */
 
 }
 
@@ -194,14 +190,30 @@ void NodeEntry::OnUdpPacketSent(Ptr<const Packet> packet) {
 
 	stats->get(this->id).NumberOfSentPackets++;
 
+	/*		cout << "[" << this->id << "] "  << Simulator::Now().GetMicroSeconds() <<
+	 " Packet sent" << endl;
+	 */
 
-		cout << "[" << this->id << "] "  << Simulator::Now().GetMicroSeconds() <<
-			" Packet sent" << endl;
+	/*	if (aId >= lastBeaconAIDStart && aId <= lastBeaconAIDEnd) {
+	 cout << "[" << this->id << "] "  << Simulator::Now().GetMicroSeconds() <<
+	 " Packet is enqueued during the RAW slot period of the node" << endl;
+	 }
+	 */
+}
 
-		if (aId >= lastBeaconAIDStart && aId <= lastBeaconAIDEnd) {
-			cout << "[" << this->id << "] "  << Simulator::Now().GetMicroSeconds() <<
-						" Packet is enqueued during the RAW slot period of the node" << endl;
-		}
+void NodeEntry::OnUdpEchoPacketReceived(Ptr<const Packet> packet,
+		Address from) {
+	cout << "Echo packet received back from AP ("
+			<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ")" << endl;
+
+	auto pCopy = packet->Copy();
+	SeqTsHeader seqTs;
+	pCopy->RemoveHeader(seqTs);
+	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
+
+	stats->get(this->id).NumberOfSuccessfulRoundtripPackets++;
+	stats->get(this->id).TotalPacketRoundtripTime += timeDiff;
+
 }
 
 void NodeEntry::OnUdpPacketReceivedAtAP(Ptr<const Packet> packet) {
@@ -211,16 +223,14 @@ void NodeEntry::OnUdpPacketReceivedAtAP(Ptr<const Packet> packet) {
 	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
 //cout << "[" << this->id << "] " << "UDP packet received at AP after "
-//		<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
+	//	<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
 
 	stats->get(this->id).NumberOfSuccessfulPackets++;
 	stats->get(this->id).TotalPacketSentReceiveTime += timeDiff;
 
-
-		cout << this->node->GetDevice(0)->GetAddress() << " ";
-		cout << "[" << this->id << "] "  << Simulator::Now().GetMicroSeconds() << " Packet received in " << timeDiff.GetMicroSeconds() << "µs" << endl;
-
-
+	/*cout << this->node->GetDevice(0)->GetAddress() << " ";
+	 cout << "[" << this->id << "] "  << Simulator::Now().GetMicroSeconds() << " Packet received in " << timeDiff.GetMicroSeconds() << "µs" << endl;
+	 */
 
 	stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
 }

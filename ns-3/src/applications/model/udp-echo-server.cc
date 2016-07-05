@@ -49,6 +49,10 @@ UdpEchoServer::GetTypeId (void)
                    UintegerValue (9),
                    MakeUintegerAccessor (&UdpEchoServer::m_port),
                    MakeUintegerChecker<uint16_t> ())
+	.AddTraceSource("Rx",
+					"A packet is received",
+					MakeTraceSourceAccessor(&UdpEchoServer::m_packetReceived),
+					"ns3::UdpEchoServer::PacketReceivedCallback");
   ;
   return tid;
 }
@@ -147,8 +151,10 @@ UdpEchoServer::HandleRead (Ptr<Socket> socket)
 
   Ptr<Packet> packet;
   Address from;
-  while ((packet = socket->RecvFrom (from)))
-    {
+  while ((packet = socket->RecvFrom (from))) {
+
+	  m_packetReceived(packet, from);
+
       if (InetSocketAddress::IsMatchingType (from))
         {
           NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server received " << packet->GetSize () << " bytes from " <<

@@ -23,6 +23,7 @@
 #include "ns3/event-id.h"
 #include "ns3/ptr.h"
 #include "ns3/address.h"
+#include "ns3/traced-callback.h"
 
 namespace ns3 {
 
@@ -51,6 +52,9 @@ public:
   UdpEchoServer ();
   virtual ~UdpEchoServer ();
 
+  typedef void (* PacketReceivedCallback)
+            (Ptr<const Packet>, Address from);
+
 protected:
   virtual void DoDispose (void);
 
@@ -72,6 +76,9 @@ private:
   Ptr<Socket> m_socket; //!< IPv4 Socket
   Ptr<Socket> m_socket6; //!< IPv6 Socket
   Address m_local; //!< local multicast address
+
+  TracedCallback<Ptr<const Packet>, Address> m_packetReceived;
+
 };
 
 } // namespace ns3

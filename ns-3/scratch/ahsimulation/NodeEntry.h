@@ -65,6 +65,8 @@ public:
     void OnPhyStateChange(std::string context, const Time start, const Time duration, const WifiPhy::State state);
 
     void OnUdpPacketSent(Ptr<const Packet> packet);
+    void OnUdpEchoPacketReceived(Ptr<const Packet> packet, Address from);
+
     void OnUdpPacketReceivedAtAP(Ptr<const Packet> packet);
 
     void UpdateQueueLength();

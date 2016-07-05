@@ -59,6 +59,10 @@ void configureUDPServer();
 
 void configureUDPClients();
 
+void configureUDPEchoClients();
+
+void configureUDPEchoServer();
+
 void onSTAAssociated(int i);
     
 void updateNodesQueueLength();
