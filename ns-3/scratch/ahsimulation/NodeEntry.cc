@@ -31,20 +31,27 @@ void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 }
 
 void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
-	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
-			//<< "µs " << "Begin Tx " << packet->GetUid() << endl;
+	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+			<< "µs " << "Begin Tx " << packet->GetUid() << endl;
 	txMap.emplace(packet->GetUid(), Simulator::Now());
+
 
 	if (txMap.size() > 1)
 		cout << "warning: more than 1 transmission active: " << txMap.size()
 				<< " transmissions" << endl;
 
+
+	if (aId >= lastBeaconAIDStart && aId <= lastBeaconAIDEnd) {
+		Time timeDiff = (Simulator::Now() - this->lastBeaconReceivedOn);
+		cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << "µs" << " Tx started after " << timeDiff.GetMicroSeconds() << "µs since last s1g beacon" << endl;
+	}
+
 	stats->get(this->id).NumberOfTransmissions++;
 }
 
 void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
-	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
-		//	<< "µs " << "End Tx " << packet->GetUid() << endl;
+	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+		 << "µs " << "End Tx " << packet->GetUid() << endl;
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
 		Time oldTime = txMap[packet->GetUid()];
@@ -99,6 +106,8 @@ void NodeEntry::OnEndOfReceive(Ptr<const Packet> packet) {
 		stats->get(this->id).TotalReceiveTime += (Simulator::Now() - oldTime);
 
 		if (hdr.IsS1gBeacon()) {
+			lastBeaconReceivedOn = Simulator::Now();
+
 			auto pCopy = packet->Copy();
 			S1gBeaconHeader s1gBeaconHeader;
 			pCopy->RemoveHeader(hdr);
@@ -151,7 +160,7 @@ void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet) {
 void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 		const Time duration, const WifiPhy::State state) {
 
-	/*
+
 	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << "State change, new state is ";
 
 	switch (state) {
@@ -176,7 +185,7 @@ void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 
 	}
 	cout << endl;
-	*/
+
 
 }
 
@@ -184,6 +193,15 @@ void NodeEntry::OnUdpPacketSent(Ptr<const Packet> packet) {
 //cout << "[" << this->id << "] " << "UDP packet sent " << endl;
 
 	stats->get(this->id).NumberOfSentPackets++;
+
+
+		cout << "[" << this->id << "] "  << Simulator::Now().GetMicroSeconds() <<
+			" Packet sent" << endl;
+
+		if (aId >= lastBeaconAIDStart && aId <= lastBeaconAIDEnd) {
+			cout << "[" << this->id << "] "  << Simulator::Now().GetMicroSeconds() <<
+						" Packet is enqueued during the RAW slot period of the node" << endl;
+		}
 }
 
 void NodeEntry::OnUdpPacketReceivedAtAP(Ptr<const Packet> packet) {
@@ -196,7 +214,13 @@ void NodeEntry::OnUdpPacketReceivedAtAP(Ptr<const Packet> packet) {
 //		<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
 
 	stats->get(this->id).NumberOfSuccessfulPackets++;
-	stats->get(this->id).TotalPacketTimeOfFlight += timeDiff;
+	stats->get(this->id).TotalPacketSentReceiveTime += timeDiff;
+
+
+		cout << this->node->GetDevice(0)->GetAddress() << " ";
+		cout << "[" << this->id << "] "  << Simulator::Now().GetMicroSeconds() << " Packet received in " << timeDiff.GetMicroSeconds() << "µs" << endl;
+
+
 
 	stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
 }

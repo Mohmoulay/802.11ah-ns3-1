@@ -24,12 +24,12 @@ public:
     
     long getNumberOfDroppedPackets();
 
-    Time TotalPacketTimeOfFlight = Time();
+    Time TotalPacketSentReceiveTime = Time();
     long TotalPacketPayloadSize = 0;
     
-    Time getAveragePacketTimeOfFlight();
+    Time getAveragePacketSentReceiveTime();
 
-    double getThroughputKbit();
+    double getGoodputKbit();
 };
 
 #endif /* NODESTATISTICS_H */

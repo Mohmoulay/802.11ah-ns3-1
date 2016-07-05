@@ -64,8 +64,8 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 			std::to_string(stats.get(i).NumberOfSentPackets),
 			std::to_string(stats.get(i).NumberOfSuccessfulPackets),
 			std::to_string(stats.get(i).getNumberOfDroppedPackets()),
-			std::to_string(stats.get(i).getAveragePacketTimeOfFlight().GetMilliSeconds()),
-			std::to_string(stats.get(i).getThroughputKbit())
+			std::to_string(stats.get(i).getAveragePacketSentReceiveTime().GetMilliSeconds()),
+			std::to_string(stats.get(i).getGoodputKbit())
 		});
 	}
 }

@@ -343,7 +343,11 @@ DcaTxop::RawStart (void)
   NS_LOG_FUNCTION (this);
   m_dcf->RawStart ();
   m_stationManager->RawStart ();
-  m_dcf->StartBackoffNow (m_rng->GetNext (0, m_dcf->GetCw ()));
+
+  auto nrOfSlots = m_rng->GetNext (0, m_dcf->GetCw ());
+
+  std::cout << "Backing off for " << nrOfSlots << " slots" << std::endl;
+  m_dcf->StartBackoffNow (nrOfSlots);
   StartAccessIfNeededRaw (); //how about remove it?
 }
 

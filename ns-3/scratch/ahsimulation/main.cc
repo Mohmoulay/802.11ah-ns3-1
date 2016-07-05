@@ -324,10 +324,10 @@ void printStatistics() {
 		cout << "Number of UDP packets sent: " << std::to_string(stats.get(i).NumberOfSentPackets) << endl;
 		cout << "Number of UDP packets successful: " << std::to_string(stats.get(i).NumberOfSuccessfulPackets) << endl;
 		cout << "Number of UDP packets dropped: " << std::to_string(stats.get(i).getNumberOfDroppedPackets()) << endl;
-		cout << "Average UDP packet time of flight: " << std::to_string(stats.get(i).getAveragePacketTimeOfFlight().GetMicroSeconds()) << "µs" << endl;
+		cout << "Average UDP packet time of flight: " << std::to_string(stats.get(i).getAveragePacketSentReceiveTime().GetMicroSeconds()) << "µs" << endl;
 
 		cout << "" << endl;
-		cout << "Throughput: " << std::to_string(stats.get(i).getThroughputKbit()) << "Kbit" << endl;
+		cout << "Goodput: " << std::to_string(stats.get(i).getGoodputKbit()) << "Kbit" << endl;
 //		cout << "Total bytes: " << std::to_string(stats.get(i).TotalPacketPayloadSize) << "b" << endl;
 //		cout << "Total time: " << std::to_string(stats.get(i).TotalPacketTimeOfFlight.GetSeconds()) << "sec" << endl;
 		cout << "*********************" << endl;

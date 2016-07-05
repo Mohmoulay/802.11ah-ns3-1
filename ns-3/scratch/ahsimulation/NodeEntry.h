@@ -29,6 +29,8 @@ private:
     uint16_t lastBeaconAIDStart = 0;
     uint16_t lastBeaconAIDEnd = 0;
 
+    Time lastBeaconReceivedOn = Time();
+
     Statistics* stats;
     
     void OnEndOfReceive(Ptr<const Packet> packet);
