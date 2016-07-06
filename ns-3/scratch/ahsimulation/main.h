@@ -63,6 +63,11 @@ void configureUDPEchoClients();
 
 void configureUDPEchoServer();
 
+void configureTCPEchoClients();
+
+void configureTCPEchoServer();
+
+
 void onSTAAssociated(int i);
     
 void updateNodesQueueLength();

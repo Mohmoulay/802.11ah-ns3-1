@@ -223,6 +223,43 @@ void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 
 }
 
+
+void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
+	stats->get(this->id).NumberOfSentPackets++;
+}
+
+void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
+		Address from) {
+	//cout << "Echo packet received back from AP ("
+		//	<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ")" << endl;
+
+	auto pCopy = packet->Copy();
+	SeqTsHeader seqTs;
+	pCopy->RemoveHeader(seqTs);
+	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
+
+	stats->get(this->id).NumberOfSuccessfulRoundtripPackets++;
+	stats->get(this->id).TotalPacketRoundtripTime += timeDiff;
+
+}
+
+void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
+	auto pCopy = packet->Copy();
+	SeqTsHeader seqTs;
+	pCopy->RemoveHeader(seqTs);
+	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
+
+//cout << "[" << this->id << "] " << "TCP packet received at AP after "
+	//	<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
+
+	stats->get(this->id).NumberOfSuccessfulPackets++;
+	stats->get(this->id).TotalPacketSentReceiveTime += timeDiff;
+	stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
+}
+
+
+
+
 void NodeEntry::OnUdpPacketSent(Ptr<const Packet> packet) {
 //cout << "[" << this->id << "] " << "UDP packet sent " << endl;
 

@@ -246,6 +246,20 @@ void udpPacketReceivedAtServer(Ptr<const Packet> packet, Address from) {
     	cout << "*** Node could not be determined from received packet at AP " << endl;
 }
 
+void tcpPacketReceivedAtServer (Ptr<const Packet> packet, Address from) {
+    int staId = -1;
+    for (int i = 0; i < staNodeInterfaces.GetN(); i++) {
+        if (staNodeInterfaces.GetAddress(i) == InetSocketAddress::ConvertFrom(from).GetIpv4()) {
+            staId = i;
+            break;
+        }
+    }
+    if (staId != -1)
+        nodes[staId]->OnTcpPacketReceivedAtAP(packet);
+    else
+    	cout << "*** Node could not be determined from received packet at AP " << endl;
+}
+
 /*void udpPacketReceivedAtClient(Ptr<const Packet> packet, Address from) {
     int apId = -1;
     for (int i = 0; i < apNodeInterfaces.GetN(); i++) {
@@ -275,6 +289,30 @@ void configureUDPEchoServer() {
     serverApp = myServer.Install(apNodes);
     serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&udpPacketReceivedAtServer));
     serverApp.Start(Seconds(0));
+}
+
+
+void configureTCPEchoServer() {
+	TcpEchoServerHelper myServer(7);
+	serverApp = myServer.Install(apNodes);
+	serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&tcpPacketReceivedAtServer));
+	serverApp.Start(Seconds(0));
+}
+
+void configureTCPEchoClients() {
+	UdpEchoClientHelper clientHelper(apNodeInterfaces.GetAddress(0), 7); //address of remote node
+	clientHelper.SetAttribute("MaxPackets", UintegerValue(4294967295u));
+	clientHelper.SetAttribute("Interval", TimeValue(MilliSeconds(config.trafficInterval)));
+	clientHelper.SetAttribute("PacketSize", UintegerValue(config.trafficPacketSize));
+	for (uint16_t i = 0; i < config.Nsta; i++) {
+		ApplicationContainer clientApp = clientHelper.Install(staNodes.Get(i));
+		clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnTcpPacketSent, nodes[i]));
+		clientApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&NodeEntry::OnTcpEchoPacketReceived, nodes[i]));
+
+		double random = (rand() % (config.trafficInterval/1000*4)) / (double)4;
+		clientApp.Start(Seconds(0+random));
+		//clientApp.Stop(Seconds(simulationTime + 1));
+	}
 }
 
 void configureUDPClients() {
@@ -310,7 +348,6 @@ void configureUDPEchoClients() {
 		//clientApp.Stop(Seconds(simulationTime + 1));
 	}
 }
-
 
 void onSTAAssociated(int i) {
 
