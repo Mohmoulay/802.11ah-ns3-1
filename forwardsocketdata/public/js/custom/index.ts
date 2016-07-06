@@ -175,6 +175,9 @@ class SimulationGUI {
         this.updateNodeGUI(true);
     }
 
+    private refreshTimerId:number = -1;
+    private lastUpdatedOn:Date = new Date();
+
     updateNodeGUI(full: boolean) {
         if (this.selectedNode < 0 || this.selectedNode >= this.simulation.nodes.length)
             return;
@@ -207,6 +210,26 @@ class SimulationGUI {
                 $($(propertyElements[i]).find("td").get(1)).text(values[values.length - 1].value);
         }
 
+
+        // prevent update flood by max 1 update per second or when gui changed
+        let timeDiff = new Date().getTime() - this.lastUpdatedOn.getTime();
+        if(timeDiff > 1000 || full) {
+            this.updateCharts(node, true);
+            this.lastUpdatedOn = new Date();
+        }
+        else {
+            
+            window.clearTimeout(this.refreshTimerId);
+            this.refreshTimerId = window.setTimeout(() => {
+                this.updateCharts(node, true);
+                this.lastUpdatedOn = new Date();
+            }, timeDiff);
+        }
+        
+        
+    }
+
+    private updateCharts(node:SimulationNode, full:boolean) {
         let showDeltas: boolean = $("#chkShowDeltas").prop("checked");
 
         let values = <Value[]>node[this.selectedPropertyForChart];
