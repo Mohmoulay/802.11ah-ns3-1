@@ -29,6 +29,8 @@ private:
     uint16_t lastBeaconAIDStart = 0;
     uint16_t lastBeaconAIDEnd = 0;
 
+    bool rawTIMGroupFlaggedAsDataAvailableInDTIM = false;
+
     Time lastBeaconReceivedOn = Time();
 
     Statistics* stats;

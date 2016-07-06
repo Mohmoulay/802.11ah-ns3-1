@@ -35,6 +35,9 @@ public:
     Time getAveragePacketRoundTripTime();
 
     double getGoodputKbit();
+
+    int EDCAQueueLength = 0;
+
 };
 
 #endif /* NODESTATISTICS_H */

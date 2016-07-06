@@ -764,23 +764,22 @@ StaWifiMac::Receive (Ptr<Packet> packet, const WifiMacHeader *hdr)
        goodBeacon = false;
      }
     else
-     {
       goodBeacon = true;
-     }
-    if (goodBeacon)
-     {
+
+    if (goodBeacon) {
        Time delay = MicroSeconds (beacon.GetBeaconCompatibility().GetBeaconInterval () * m_maxMissedBeacons);
        RestartBeaconWatchdog (delay);
        //SetBssid (beacon.GetSA ());
        SetBssid (hdr->GetAddr3 ()); //for debug
-     }
+    }
+
     if (goodBeacon && m_state == BEACON_MISSED)
      {
        SetState (WAIT_ASSOC_RESP);
        SendAssociationRequest ();
-     }
-    if (goodBeacon)
-     {
+    }
+    if (goodBeacon) {
+
         UnsetInRAWgroup ();
         uint8_t * rawassign;
         rawassign = beacon.GetRPS().GetRawAssignment();

@@ -111,11 +111,42 @@ void NodeEntry::OnEndOfReceive(Ptr<const Packet> packet) {
 			pCopy->RemoveHeader(hdr);
 			pCopy->RemoveHeader(s1gBeaconHeader);
 
+
 			//       cout << "[" << this->id << "] " <<  "Received S1g beacon " << endl;
 			auto raw = s1gBeaconHeader.GetRPS().GetRawAssigmentObj();
 
 			this->lastBeaconAIDStart = raw.GetRawGroupAIDStart();
 			this->lastBeaconAIDEnd = raw.GetRawGroupAIDEnd();
+
+
+			if(s1gBeaconHeader.GetTIM().GetTIMCount() == 0) {
+				// DTIM data
+				uint32_t vmap = s1gBeaconHeader.GetTIM().GetPartialVBitmap();
+
+				/*if(vmap != 0x0) {
+					std::cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "]" << " DTIM beacon received, VMAP: ";
+					for(int i = 31; i >= 0; i--)
+						cout << ((vmap >> i) & 0x01);
+					cout << endl;
+				}*/
+
+
+				/*	std::cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "]" << " DTIM beacon received, VMAP: ";
+										for(int i = 31; i >= 0; i--)
+											cout << ((vmap >> i) & 0x01);
+										cout << endl;
+				*/
+
+				if((vmap >> this->rawGroupNumber) & 0x01 == 0x01) {
+					// there is pending data at the AP
+					rawTIMGroupFlaggedAsDataAvailableInDTIM = true;
+				}
+				else {
+					// no pending data at the AP
+					rawTIMGroupFlaggedAsDataAvailableInDTIM = false;
+				}
+			}
+
 
 			//cout << "S1g beacon received" << endl;
 			//cout << "RAW Group: page=" << std::to_string(raw.GetRawGroupPage()) << ", aId start=" << std::to_string(lastBeaconAIDStart) << ", aId end=" << std::to_string(lastBeaconAIDEnd) << endl;
@@ -126,8 +157,15 @@ void NodeEntry::OnEndOfReceive(Ptr<const Packet> packet) {
 		// if the AID assigned to the station falls within the AID range it's
 		// the same as having the radio active during the RAW duration for potential
 		// Rx.
+		// The STA will only become awake if the DTIM data specified that there is data pending
 
-		if (aId >= lastBeaconAIDStart && aId <= lastBeaconAIDEnd) {
+	/*	if(this->id==48) {
+			cout << "Receive on node 48 " << endl;
+			cout << "TIM group was flagged in last DTIM?: " << rawTIMGroupFlaggedAsDataAvailableInDTIM << endl;
+			cout << "Last beacon range: " << lastBeaconAIDStart << " - " << lastBeaconAIDEnd << endl;
+		}
+		*/
+		if (rawTIMGroupFlaggedAsDataAvailableInDTIM && aId >= lastBeaconAIDStart && aId <= lastBeaconAIDEnd) {
 			// the last beacon received was a beacon for a RAW slot for the current station
 			stats->get(this->id).TotalReceiveActiveTime += (Simulator::Now()
 					- oldTime);

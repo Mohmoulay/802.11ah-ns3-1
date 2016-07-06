@@ -258,9 +258,11 @@ private:
 
 
   uint8_t m_nrOfTIMGroups;
-  uint8_t m_currentBeaconTIMGroup = 0;
+  uint8_t m_currentBeaconTIMGroup = -1; // -1 because first beacon will have to be 0
   uint32_t current_aid_start = 1;
   uint32_t current_aid_end = m_rawGroupInterval; //m_rawGroupInterval;
+
+  Time lastBeaconTime = Time();
 
   std::map<Mac48Address, uint16_t> macToAIDMap;
 

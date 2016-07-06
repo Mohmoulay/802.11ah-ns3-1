@@ -120,6 +120,18 @@ void configureSTANodes(Ssid& ssid) {
     mobility.Install(staNodes);
 }
 
+void OnAPPhyRxBegin(std::string context, Ptr<const Packet> packet) {
+
+}
+
+void OnAPPhyRxDrop(std::string context, Ptr<const Packet> packet) {
+
+
+	//cout << " AP RX Drop for packet " << endl;
+	//packet->Print(cout);
+
+}
+
 void configureAPNode(Ssid& ssid) {
     // create AP node
     apNodes.Create(1);
@@ -169,6 +181,14 @@ void configureAPNode(Ssid& ssid) {
     mobilityAp.SetPositionAllocator(positionAlloc);
     mobilityAp.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobilityAp.Install(apNodes);
+
+    cout << "AP matches " << Config::LookupMatches("/NodeList/" + std::to_string(config.Nsta) + "/").GetN() << endl;
+
+	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeCallback(&OnAPPhyRxBegin));
+	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeCallback(&OnAPPhyRxDrop));
+
+	PacketMetadata::Enable();
+
 }
 
 void configureIPStack() {
@@ -294,7 +314,7 @@ void configureUDPEchoClients() {
 
 void onSTAAssociated(int i) {
 
-    nodes[i]->rawGroupNumber = (nodes[i]->aId / (config.NRawSta / config.NGroup));
+    nodes[i]->rawGroupNumber = ((nodes[i]->aId - 1) / (config.NRawSta / config.NGroup));
 	cout << "Node " << std::to_string(i) << " is associated and has aId " << nodes[i]->aId << " and falls in RAW group " << std::to_string(nodes[i]->rawGroupNumber) << endl;
 
     eventManager.onNodeAssociated(*nodes[i]);
@@ -321,10 +341,13 @@ void onSTAAssociated(int i) {
 
 
 void updateNodesQueueLength() {
-	for(int i = 0; i < config.Nsta; i++)
+	for(int i = 0; i < config.Nsta; i++) {
 		nodes[i]->UpdateQueueLength();
 
-	Simulator::Schedule(Seconds(1), &updateNodesQueueLength);
+		stats.get(i).EDCAQueueLength = nodes[i]->queueLength;
+	}
+
+	Simulator::Schedule(Seconds(0.5), &updateNodesQueueLength);
 }
 
 void printStatistics() {
