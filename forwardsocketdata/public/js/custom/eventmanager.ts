@@ -35,30 +35,12 @@ class EventManager {
                     break;
 
                 case 'nodestats':
-                    /*send({"nodestats", std::to_string(i),
-                std::to_string(stats.get(i).TotalTransmitTime.GetMilliSeconds()),
-                std::to_string(stats.get(i).TotalReceiveTime.GetMilliSeconds()),
-                std::to_string(stats.get(i).TotalReceiveDozeTime.GetMilliSeconds()),
-                std::to_string(stats.get(i).TotalReceiveActiveTime.GetMilliSeconds()),
-    
-                std::to_string(stats.get(i).NumberOfTransmissions),
-                std::to_string(stats.get(i).NumberOfTransmissionsDropped),
-                std::to_string(stats.get(i).NumberOfReceives),
-                std::to_string(stats.get(i).NumberOfReceivesDropped),
-    
-                std::to_string(stats.get(i).NumberOfSentPackets),
-                std::to_string(stats.get(i).NumberOfSuccessfulPackets),
-                std::to_string(stats.get(i).NumberOfDroppedPackets),
-    
-                std::to_string(stats.get(i).getAveragePacketTimeOfFlight().GetMilliSeconds()),
-                std::to_string(stats.get(i).getThroughputKbit())
-            });
-                */
                     this.onStatsUpdated(ev.time, parseInt(ev.parts[2]),
                         parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]),
                         parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]),
                         parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]),
-                        parseFloat(ev.parts[14]), parseFloat(ev.parts[15]));
+                        parseFloat(ev.parts[14]), parseFloat(ev.parts[15]),
+                        parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]));
                     break;
 
                 default:
@@ -136,7 +118,8 @@ class EventManager {
         totalTransmitTime: number, totalReceiveTime: number, totalReceiveDozeTime: number, totalReceiveActiveTime: number,
         nrOfTransmissions: number, nrOfTransmissionsDropped: number, nrOfReceives: number, nrOfReceivesDropped: number,
         nrOfSentPackets: number, nrOfSuccessfulPackets: number, nrOfDroppedPackets: number,
-        avgPacketTimeOfFlight: number, throughputKbit: number) {
+        avgPacketTimeOfFlight: number, goodputKbit: number, 
+        edcaQueueLength:number, nrOfSuccessfulRoundtripPackets:number, avgRoundTripTIme:number) {
 
         if(id < 0 || id >= this.sim.simulation.nodes.length) return;
         // keep track of statistics
@@ -157,8 +140,12 @@ class EventManager {
         n.nrOfSuccessfulPackets.push(new Value(timestamp, nrOfSuccessfulPackets));
         n.nrOfDroppedPackets.push(new Value(timestamp, nrOfDroppedPackets));
 
-        n.avgPacketTimeOfFlight.push(new Value(timestamp, avgPacketTimeOfFlight));
-        n.throughputKbit.push(new Value(timestamp, throughputKbit));
+        n.avgSentReceiveTime.push(new Value(timestamp, avgPacketTimeOfFlight));
+        n.goodputKbit.push(new Value(timestamp, goodputKbit));
+
+        n.edcaQueueLength.push(new Value(timestamp, edcaQueueLength));
+        n.nrOfSuccessfulRoundtripPackets.push(new Value(timestamp, nrOfSuccessfulRoundtripPackets));
+        n.avgRoundtripTime.push(new Value(timestamp, avgRoundTripTIme));
 
         if (this.hasIncreased(n.totalTransmitTime)) {
             this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));

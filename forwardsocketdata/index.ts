@@ -107,27 +107,31 @@ export class Program {
         }
     }
 
-    private onWebClientConnected(sock:SocketIO.Socket) {
-        for(let initLine of this.simulationInitializationLines) {
+    private onWebClientConnected(sock: SocketIO.Socket) {
+        for (let initLine of this.simulationInitializationLines) {
             sock.emit("entry", initLine);
         }
     }
 
     simulationInitializationLines: string[] = [];
-    simulationName:string = "";
+    simulationName: string = "";
     private processMessage(line: string) {
 
-        
+
         // retain config & base data to allow users to jump in simulation when it's already busy
         var parts = line.split(';');
         if (parts[1] == "start") {
             this.simulationInitializationLines = [];
-            this.simulationName = parts[parts.length-1] + ".nss";
-            
-            if(this.simulationName != "") {
-                fs.unlinkSync(path.resolve(__dirname, "simulations", this.simulationName));
+            this.simulationName = parts[parts.length - 1] + ".nss";
+
+            try {
+                if (this.simulationName != "") {
+                    fs.unlinkSync(path.resolve(__dirname, "simulations", this.simulationName));
+                }
             }
-            
+            catch (e) {
+            }
+
             this.simulationInitializationLines.push(line);
         }
         else if (parts[1] == "stanodeadd" || parts[1] == "apnodeadd" || parts[1] == "stanodeassoc")
@@ -137,9 +141,14 @@ export class Program {
             s.emit("entry", line);
         }
 
-        if(this.simulationName != "") {
-        //console.log("Writing to file " + path.resolve(__dirname, "simulations", this.simulationName));        
-            fs.appendFileSync(path.resolve(__dirname, "simulations", this.simulationName), line + "\n");
+        try {
+            if (this.simulationName != "") {
+                //console.log("Writing to file " + path.resolve(__dirname, "simulations", this.simulationName));        
+                fs.appendFileSync(path.resolve(__dirname, "simulations", this.simulationName), line + "\n");
+            }
+        }
+        catch (e) {
+
         }
     }
 }

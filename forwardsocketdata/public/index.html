@@ -90,7 +90,7 @@
                             <div class="panel-body">
                                 <div class="row">
                                     <div class="col-md-8">
-                                        <div class="scrollTable">
+                                        <div class="scrollTable" style="max-height: 280px;">
                                             <table class="table">
                                                 <tr>
                                                     <td>Position</td>
@@ -100,13 +100,15 @@
                                                     <td>AID</td>
                                                     <td><span id="nodeAID">---</span> (grp: <span id="nodeGroupNumber">---</span>)</td>
                                                 </tr>
-                                                <tr class="nodeProperty" data-max="500" data-min="0" data-property="avgPacketTimeOfFlight" data-type="LOWER_IS_BETTER">
-                                                    <td>Average packet time of flight (ms)</td>
-                                                    <td id="nodeAvgPacketTimeOfFlight">---</td>
+                                                <!-- use data-max="*" to automatically determine the max value present -->
+
+                                                <tr class="nodeProperty" data-max="*" data-min="0" data-property="avgSentReceiveTime" data-type="LOWER_IS_BETTER">
+                                                    <td>Average time between sent/receive (ms)</td>
+                                                    <td id="nodeAvgSentReceiveTIme">---</td>
                                                 </tr>
-                                                <tr class="nodeProperty" data-max="500" data-min="0" data-property="throughputKbit" data-type="HIGHER_IS_BETTER">
-                                                    <td>Throughput (kbit)</td>
-                                                    <td id="nodeThroughputKbit">---</td>
+                                                <tr class="nodeProperty" data-max="*" data-min="0" data-property="goodputKbit" data-type="HIGHER_IS_BETTER">
+                                                    <td>Goodput (kbit)</td>
+                                                    <td id="nodeGoodputKbit">---</td>
                                                 </tr>
                                                 <tr class="nodeProperty selected" data-property="totalTransmitTime">
                                                     <td>Total transmit time (ms)</td>
@@ -136,7 +138,7 @@
                                                     <td>Number of receives</td>
                                                     <td id="nodeNrOfReceives">---</td>
                                                 </tr>
-                                                <tr class="nodeProperty" data-property="nrOfReceivesDropped">
+                                                <tr class="nodeProperty" data-property="nrOfReceivesDropped" data-max="*" data-min="0" data-type="LOWER_IS_BETTER">
                                                     <td>Number of receives dropped</td>
                                                     <td id="nodeNrOfReceivesDropped">---</td>
                                                 </tr>
@@ -148,10 +150,22 @@
                                                     <td>Number of succ. packets received at AP</td>
                                                     <td id="nodeNrOfSuccessfulPackets">---</td>
                                                 </tr>
-                                                <!-- use data-max="*" to automatically determine the max value present -->
                                                 <tr class="nodeProperty" data-max="*" data-min="0" data-property="nrOfDroppedPackets" data-type="LOWER_IS_BETTER">
                                                     <td>Number of dropped packets</td>
                                                     <td id="nodeNrOfDroppedPackets">---</td>
+                                                </tr>
+                                                <tr class="nodeProperty" data-max="*" data-min="0" data-property="edcaQueueLength" data-type="LOWER_IS_BETTER">
+                                                    <td>EDCA Queue Length</td>
+                                                    <td id="nodeEDCAQueueLength">---</td>
+                                                </tr>
+
+                                               <tr class="nodeProperty" data-property="nrOfSuccessfulRoundtripPackets">
+                                                    <td>Number of succ. echoed packets received </td>
+                                                    <td id="nodeNrOfSuccessfulRoundtripPackets">---</td>
+                                                </tr>
+                                                <tr class="nodeProperty" data-property="avgRoundtripTime"  data-max="*" data-min="0" data-type="LOWER_IS_BETTER">
+                                                    <td>Average round trip time (ms)</td>
+                                                    <td id="nodeAvgRoundtripTime">---</td>
                                                 </tr>
                                             </table>
                                         </div>
@@ -176,7 +190,7 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-12">
-                                         <div id="nodeChart" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+                                         <div id="nodeChart" style="min-width: 310px; height: 300px; margin: 0 auto"></div>
                                     </div>
                                 </div>
                             </div>

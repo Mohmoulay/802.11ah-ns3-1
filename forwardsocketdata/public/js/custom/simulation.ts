@@ -23,8 +23,13 @@ abstract class SimulationNode {
     nrOfSuccessfulPackets: Value[] = [];
     nrOfDroppedPackets: Value[] = [];
 
-    avgPacketTimeOfFlight: Value[] = [];
-    throughputKbit: Value[] = [];
+    avgSentReceiveTime: Value[] = [];
+    goodputKbit: Value[] = [];
+
+    edcaQueueLength:Value[] = [];
+    nrOfSuccessfulRoundtripPackets: Value[] = [];
+    avgRoundtripTime: Value[] = [];
+
 }
 
 class Value {
