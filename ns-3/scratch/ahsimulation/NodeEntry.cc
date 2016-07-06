@@ -225,13 +225,15 @@ void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 
 
 void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
+	cout << "[" << this->id << "] " << "TCP packet sent " << endl;
+
 	stats->get(this->id).NumberOfSentPackets++;
 }
 
 void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
 		Address from) {
-	//cout << "Echo packet received back from AP ("
-		//	<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ")" << endl;
+	cout << "Echo packet received back from AP ("
+			<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ")" << endl;
 
 	auto pCopy = packet->Copy();
 	SeqTsHeader seqTs;
@@ -249,8 +251,8 @@ void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 	pCopy->RemoveHeader(seqTs);
 	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
-//cout << "[" << this->id << "] " << "TCP packet received at AP after "
-	//	<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
+cout << "[" << this->id << "] " << "TCP packet received at AP after "
+	<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
 
 	stats->get(this->id).NumberOfSuccessfulPackets++;
 	stats->get(this->id).TotalPacketSentReceiveTime += timeDiff;

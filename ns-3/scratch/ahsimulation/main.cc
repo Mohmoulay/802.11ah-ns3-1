@@ -121,13 +121,13 @@ void configureSTANodes(Ssid& ssid) {
 }
 
 void OnAPPhyRxBegin(std::string context, Ptr<const Packet> packet) {
-
+	cout << " AP RX Begin " << endl;
 }
 
 void OnAPPhyRxDrop(std::string context, Ptr<const Packet> packet) {
 
 
-	//cout << " AP RX Drop for packet " << endl;
+	cout << " AP RX Drop " << endl;
 	//packet->Print(cout);
 
 }
@@ -187,7 +187,8 @@ void configureAPNode(Ssid& ssid) {
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeCallback(&OnAPPhyRxBegin));
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeCallback(&OnAPPhyRxDrop));
 
-	PacketMetadata::Enable();
+
+	phy.EnablePcap("pcapfile", apNodes, 0);
 
 }
 
@@ -247,6 +248,8 @@ void udpPacketReceivedAtServer(Ptr<const Packet> packet, Address from) {
 }
 
 void tcpPacketReceivedAtServer (Ptr<const Packet> packet, Address from) {
+	cout << "TCP packet received at server " << endl;
+
     int staId = -1;
     for (int i = 0; i < staNodeInterfaces.GetN(); i++) {
         if (staNodeInterfaces.GetAddress(i) == InetSocketAddress::ConvertFrom(from).GetIpv4()) {
@@ -293,14 +296,14 @@ void configureUDPEchoServer() {
 
 
 void configureTCPEchoServer() {
-	TcpEchoServerHelper myServer(7);
+	TcpEchoServerHelper myServer(80);
 	serverApp = myServer.Install(apNodes);
 	serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&tcpPacketReceivedAtServer));
 	serverApp.Start(Seconds(0));
 }
 
 void configureTCPEchoClients() {
-	UdpEchoClientHelper clientHelper(apNodeInterfaces.GetAddress(0), 7); //address of remote node
+	TcpEchoClientHelper clientHelper(apNodeInterfaces.GetAddress(0), 80); //address of remote node
 	clientHelper.SetAttribute("MaxPackets", UintegerValue(4294967295u));
 	clientHelper.SetAttribute("Interval", TimeValue(MilliSeconds(config.trafficInterval)));
 	clientHelper.SetAttribute("PacketSize", UintegerValue(config.trafficPacketSize));
@@ -369,8 +372,10 @@ void onSTAAssociated(int i) {
 
         //configureUDPServer();
         //configureUDPClients();
-    	configureUDPEchoServer();
-    	configureUDPEchoClients();
+    	//configureUDPEchoServer();
+    	//configureUDPEchoClients();
+		configureTCPEchoServer();
+		configureTCPEchoClients();
 
         updateNodesQueueLength();
     }
@@ -410,14 +415,14 @@ void printStatistics() {
 		cout << "Number of receives dropped: " << std::to_string(stats.get(i).NumberOfReceivesDropped) << endl;
 
 		cout << "" << endl;
-		cout << "Number of UDP packets sent: " << std::to_string(stats.get(i).NumberOfSentPackets) << endl;
-		cout << "Number of UDP packets successful: " << std::to_string(stats.get(i).NumberOfSuccessfulPackets) << endl;
-		cout << "Number of UDP packets dropped: " << std::to_string(stats.get(i).getNumberOfDroppedPackets()) << endl;
+		cout << "Number of packets sent: " << std::to_string(stats.get(i).NumberOfSentPackets) << endl;
+		cout << "Number of packets successful: " << std::to_string(stats.get(i).NumberOfSuccessfulPackets) << endl;
+		cout << "Number of packets dropped: " << std::to_string(stats.get(i).getNumberOfDroppedPackets()) << endl;
 
-		cout << "Number of UDP roundtrip packets successful: " << std::to_string(stats.get(i).NumberOfSuccessfulRoundtripPackets) << endl;
+		cout << "Number of roundtrip packets successful: " << std::to_string(stats.get(i).NumberOfSuccessfulRoundtripPackets) << endl;
 
-		cout << "Average UDP packet sent/receive time: " << std::to_string(stats.get(i).getAveragePacketSentReceiveTime().GetMicroSeconds()) << "µs" << endl;
-		cout << "Average UDP packet roundtrip time: " << std::to_string(stats.get(i).getAveragePacketRoundTripTime().GetMicroSeconds()) << "µs" << endl;
+		cout << "Average packet sent/receive time: " << std::to_string(stats.get(i).getAveragePacketSentReceiveTime().GetMicroSeconds()) << "µs" << endl;
+		cout << "Average packet roundtrip time: " << std::to_string(stats.get(i).getAveragePacketRoundTripTime().GetMicroSeconds()) << "µs" << endl;
 
 		cout << "" << endl;
 		cout << "Goodput: " << std::to_string(stats.get(i).getGoodputKbit()) << "Kbit" << endl;

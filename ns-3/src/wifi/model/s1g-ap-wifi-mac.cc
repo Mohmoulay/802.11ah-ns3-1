@@ -246,7 +246,7 @@ void S1gApWifiMac::ForwardDown(Ptr<const Packet> packet, Mac48Address from,
 
 	uint16_t aId = macToAIDMap[to];
 	pendingDataSizeForStations[aId - 1]--;
-	std::cout << Simulator::Now().GetMicroSeconds() <<  " Data for " << (aId - 1) << " --" << std::endl;
+	//std::cout << Simulator::Now().GetMicroSeconds() <<  " Data for " << (aId - 1) << " --" << std::endl;
 
 	//If we are a QoS AP then we attempt to get a TID for this packet
 	if (m_qosSupported) {
@@ -312,7 +312,7 @@ void S1gApWifiMac::Enqueue(Ptr<const Packet> packet, Mac48Address to,
 
 		uint16_t aId = macToAIDMap[to];
 		pendingDataSizeForStations[aId - 1]++;
-		std::cout << Simulator::Now().GetMicroSeconds() << " Data for " << (aId - 1) << " ++" << std::endl;
+		//std::cout << Simulator::Now().GetMicroSeconds() << " Data for " << (aId - 1) << " ++" << std::endl;
 
 		// technically you can only send it through directly if the previous DTIM
 		// beacon indicated that there's data for this TIM grup
@@ -353,7 +353,7 @@ void S1gApWifiMac::Enqueue(Ptr<const Packet> packet, Mac48Address to,
 				}
 			}
 
-			std::cout << "Current TIM beacon " << std::to_string(m_currentBeaconTIMGroup) << ", scheduling packet in " << remainingBeacons << " beacons" << std::endl;
+			//std::cout << "Current TIM beacon " << std::to_string(m_currentBeaconTIMGroup) << ", scheduling packet in " << remainingBeacons << " beacons" << std::endl;
 			Time packetSendTime = m_beaconInterval * remainingBeacons;
 
 			//align with beacon interval
@@ -574,16 +574,17 @@ void S1gApWifiMac::SendOneBeacon(void) {
 			for (int i = 0; i < this->m_totalStaNum; i++) {
 				if (pendingDataSizeForStations.at(i) > 0) {
 					int group = i / m_rawGroupInterval;
-					std::cout << Simulator::Now().GetMicroSeconds() << " there is data for " << i << "( " << "group " << group << ")" << std::endl;
+					//std::cout << Simulator::Now().GetMicroSeconds() << " there is data for " << i << "( " << "group " << group << ")" << std::endl;
 					vmap = vmap | (1 << group);
 				}
 			}
 
 
-				std::cout << Simulator::Now().GetMicroSeconds() << " DTIM beacon send, VMAP: ";
+				/*std::cout << Simulator::Now().GetMicroSeconds() << " DTIM beacon send, VMAP: ";
 				for(int i = 31; i >= 0; i--)
 					std::cout << ((vmap >> i) & 0x01);
 				std::cout << std::endl;
+*/
 
 			tim.SetPartialVBitmap(vmap);
 
