@@ -40,7 +40,7 @@ class EventManager {
                         parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]),
                         parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]),
                         parseFloat(ev.parts[14]), parseFloat(ev.parts[15]),
-                        parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]));
+                        parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]));
                     break;
 
                 default:
@@ -61,7 +61,7 @@ class EventManager {
         this.events.push(ev);
     }
 
-    onStart(aidRAWRange: number, numberOfRAWGroups: number, RAWSlotFormat: string, numberOfRAWSlots: number, RAWSlotDuration: number,
+    onStart(aidRAWRange: number, numberOfRAWGroups: number, RAWSlotFormat: string, RAWSlotDuration: number, numberOfRAWSlots: number, 
         dataMode: string, dataRate: number, bandwidth: number, trafficInterval: number, trafficPacketsize: number, beaconInterval: number,
         name:string) {
         this.sim.simulation.nodes = [];
@@ -119,7 +119,7 @@ class EventManager {
         nrOfTransmissions: number, nrOfTransmissionsDropped: number, nrOfReceives: number, nrOfReceivesDropped: number,
         nrOfSentPackets: number, nrOfSuccessfulPackets: number, nrOfDroppedPackets: number,
         avgPacketTimeOfFlight: number, goodputKbit: number, 
-        edcaQueueLength:number, nrOfSuccessfulRoundtripPackets:number, avgRoundTripTIme:number) {
+        edcaQueueLength:number, nrOfSuccessfulRoundtripPackets:number, avgRoundTripTime:number, tcpCongestionWindow:number) {
 
         if(id < 0 || id >= this.sim.simulation.nodes.length) return;
         // keep track of statistics
@@ -145,7 +145,10 @@ class EventManager {
 
         n.edcaQueueLength.push(new Value(timestamp, edcaQueueLength));
         n.nrOfSuccessfulRoundtripPackets.push(new Value(timestamp, nrOfSuccessfulRoundtripPackets));
-        n.avgRoundtripTime.push(new Value(timestamp, avgRoundTripTIme));
+        n.avgRoundtripTime.push(new Value(timestamp, avgRoundTripTime));
+
+                n.tcpCongestionWindow.push(new Value(timestamp, tcpCongestionWindow));
+
 
         if (this.hasIncreased(n.totalTransmitTime)) {
             this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));

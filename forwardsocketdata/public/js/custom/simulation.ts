@@ -30,6 +30,8 @@ abstract class SimulationNode {
     nrOfSuccessfulRoundtripPackets: Value[] = [];
     avgRoundtripTime: Value[] = [];
 
+    tcpCongestionWindow: Value[] = [];
+
 }
 
 class Value {

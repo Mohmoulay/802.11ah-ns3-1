@@ -259,7 +259,8 @@ class SimulationGUI {
                             load: function () {
                                 self.currentChart = (<HighchartsChartObject>this);
                             }
-                        }
+                        },
+                        zoomType: "x"
                     },
                     plotOptions: {
                         series: {
@@ -326,7 +327,7 @@ class SimulationGUI {
         if (node.nrOfSuccessfulPackets.length > 0 && node.nrOfDroppedPackets.length > 0) {
             let activePacketsSuccessDroppedData = [{ name: "OK", y: node.nrOfSuccessfulPackets[node.nrOfSuccessfulPackets.length - 1].value },
                 { name: "Dropped", y: node.nrOfDroppedPackets[node.nrOfDroppedPackets.length - 1].value }]
-            this.createPieChart("#nodeChartUDPPacketSuccessDropped", 'UDP Packets OK/dropped', activePacketsSuccessDroppedData);
+            this.createPieChart("#nodeChartPacketSuccessDropped", 'Packets OK/dropped', activePacketsSuccessDroppedData);
         }
     }
 

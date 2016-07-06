@@ -68,11 +68,11 @@
                                             <td>---</td>
                                         </tr>
                                         <tr class="configProperty" data-property="trafficInterval">
-                                            <td>UDP Traffic interval (in ms)</td>
+                                            <td>Traffic interval (in ms)</td>
                                             <td>---</td>
                                         </tr>
                                         <tr class="configProperty" data-property="trafficPacketsize">
-                                            <td>UDP Traffic Packet size (in bytes)</td>
+                                            <td>Traffic Packet size (in bytes)</td>
                                             <td>---</td>
                                         </tr>
                                         <tr class="configProperty" data-property="beaconInterval">
@@ -118,7 +118,7 @@
                                                     <td>Total receive time (ms)</td>
                                                     <td id="nodeTotalReceiveTime">---</td>
                                                 </tr>
-                                                <tr class="nodeProperty" data-property="totalReceiveDozeTime">
+                                                <tr class="nodeProperty" data-property="totalReceiveDozeTime" data-max="*" data-min="0" data-type="HIGHER_IS_BETTER">
                                                     <td>Total receive doze time (ms)</td>
                                                     <td id="nodeTotalReceiveDozeTime">---</td>
                                                 </tr>
@@ -167,6 +167,10 @@
                                                     <td>Average round trip time (ms)</td>
                                                     <td id="nodeAvgRoundtripTime">---</td>
                                                 </tr>
+                                                <tr class="nodeProperty" data-property="tcpCongestionWindow">
+                                                    <td>TCP Congestion window (bytes)</td>
+                                                    <td id="nodeTCPCongestionWindow">---</td>
+                                                </tr>
                                             </table>
                                         </div>
                                         <label>Show delta's <input id="chkShowDeltas" type="checkbox"></label>
@@ -183,7 +187,7 @@
                                                 <div id="nodeChartRxSuccessDropped" style="margin: 0 auto; height:150px"></div>
                                             </div>
                                             <div class="col-md-6">
-                                                <div id="nodeChartUDPPacketSuccessDropped" style="margin: 0 auto; height:150px"></div>
+                                                <div id="nodeChartPacketSuccessDropped" style="margin: 0 auto; height:150px"></div>
                                             </div>
                                         </div>
                                     </div>

@@ -178,7 +178,7 @@ var EventManager = (function () {
                     this.onNodeAdded(false, -1, parseFloat(ev.parts[2]), parseFloat(ev.parts[3]), -1);
                     break;
                 case 'nodestats':
-                    this.onStatsUpdated(ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]));
+                    this.onStatsUpdated(ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]));
                     break;
                 default:
             }
@@ -193,7 +193,7 @@ var EventManager = (function () {
         var ev = new SimulationEvent(time, parts);
         this.events.push(ev);
     };
-    EventManager.prototype.onStart = function (aidRAWRange, numberOfRAWGroups, RAWSlotFormat, numberOfRAWSlots, RAWSlotDuration, dataMode, dataRate, bandwidth, trafficInterval, trafficPacketsize, beaconInterval, name) {
+    EventManager.prototype.onStart = function (aidRAWRange, numberOfRAWGroups, RAWSlotFormat, RAWSlotDuration, numberOfRAWSlots, dataMode, dataRate, bandwidth, trafficInterval, trafficPacketsize, beaconInterval, name) {
         this.sim.simulation.nodes = [];
         var config = this.sim.simulation.config;
         config.AIDRAWRange = aidRAWRange;
@@ -236,7 +236,7 @@ var EventManager = (function () {
         else
             return false;
     };
-    EventManager.prototype.onStatsUpdated = function (timestamp, id, totalTransmitTime, totalReceiveTime, totalReceiveDozeTime, totalReceiveActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTIme) {
+    EventManager.prototype.onStatsUpdated = function (timestamp, id, totalTransmitTime, totalReceiveTime, totalReceiveDozeTime, totalReceiveActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTime, tcpCongestionWindow) {
         if (id < 0 || id >= this.sim.simulation.nodes.length)
             return;
         // keep track of statistics
@@ -256,7 +256,8 @@ var EventManager = (function () {
         n.goodputKbit.push(new Value(timestamp, goodputKbit));
         n.edcaQueueLength.push(new Value(timestamp, edcaQueueLength));
         n.nrOfSuccessfulRoundtripPackets.push(new Value(timestamp, nrOfSuccessfulRoundtripPackets));
-        n.avgRoundtripTime.push(new Value(timestamp, avgRoundTripTIme));
+        n.avgRoundtripTime.push(new Value(timestamp, avgRoundTripTime));
+        n.tcpCongestionWindow.push(new Value(timestamp, tcpCongestionWindow));
         if (this.hasIncreased(n.totalTransmitTime)) {
             this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));
         }
@@ -487,7 +488,8 @@ var SimulationGUI = (function () {
                             load: function () {
                                 self_1.currentChart = this;
                             }
-                        }
+                        },
+                        zoomType: "x"
                     },
                     plotOptions: {
                         series: {
@@ -548,7 +550,7 @@ var SimulationGUI = (function () {
         if (node.nrOfSuccessfulPackets.length > 0 && node.nrOfDroppedPackets.length > 0) {
             var activePacketsSuccessDroppedData = [{ name: "OK", y: node.nrOfSuccessfulPackets[node.nrOfSuccessfulPackets.length - 1].value },
                 { name: "Dropped", y: node.nrOfDroppedPackets[node.nrOfDroppedPackets.length - 1].value }];
-            this.createPieChart("#nodeChartUDPPacketSuccessDropped", 'UDP Packets OK/dropped', activePacketsSuccessDroppedData);
+            this.createPieChart("#nodeChartPacketSuccessDropped", 'Packets OK/dropped', activePacketsSuccessDroppedData);
         }
     };
     SimulationGUI.prototype.createPieChart = function (selector, title, data) {
@@ -662,6 +664,7 @@ var SimulationNode = (function () {
         this.edcaQueueLength = [];
         this.nrOfSuccessfulRoundtripPackets = [];
         this.avgRoundtripTime = [];
+        this.tcpCongestionWindow = [];
     }
     return SimulationNode;
 })();
