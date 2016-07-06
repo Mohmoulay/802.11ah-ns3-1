@@ -35,6 +35,11 @@ public:
     Time getAveragePacketRoundTripTime();
 
     double getGoodputKbit();
+
+    int EDCAQueueLength = 0;
+
+    uint32_t TCPCongestionWindow = 0;
+
 };
 
 #endif /* NODESTATISTICS_H */

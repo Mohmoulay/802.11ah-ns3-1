@@ -6,6 +6,8 @@ using namespace ns3;
 
 int main(int argc, char** argv) {
 
+	PacketMetadata::Enable();
+
     config = Configuration(argc, argv);
     stats = Statistics(config.Nsta);
 
@@ -120,6 +122,18 @@ void configureSTANodes(Ssid& ssid) {
     mobility.Install(staNodes);
 }
 
+void OnAPPhyRxBegin(std::string context, Ptr<const Packet> packet) {
+	//cout << " AP RX Begin " << endl;
+}
+
+void OnAPPhyRxDrop(std::string context, Ptr<const Packet> packet) {
+
+
+	//cout << " AP RX Drop " << endl;
+	//packet->Print(cout);
+
+}
+
 void configureAPNode(Ssid& ssid) {
     // create AP node
     apNodes.Create(1);
@@ -169,6 +183,13 @@ void configureAPNode(Ssid& ssid) {
     mobilityAp.SetPositionAllocator(positionAlloc);
     mobilityAp.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobilityAp.Install(apNodes);
+
+	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeCallback(&OnAPPhyRxBegin));
+	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeCallback(&OnAPPhyRxDrop));
+
+
+	phy.EnablePcap("pcapfile", apNodes, 0);
+
 }
 
 void configureIPStack() {
@@ -226,6 +247,22 @@ void udpPacketReceivedAtServer(Ptr<const Packet> packet, Address from) {
     	cout << "*** Node could not be determined from received packet at AP " << endl;
 }
 
+void tcpPacketReceivedAtServer (Ptr<const Packet> packet, Address from) {
+	cout << "TCP packet received at server " << endl;
+
+    int staId = -1;
+    for (int i = 0; i < staNodeInterfaces.GetN(); i++) {
+        if (staNodeInterfaces.GetAddress(i) == InetSocketAddress::ConvertFrom(from).GetIpv4()) {
+            staId = i;
+            break;
+        }
+    }
+    if (staId != -1)
+        nodes[staId]->OnTcpPacketReceivedAtAP(packet);
+    else
+    	cout << "*** Node could not be determined from received packet at AP " << endl;
+}
+
 /*void udpPacketReceivedAtClient(Ptr<const Packet> packet, Address from) {
     int apId = -1;
     for (int i = 0; i < apNodeInterfaces.GetN(); i++) {
@@ -255,6 +292,32 @@ void configureUDPEchoServer() {
     serverApp = myServer.Install(apNodes);
     serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&udpPacketReceivedAtServer));
     serverApp.Start(Seconds(0));
+}
+
+
+void configureTCPEchoServer() {
+	TcpEchoServerHelper myServer(80);
+	serverApp = myServer.Install(apNodes);
+	serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&tcpPacketReceivedAtServer));
+	serverApp.Start(Seconds(0));
+}
+
+void configureTCPEchoClients() {
+	TcpEchoClientHelper clientHelper(apNodeInterfaces.GetAddress(0), 80); //address of remote node
+	clientHelper.SetAttribute("MaxPackets", UintegerValue(4294967295u));
+	clientHelper.SetAttribute("Interval", TimeValue(MilliSeconds(config.trafficInterval)));
+	clientHelper.SetAttribute("PacketSize", UintegerValue(config.trafficPacketSize));
+	for (uint16_t i = 0; i < config.Nsta; i++) {
+		ApplicationContainer clientApp = clientHelper.Install(staNodes.Get(i));
+		clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnTcpPacketSent, nodes[i]));
+		clientApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&NodeEntry::OnTcpEchoPacketReceived, nodes[i]));
+
+		clientApp.Get(0)->TraceConnectWithoutContext("CongestionWindow", MakeCallback(&NodeEntry::OnTcpCongestionWindowChanged, nodes[i]));
+
+		double random = (rand() % (config.trafficInterval/1000*4)) / (double)4;
+		clientApp.Start(Seconds(0+random));
+		//clientApp.Stop(Seconds(simulationTime + 1));
+	}
 }
 
 void configureUDPClients() {
@@ -291,10 +354,9 @@ void configureUDPEchoClients() {
 	}
 }
 
-
 void onSTAAssociated(int i) {
 
-    nodes[i]->rawGroupNumber = (nodes[i]->aId / (config.NRawSta / config.NGroup));
+    nodes[i]->rawGroupNumber = ((nodes[i]->aId - 1) / (config.NRawSta / config.NGroup));
 	cout << "Node " << std::to_string(i) << " is associated and has aId " << nodes[i]->aId << " and falls in RAW group " << std::to_string(nodes[i]->rawGroupNumber) << endl;
 
     eventManager.onNodeAssociated(*nodes[i]);
@@ -312,8 +374,10 @@ void onSTAAssociated(int i) {
 
         //configureUDPServer();
         //configureUDPClients();
-    	configureUDPEchoServer();
-    	configureUDPEchoClients();
+    	//configureUDPEchoServer();
+    	//configureUDPEchoClients();
+		configureTCPEchoServer();
+		configureTCPEchoClients();
 
         updateNodesQueueLength();
     }
@@ -321,10 +385,13 @@ void onSTAAssociated(int i) {
 
 
 void updateNodesQueueLength() {
-	for(int i = 0; i < config.Nsta; i++)
+	for(int i = 0; i < config.Nsta; i++) {
 		nodes[i]->UpdateQueueLength();
 
-	Simulator::Schedule(Seconds(1), &updateNodesQueueLength);
+		stats.get(i).EDCAQueueLength = nodes[i]->queueLength;
+	}
+
+	Simulator::Schedule(Seconds(0.5), &updateNodesQueueLength);
 }
 
 void printStatistics() {
@@ -337,6 +404,7 @@ void printStatistics() {
 		cout << "Node " << std::to_string(i) << endl;
 		cout << "X: " << nodes[i]->x << ", Y: " << nodes[i]->y << endl;
 		cout << "Tx Remaining Queue size: " << nodes[i]->queueLength << endl;
+		cout << "Tcp congestion window value: " << nodes[i]->congestionWindowValue << endl;
 		cout << "--------------" << endl;
 
 		cout << "Total transmit time: " << std::to_string(stats.get(i).TotalTransmitTime.GetMilliSeconds()) << "ms" << endl;
@@ -350,14 +418,14 @@ void printStatistics() {
 		cout << "Number of receives dropped: " << std::to_string(stats.get(i).NumberOfReceivesDropped) << endl;
 
 		cout << "" << endl;
-		cout << "Number of UDP packets sent: " << std::to_string(stats.get(i).NumberOfSentPackets) << endl;
-		cout << "Number of UDP packets successful: " << std::to_string(stats.get(i).NumberOfSuccessfulPackets) << endl;
-		cout << "Number of UDP packets dropped: " << std::to_string(stats.get(i).getNumberOfDroppedPackets()) << endl;
+		cout << "Number of packets sent: " << std::to_string(stats.get(i).NumberOfSentPackets) << endl;
+		cout << "Number of packets successful: " << std::to_string(stats.get(i).NumberOfSuccessfulPackets) << endl;
+		cout << "Number of packets dropped: " << std::to_string(stats.get(i).getNumberOfDroppedPackets()) << endl;
 
-		cout << "Number of UDP roundtrip packets successful: " << std::to_string(stats.get(i).NumberOfSuccessfulRoundtripPackets) << endl;
+		cout << "Number of roundtrip packets successful: " << std::to_string(stats.get(i).NumberOfSuccessfulRoundtripPackets) << endl;
 
-		cout << "Average UDP packet sent/receive time: " << std::to_string(stats.get(i).getAveragePacketSentReceiveTime().GetMicroSeconds()) << "µs" << endl;
-		cout << "Average UDP packet roundtrip time: " << std::to_string(stats.get(i).getAveragePacketRoundTripTime().GetMicroSeconds()) << "µs" << endl;
+		cout << "Average packet sent/receive time: " << std::to_string(stats.get(i).getAveragePacketSentReceiveTime().GetMicroSeconds()) << "µs" << endl;
+		cout << "Average packet roundtrip time: " << std::to_string(stats.get(i).getAveragePacketRoundTripTime().GetMicroSeconds()) << "µs" << endl;
 
 		cout << "" << endl;
 		cout << "Goodput: " << std::to_string(stats.get(i).getGoodputKbit()) << "Kbit" << endl;
