@@ -69,7 +69,11 @@ TcpEchoClient::GetTypeId (void)
 	.AddTraceSource("Rx",
 					"An echo packet is received",
 					MakeTraceSourceAccessor(&TcpEchoClient::m_packetReceived),
-					"ns3::TcpEchoClient::PacketReceivedCallback");
+					"ns3::TcpEchoClient::PacketReceivedCallback")
+	.AddTraceSource ("CongestionWindow",
+					 "The TCP connection's congestion window",
+					 MakeTraceSourceAccessor (&TcpEchoClient::m_cWnd),
+					 "ns3::TracedValue::Uint32Callback")
   ;
   return tid;
 }
@@ -120,6 +124,10 @@ TcpEchoClient::StartApplication (void)
     {
       TypeId tid = TypeId::LookupByName ("ns3::TcpSocketFactory");
       m_socket = Socket::CreateSocket (GetNode (), tid);
+
+
+      m_socket->TraceConnectWithoutContext("CongestionWindow", MakeCallback(&TcpEchoClient::OnCongestionWindowChanged, this));
+
       m_socket->Bind ();
       m_socket->Connect (InetSocketAddress (m_peerAddress, m_peerPort));
     }
@@ -128,6 +136,11 @@ TcpEchoClient::StartApplication (void)
 
   ScheduleTransmit (Seconds (0.));
 }
+
+void TcpEchoClient::OnCongestionWindowChanged(uint32_t oldval, uint32_t newval) {
+	m_cWnd(oldval,newval);
+}
+
 
 void
 TcpEchoClient::StopApplication ()

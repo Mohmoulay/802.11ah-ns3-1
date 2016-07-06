@@ -25,6 +25,7 @@
 #include "ns3/ptr.h"
 #include "ns3/ipv4-address.h"
 #include "ns3/traced-callback.h"
+#include "ns3/traced-value.h"
 
 namespace ns3 {
 
@@ -144,6 +145,8 @@ private:
 
   void ReceivePacket (Ptr<Socket> socket);
 
+  void OnCongestionWindowChanged(uint32_t oldval, uint32_t newval);
+
   uint32_t m_count;
   Time m_interval;
   uint32_t m_size;
@@ -159,6 +162,9 @@ private:
   Ipv4Address m_peerAddress;
   uint16_t m_peerPort;
   EventId m_sendEvent;
+
+  TracedCallback<uint32_t,uint32_t>          m_cWnd;
+
   /// Callbacks for tracing the packet Tx events
   TracedCallback<Ptr<const Packet> > m_txTrace;
 

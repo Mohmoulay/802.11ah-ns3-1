@@ -36,18 +36,6 @@
 namespace ns3 {
 
 
-
-struct PendingData {
-
-	PendingData(Mac48Address from, Mac48Address to, Ptr<const Packet>* packet)
-		: from(from), to(to), packet(packet) {
-
-	}
-	Mac48Address from;
-	Mac48Address to;
-	Ptr<const Packet>* packet;
-};
-
 /**
  * \brief Wi-Fi AP state machine
  * \ingroup wifi

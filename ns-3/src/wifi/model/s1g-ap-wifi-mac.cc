@@ -579,8 +579,8 @@ void S1gApWifiMac::SendOneBeacon(void) {
 				}
 			}
 
-
-				/*std::cout << Simulator::Now().GetMicroSeconds() << " DTIM beacon send, VMAP: ";
+/*
+				std::cout << Simulator::Now().GetMicroSeconds() << " DTIM beacon send, VMAP: ";
 				for(int i = 31; i >= 0; i--)
 					std::cout << ((vmap >> i) & 0x01);
 				std::cout << std::endl;

@@ -6,6 +6,8 @@ using namespace ns3;
 
 int main(int argc, char** argv) {
 
+	PacketMetadata::Enable();
+
     config = Configuration(argc, argv);
     stats = Statistics(config.Nsta);
 
@@ -121,13 +123,13 @@ void configureSTANodes(Ssid& ssid) {
 }
 
 void OnAPPhyRxBegin(std::string context, Ptr<const Packet> packet) {
-	cout << " AP RX Begin " << endl;
+	//cout << " AP RX Begin " << endl;
 }
 
 void OnAPPhyRxDrop(std::string context, Ptr<const Packet> packet) {
 
 
-	cout << " AP RX Drop " << endl;
+	//cout << " AP RX Drop " << endl;
 	//packet->Print(cout);
 
 }
@@ -181,8 +183,6 @@ void configureAPNode(Ssid& ssid) {
     mobilityAp.SetPositionAllocator(positionAlloc);
     mobilityAp.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobilityAp.Install(apNodes);
-
-    cout << "AP matches " << Config::LookupMatches("/NodeList/" + std::to_string(config.Nsta) + "/").GetN() << endl;
 
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeCallback(&OnAPPhyRxBegin));
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeCallback(&OnAPPhyRxDrop));
@@ -312,6 +312,8 @@ void configureTCPEchoClients() {
 		clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnTcpPacketSent, nodes[i]));
 		clientApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&NodeEntry::OnTcpEchoPacketReceived, nodes[i]));
 
+		clientApp.Get(0)->TraceConnectWithoutContext("CongestionWindow", MakeCallback(&NodeEntry::OnTcpCongestionWindowChanged, nodes[i]));
+
 		double random = (rand() % (config.trafficInterval/1000*4)) / (double)4;
 		clientApp.Start(Seconds(0+random));
 		//clientApp.Stop(Seconds(simulationTime + 1));
@@ -402,6 +404,7 @@ void printStatistics() {
 		cout << "Node " << std::to_string(i) << endl;
 		cout << "X: " << nodes[i]->x << ", Y: " << nodes[i]->y << endl;
 		cout << "Tx Remaining Queue size: " << nodes[i]->queueLength << endl;
+		cout << "Tcp congestion window value: " << nodes[i]->congestionWindowValue << endl;
 		cout << "--------------" << endl;
 
 		cout << "Total transmit time: " << std::to_string(stats.get(i).TotalTransmitTime.GetMilliSeconds()) << "ms" << endl;

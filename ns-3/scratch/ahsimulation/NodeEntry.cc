@@ -48,8 +48,12 @@ void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
-	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
-	// << "µs " << "End Tx " << packet->GetUid() << endl;
+	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
+	  //<< "End Tx " << packet->GetUid() << " (current group: " << lastBeaconAIDStart << " - " << lastBeaconAIDEnd << ")" << endl;
+
+	if(packet->GetUid() == 68)
+		packet->Print(cout);
+
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
 		Time oldTime = txMap[packet->GetUid()];
@@ -88,8 +92,9 @@ void NodeEntry::OnPhyRxBegin(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyRxEnd(std::string context, Ptr<const Packet> packet) {
-	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
 	//<< " End Rx " << packet->GetUid() << endl;
+
 	this->OnEndOfReceive(packet);
 }
 
@@ -225,20 +230,23 @@ void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 
 
 void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
-	cout << "[" << this->id << "] " << "TCP packet sent " << endl;
+	cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] " << "TCP packet sent " << endl;
 
 	stats->get(this->id).NumberOfSentPackets++;
 }
 
 void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
 		Address from) {
-	cout << "Echo packet received back from AP ("
-			<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ")" << endl;
+
 
 	auto pCopy = packet->Copy();
 	SeqTsHeader seqTs;
 	pCopy->RemoveHeader(seqTs);
 	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
+
+	cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] " << " Echo packet received back from AP ("
+				<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ") after "
+				<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
 
 	stats->get(this->id).NumberOfSuccessfulRoundtripPackets++;
 	stats->get(this->id).TotalPacketRoundtripTime += timeDiff;
@@ -251,7 +259,7 @@ void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 	pCopy->RemoveHeader(seqTs);
 	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
-cout << "[" << this->id << "] " << "TCP packet received at AP after "
+	cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "] " << "TCP packet received at AP after "
 	<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
 
 	stats->get(this->id).NumberOfSuccessfulPackets++;
@@ -259,7 +267,10 @@ cout << "[" << this->id << "] " << "TCP packet received at AP after "
 	stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
 }
 
-
+void NodeEntry::OnTcpCongestionWindowChanged(uint32_t oldval, uint32_t newval) {
+	this->congestionWindowValue = newval;
+	stats->get(this->id).TCPCongestionWindow = newval;
+}
 
 
 void NodeEntry::OnUdpPacketSent(Ptr<const Packet> packet) {
