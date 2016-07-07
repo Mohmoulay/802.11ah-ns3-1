@@ -12,7 +12,7 @@ var Animation = (function () {
         this.time += dt;
     };
     return Animation;
-})();
+}());
 var BroadcastAnimation = (function (_super) {
     __extends(BroadcastAnimation, _super);
     function BroadcastAnimation(x, y) {
@@ -35,7 +35,7 @@ var BroadcastAnimation = (function (_super) {
         return this.time >= this.max_time;
     };
     return BroadcastAnimation;
-})(Animation);
+}(Animation));
 var ReceivedAnimation = (function (_super) {
     __extends(ReceivedAnimation, _super);
     function ReceivedAnimation(x, y) {
@@ -59,7 +59,7 @@ var ReceivedAnimation = (function (_super) {
         return this.time >= this.max_time;
     };
     return ReceivedAnimation;
-})(Animation);
+}(Animation));
 var AssociatedAnimation = (function (_super) {
     __extends(AssociatedAnimation, _super);
     function AssociatedAnimation(x, y) {
@@ -84,5 +84,5 @@ var AssociatedAnimation = (function (_super) {
         return this.time >= this.max_time;
     };
     return AssociatedAnimation;
-})(Animation);
+}(Animation));
 //# sourceMappingURL=animation.js.map

@@ -12,7 +12,7 @@ var Animation = (function () {
         this.time += dt;
     };
     return Animation;
-})();
+}());
 var BroadcastAnimation = (function (_super) {
     __extends(BroadcastAnimation, _super);
     function BroadcastAnimation(x, y) {
@@ -35,7 +35,7 @@ var BroadcastAnimation = (function (_super) {
         return this.time >= this.max_time;
     };
     return BroadcastAnimation;
-})(Animation);
+}(Animation));
 var ReceivedAnimation = (function (_super) {
     __extends(ReceivedAnimation, _super);
     function ReceivedAnimation(x, y) {
@@ -59,7 +59,7 @@ var ReceivedAnimation = (function (_super) {
         return this.time >= this.max_time;
     };
     return ReceivedAnimation;
-})(Animation);
+}(Animation));
 var AssociatedAnimation = (function (_super) {
     __extends(AssociatedAnimation, _super);
     function AssociatedAnimation(x, y) {
@@ -84,7 +84,7 @@ var AssociatedAnimation = (function (_super) {
         return this.time >= this.max_time;
     };
     return AssociatedAnimation;
-})(Animation);
+}(Animation));
 var Color = (function () {
     function Color(red, green, blue, alpha, position) {
         if (alpha === void 0) { alpha = 1; }
@@ -99,7 +99,7 @@ var Color = (function () {
         return "rgba(" + this.red + ", " + this.green + "," + this.blue + ", " + this.alpha + ")";
     };
     return Color;
-})();
+}());
 var Palette = (function () {
     function Palette() {
         this.colors = [];
@@ -151,34 +151,30 @@ var Palette = (function () {
         }
     };
     return Palette;
-})();
+}());
 var EventManager = (function () {
-    function EventManager(sim, sock) {
+    function EventManager(sim) {
         this.sim = sim;
         this.events = [];
-        var self = this;
-        sock.on("entry", function (data) {
-            self.onReceive(data);
-        });
     }
     EventManager.prototype.processEvents = function () {
         while (this.events.length > 0) {
             var ev = this.events[0];
             switch (ev.parts[1]) {
                 case 'start':
-                    this.onStart(parseInt(ev.parts[2]), parseInt(ev.parts[3]), ev.parts[4], parseInt(ev.parts[5]), parseInt(ev.parts[6]), ev.parts[7], parseFloat(ev.parts[8]), parseFloat(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), ev.parts[13]);
+                    this.onStart(ev.stream, parseInt(ev.parts[2]), parseInt(ev.parts[3]), ev.parts[4], parseInt(ev.parts[5]), parseInt(ev.parts[6]), ev.parts[7], parseFloat(ev.parts[8]), parseFloat(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), ev.parts[13]);
                     break;
                 case 'stanodeadd':
-                    this.onNodeAdded(true, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseInt(ev.parts[5]));
+                    this.onNodeAdded(ev.stream, true, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseInt(ev.parts[5]));
                     break;
                 case 'stanodeassoc':
-                    this.onNodeAssociated(parseInt(ev.parts[2]), parseInt(ev.parts[3]), parseInt(ev.parts[4]));
+                    this.onNodeAssociated(ev.stream, parseInt(ev.parts[2]), parseInt(ev.parts[3]), parseInt(ev.parts[4]));
                     break;
                 case 'apnodeadd':
-                    this.onNodeAdded(false, -1, parseFloat(ev.parts[2]), parseFloat(ev.parts[3]), -1);
+                    this.onNodeAdded(ev.stream, false, -1, parseFloat(ev.parts[2]), parseFloat(ev.parts[3]), -1);
                     break;
                 case 'nodestats':
-                    this.onStatsUpdated(ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]));
+                    this.onStatsUpdated(ev.stream, ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]));
                     break;
                 default:
             }
@@ -186,16 +182,18 @@ var EventManager = (function () {
             this.events.shift();
         }
     };
-    EventManager.prototype.onReceive = function (line) {
-        var parts = line.split(';');
+    EventManager.prototype.onReceive = function (entry) {
+        var parts = entry.line.split(';');
         var time = parseInt(parts[0]);
         time = time / (1000 * 1000); // ns -> ms
-        var ev = new SimulationEvent(time, parts);
+        var ev = new SimulationEvent(entry.stream, time, parts);
         this.events.push(ev);
     };
-    EventManager.prototype.onStart = function (aidRAWRange, numberOfRAWGroups, RAWSlotFormat, RAWSlotDuration, numberOfRAWSlots, dataMode, dataRate, bandwidth, trafficInterval, trafficPacketsize, beaconInterval, name) {
-        this.sim.simulation.nodes = [];
-        var config = this.sim.simulation.config;
+    EventManager.prototype.onStart = function (stream, aidRAWRange, numberOfRAWGroups, RAWSlotFormat, RAWSlotDuration, numberOfRAWSlots, dataMode, dataRate, bandwidth, trafficInterval, trafficPacketsize, beaconInterval, name) {
+        var simulation = new Simulation();
+        this.sim.simulationContainer.setSimulation(stream, simulation);
+        simulation.nodes = [];
+        var config = simulation.config;
         config.AIDRAWRange = aidRAWRange;
         config.numberOfRAWGroups = numberOfRAWGroups;
         config.RAWSlotFormat = RAWSlotFormat;
@@ -209,23 +207,24 @@ var EventManager = (function () {
         config.beaconInterval = beaconInterval;
         config.name = name;
     };
-    EventManager.prototype.onNodeAdded = function (isSTA, id, x, y, aId) {
+    EventManager.prototype.onNodeAdded = function (stream, isSTA, id, x, y, aId) {
         var n = isSTA ? new STANode() : new APNode();
         n.id = id;
         n.x = x;
         n.y = y;
         n.aId = aId;
-        this.sim.simulation.nodes.push(n);
-        this.sim.onNodeAdded(id);
+        this.sim.simulationContainer.getSimulation(stream).nodes.push(n);
+        this.sim.onNodeAdded(stream, id);
     };
-    EventManager.prototype.onNodeAssociated = function (id, aId, groupNumber) {
-        if (id < 0 || id >= this.sim.simulation.nodes.length)
+    EventManager.prototype.onNodeAssociated = function (stream, id, aId, groupNumber) {
+        var simulation = this.sim.simulationContainer.getSimulation(stream);
+        if (id < 0 || id >= simulation.nodes.length)
             return;
-        var n = this.sim.simulation.nodes[id];
+        var n = simulation.nodes[id];
         n.aId = aId;
         n.groupNumber = groupNumber;
         n.isAssociated = true;
-        this.sim.onNodeAssociated(id);
+        this.sim.onNodeAssociated(stream, id);
     };
     EventManager.prototype.hasIncreased = function (values) {
         if (values.length >= 2) {
@@ -236,11 +235,12 @@ var EventManager = (function () {
         else
             return false;
     };
-    EventManager.prototype.onStatsUpdated = function (timestamp, id, totalTransmitTime, totalReceiveTime, totalReceiveDozeTime, totalReceiveActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTime, tcpCongestionWindow) {
-        if (id < 0 || id >= this.sim.simulation.nodes.length)
+    EventManager.prototype.onStatsUpdated = function (stream, timestamp, id, totalTransmitTime, totalReceiveTime, totalReceiveDozeTime, totalReceiveActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTime, tcpCongestionWindow) {
+        var simulation = this.sim.simulationContainer.getSimulation(stream);
+        if (id < 0 || id >= simulation.nodes.length)
             return;
         // keep track of statistics
-        var n = this.sim.simulation.nodes[id];
+        var n = simulation.nodes[id];
         n.totalTransmitTime.push(new Value(timestamp, totalTransmitTime));
         n.totalReceiveTime.push(new Value(timestamp, totalReceiveTime));
         n.totalReceiveDozeTime.push(new Value(timestamp, totalReceiveDozeTime));
@@ -258,31 +258,66 @@ var EventManager = (function () {
         n.nrOfSuccessfulRoundtripPackets.push(new Value(timestamp, nrOfSuccessfulRoundtripPackets));
         n.avgRoundtripTime.push(new Value(timestamp, avgRoundTripTime));
         n.tcpCongestionWindow.push(new Value(timestamp, tcpCongestionWindow));
-        if (this.hasIncreased(n.totalTransmitTime)) {
-            this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));
+        if (stream == this.sim.simulationContainer.getFirstStream()) {
+            if (this.hasIncreased(n.totalTransmitTime)) {
+                this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));
+            }
         }
         //if(this.hasIncreased(n.totalReceiveActiveTime))
         //   this.sim.addAnimation(new ReceivedAnimation(n.x, n.y));
-        this.sim.onNodeUpdated(id);
+        this.sim.onNodeUpdated(stream, id);
     };
     return EventManager;
-})();
+}());
 var SimulationEvent = (function () {
-    function SimulationEvent(time, parts) {
+    function SimulationEvent(stream, time, parts) {
+        this.stream = stream;
         this.time = time;
         this.parts = parts;
     }
     return SimulationEvent;
-})();
+}());
 /// <reference path="../../../typings/globals/jquery/index.d.ts" />
 /// <reference path="../../../typings/globals/socket.io/index.d.ts" />
 /// <reference path="../../../typings/globals/highcharts/index.d.ts" />
+var SimulationContainer = (function () {
+    function SimulationContainer() {
+        this.keys = [];
+        this.simulations = {};
+    }
+    SimulationContainer.prototype.getSimulation = function (stream) {
+        return this.simulations[stream];
+    };
+    SimulationContainer.prototype.setSimulation = function (stream, sim) {
+        this.simulations[stream] = sim;
+        this.keys.push(stream);
+    };
+    SimulationContainer.prototype.hasSimulations = function () {
+        return this.keys.length > 0;
+    };
+    SimulationContainer.prototype.getFirstSimulation = function () {
+        return this.simulations[this.keys[0]];
+    };
+    SimulationContainer.prototype.getFirstStream = function () {
+        return this.keys[0];
+    };
+    SimulationContainer.prototype.getSimulations = function () {
+        var sims = [];
+        for (var _i = 0, _a = this.keys; _i < _a.length; _i++) {
+            var k = _a[_i];
+            sims.push(this.simulations[k]);
+        }
+        return sims;
+    };
+    return SimulationContainer;
+}());
 var SimulationGUI = (function () {
     function SimulationGUI(canvas) {
         this.canvas = canvas;
-        this.simulation = new Simulation();
+        this.simulationContainer = new SimulationContainer();
         this.selectedNode = 0;
         this.selectedPropertyForChart = "totalTransmitTime";
+        this.selectedStream = "";
         this.animations = [];
         this.area = 2000;
         this.currentChart = null;
@@ -306,8 +341,10 @@ var SimulationGUI = (function () {
         }
     };
     SimulationGUI.prototype.drawRange = function () {
+        if (!this.simulationContainer.hasSimulations())
+            return;
         this.ctx.strokeStyle = "#CCC";
-        for (var _i = 0, _a = this.simulation.nodes; _i < _a.length; _i++) {
+        for (var _i = 0, _a = this.simulationContainer.getFirstSimulation().nodes; _i < _a.length; _i++) {
             var n = _a[_i];
             if (n.type == "AP") {
                 for (var i = 1; i <= 10; i++) {
@@ -320,9 +357,11 @@ var SimulationGUI = (function () {
         }
     };
     SimulationGUI.prototype.getMaxOfProperty = function (prop) {
+        if (!this.simulationContainer.hasSimulations())
+            return 0;
         var curMax = Number.MIN_VALUE;
         if (prop != "") {
-            for (var _i = 0, _a = this.simulation.nodes; _i < _a.length; _i++) {
+            for (var _i = 0, _a = this.simulationContainer.getFirstSimulation().nodes; _i < _a.length; _i++) {
                 var n = _a[_i];
                 var values = n[this.selectedPropertyForChart];
                 if (values.length > 0) {
@@ -342,7 +381,7 @@ var SimulationGUI = (function () {
             var type = el.attr("data-type");
             if (typeof type != "undefined" && type != "") {
                 var min = parseInt(el.attr("data-min"));
-                var max;
+                var max = void 0;
                 if (el.attr("data-max") == "*")
                     max = curMax;
                 else
@@ -364,8 +403,10 @@ var SimulationGUI = (function () {
             return this.rawGroupColors[n.groupNumber % this.rawGroupColors.length].toString();
     };
     SimulationGUI.prototype.drawNodes = function () {
+        if (!this.simulationContainer.hasSimulations())
+            return;
         var curMax = this.getMaxOfProperty(this.selectedPropertyForChart);
-        for (var _i = 0, _a = this.simulation.nodes; _i < _a.length; _i++) {
+        for (var _i = 0, _a = this.simulationContainer.getFirstSimulation().nodes; _i < _a.length; _i++) {
             var n = _a[_i];
             this.ctx.beginPath();
             if (n.type == "AP") {
@@ -402,17 +443,19 @@ var SimulationGUI = (function () {
     SimulationGUI.prototype.addAnimation = function (anim) {
         this.animations.push(anim);
     };
-    SimulationGUI.prototype.onNodeUpdated = function (id) {
+    SimulationGUI.prototype.onNodeUpdated = function (stream, id) {
         if (id == this.selectedNode)
             this.updateNodeGUI(false);
     };
-    SimulationGUI.prototype.onNodeAdded = function (id) {
+    SimulationGUI.prototype.onNodeAdded = function (stream, id) {
         if (id == this.selectedNode)
             this.updateNodeGUI(true);
     };
-    SimulationGUI.prototype.onNodeAssociated = function (id) {
-        var n = this.simulation.nodes[id];
-        this.addAnimation(new AssociatedAnimation(n.x, n.y));
+    SimulationGUI.prototype.onNodeAssociated = function (stream, id) {
+        if (stream == this.simulationContainer.getFirstStream()) {
+            var n = this.simulationContainer.getSimulation(stream).nodes[id];
+            this.addAnimation(new AssociatedAnimation(n.x, n.y));
+        }
     };
     SimulationGUI.prototype.onSimulationTimeUpdated = function (time) {
         $("#simCurrentTime").text(time);
@@ -423,10 +466,14 @@ var SimulationGUI = (function () {
     };
     SimulationGUI.prototype.updateNodeGUI = function (full) {
         var _this = this;
-        if (this.selectedNode < 0 || this.selectedNode >= this.simulation.nodes.length)
+        if (!this.simulationContainer.hasSimulations())
             return;
-        var node = this.simulation.nodes[this.selectedNode];
-        $("#simulationName").text(this.simulation.config.name);
+        if (this.selectedNode < 0 || this.selectedNode >= this.simulationContainer.getFirstSimulation().nodes.length)
+            return;
+        var simulations = this.simulationContainer.getSimulations();
+        var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        var node = selectedSimulation.nodes[this.selectedNode];
+        $("#simulationName").text(selectedSimulation.config.name);
         $("#nodeTitle").text("Node " + node.id);
         $("#nodePosition").text(node.x + "," + node.y);
         if (node.type == "STA" && !node.isAssociated) {
@@ -439,7 +486,7 @@ var SimulationGUI = (function () {
         var configElements = $(".configProperty");
         for (var i = 0; i < configElements.length; i++) {
             var prop = $(configElements[i]).attr("data-property");
-            $($(configElements[i]).find("td").get(1)).text(this.simulation.config[prop]);
+            $($(configElements[i]).find("td").get(1)).text(selectedSimulation.config[prop]);
         }
         var propertyElements = $(".nodeProperty");
         for (var i = 0; i < propertyElements.length; i++) {
@@ -451,31 +498,40 @@ var SimulationGUI = (function () {
         // prevent update flood by max 1 update per second or when gui changed
         var timeDiff = new Date().getTime() - this.lastUpdatedOn.getTime();
         if (timeDiff > 1000 || full) {
-            this.updateCharts(node, true);
+            this.updateCharts(simulations, full);
             this.lastUpdatedOn = new Date();
         }
         else {
             window.clearTimeout(this.refreshTimerId);
             this.refreshTimerId = window.setTimeout(function () {
-                _this.updateCharts(node, true);
+                _this.updateCharts(simulations, full);
                 _this.lastUpdatedOn = new Date();
             }, timeDiff);
         }
     };
-    SimulationGUI.prototype.updateCharts = function (node, full) {
+    SimulationGUI.prototype.updateCharts = function (simulations, full) {
         var showDeltas = $("#chkShowDeltas").prop("checked");
-        var values = node[this.selectedPropertyForChart];
-        if (values.length > 0) {
+        var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        var firstNode = selectedSimulation.nodes[this.selectedNode];
+        if (firstNode[this.selectedPropertyForChart].length > 0) {
             if (this.currentChart == null || full) {
-                var selectedData = [];
-                if (!showDeltas) {
-                    for (var i = 0; i < values.length; i++)
-                        selectedData.push({ x: values[i].timestamp, y: values[i].value });
-                }
-                else {
-                    selectedData.push({ x: values[0].timestamp, y: values[0].value });
-                    for (var i = 1; i < values.length; i++)
-                        selectedData.push({ x: values[i].timestamp, y: values[i].value - values[i - 1].value });
+                var series = [];
+                for (var i = 0; i < simulations.length; i++) {
+                    var values = simulations[i].nodes[this.selectedNode][this.selectedPropertyForChart];
+                    var selectedData = [];
+                    if (!showDeltas) {
+                        for (var i_1 = 0; i_1 < values.length; i_1++)
+                            selectedData.push({ x: values[i_1].timestamp, y: values[i_1].value });
+                    }
+                    else {
+                        selectedData.push({ x: values[0].timestamp, y: values[0].value });
+                        for (var i_2 = 1; i_2 < values.length; i_2++)
+                            selectedData.push({ x: values[i_2].timestamp, y: values[i_2].value - values[i_2 - 1].value });
+                    }
+                    series.push({
+                        name: "[" + i + "] " + this.selectedPropertyForChart,
+                        data: selectedData
+                    });
                 }
                 var self_1 = this;
                 var title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
@@ -511,45 +567,47 @@ var SimulationGUI = (function () {
                             }]
                     },
                     legend: { enabled: false },
-                    series: [{
-                            name: this.selectedPropertyForChart,
-                            data: selectedData
-                        }],
+                    series: series,
                     credits: false
                 });
             }
             else {
-                var lastValue = values[values.length - 1];
-                if (!showDeltas)
-                    this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value], true, false);
-                else {
-                    if (values.length >= 2) {
-                        var beforeLastValue = values[values.length - 2];
-                        this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value - beforeLastValue.value], true, false);
+                for (var s = 0; s < simulations.length; s++) {
+                    var values = simulations[s].nodes[this.selectedNode][this.selectedPropertyForChart];
+                    if (!showDeltas || values.length < 2) {
+                        for (var i = this.currentChart.series[s].data.length; i < values.length; i++) {
+                            var val = values[i];
+                            this.currentChart.series[s].addPoint([val.timestamp, val.value], true, false);
+                        }
                     }
-                    else
-                        this.currentChart.series[0].addPoint([lastValue.timestamp, lastValue.value], true, false);
+                    else {
+                        for (var i = this.currentChart.series[s].data.length; i < values.length; i++) {
+                            var beforeVal = values[i - 1];
+                            var val = values[i];
+                            this.currentChart.series[s].addPoint([val.timestamp, val.value - beforeVal.value], true, false);
+                        }
+                    }
                 }
             }
         }
-        if (node.totalReceiveActiveTime.length > 0 && node.totalReceiveDozeTime.length > 0) {
-            var activeDozePieData = [{ name: "Active", y: node.totalReceiveActiveTime[node.totalReceiveActiveTime.length - 1].value },
-                { name: "Doze", y: node.totalReceiveDozeTime[node.totalReceiveDozeTime.length - 1].value }];
+        if (firstNode.totalReceiveActiveTime.length > 0 && firstNode.totalReceiveDozeTime.length > 0) {
+            var activeDozePieData = [{ name: "Active", y: firstNode.totalReceiveActiveTime[firstNode.totalReceiveActiveTime.length - 1].value },
+                { name: "Doze", y: firstNode.totalReceiveDozeTime[firstNode.totalReceiveDozeTime.length - 1].value }];
             this.createPieChart("#nodeChartActiveDoze", 'Active/doze time', activeDozePieData);
         }
-        if (node.nrOfTransmissions.length > 0 && node.nrOfTransmissionsDropped.length > 0) {
-            var activeTransmissionsSuccessDroppedData = [{ name: "OK", y: node.nrOfTransmissions[node.nrOfTransmissions.length - 1].value - node.nrOfTransmissionsDropped[node.nrOfTransmissionsDropped.length - 1].value },
-                { name: "Dropped", y: node.nrOfTransmissionsDropped[node.nrOfTransmissionsDropped.length - 1].value }];
+        if (firstNode.nrOfTransmissions.length > 0 && firstNode.nrOfTransmissionsDropped.length > 0) {
+            var activeTransmissionsSuccessDroppedData = [{ name: "OK", y: firstNode.nrOfTransmissions[firstNode.nrOfTransmissions.length - 1].value - firstNode.nrOfTransmissionsDropped[firstNode.nrOfTransmissionsDropped.length - 1].value },
+                { name: "Dropped", y: firstNode.nrOfTransmissionsDropped[firstNode.nrOfTransmissionsDropped.length - 1].value }];
             this.createPieChart("#nodeChartTxSuccessDropped", 'TX OK/dropped', activeTransmissionsSuccessDroppedData);
         }
-        if (node.nrOfReceives.length > 0 && node.nrOfReceivesDropped.length > 0) {
-            var activeReceivesSuccessDroppedData = [{ name: "OK", y: node.nrOfReceives[node.nrOfReceives.length - 1].value - node.nrOfReceivesDropped[node.nrOfReceivesDropped.length - 1].value },
-                { name: "Dropped", y: node.nrOfReceivesDropped[node.nrOfReceivesDropped.length - 1].value }];
+        if (firstNode.nrOfReceives.length > 0 && firstNode.nrOfReceivesDropped.length > 0) {
+            var activeReceivesSuccessDroppedData = [{ name: "OK", y: firstNode.nrOfReceives[firstNode.nrOfReceives.length - 1].value - firstNode.nrOfReceivesDropped[firstNode.nrOfReceivesDropped.length - 1].value },
+                { name: "Dropped", y: firstNode.nrOfReceivesDropped[firstNode.nrOfReceivesDropped.length - 1].value }];
             this.createPieChart("#nodeChartRxSuccessDropped", 'RX OK/dropped', activeReceivesSuccessDroppedData);
         }
-        if (node.nrOfSuccessfulPackets.length > 0 && node.nrOfDroppedPackets.length > 0) {
-            var activePacketsSuccessDroppedData = [{ name: "OK", y: node.nrOfSuccessfulPackets[node.nrOfSuccessfulPackets.length - 1].value },
-                { name: "Dropped", y: node.nrOfDroppedPackets[node.nrOfDroppedPackets.length - 1].value }];
+        if (firstNode.nrOfSuccessfulPackets.length > 0 && firstNode.nrOfDroppedPackets.length > 0) {
+            var activePacketsSuccessDroppedData = [{ name: "OK", y: firstNode.nrOfSuccessfulPackets[firstNode.nrOfSuccessfulPackets.length - 1].value },
+                { name: "Dropped", y: firstNode.nrOfDroppedPackets[firstNode.nrOfDroppedPackets.length - 1].value }];
             this.createPieChart("#nodeChartPacketSuccessDropped", 'Packets OK/dropped', activePacketsSuccessDroppedData);
         }
     };
@@ -581,28 +639,65 @@ var SimulationGUI = (function () {
         });
     };
     return SimulationGUI;
-})();
+}());
+function getParameterByName(name, url) {
+    if (!url)
+        url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"), results = regex.exec(url);
+    if (!results)
+        return "";
+    if (!results[2])
+        return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
 $(document).ready(function () {
     var sim = null;
     var evManager = null;
     var time = new Date().getTime();
     var canvas = $("#canv").get(0);
     sim = new SimulationGUI(canvas);
+    var streams;
+    var compare = getParameterByName("compare");
+    if (compare == "")
+        streams = ["live"];
+    else
+        streams = compare.split(',');
+    for (var _i = 0, streams_1 = streams; _i < streams_1.length; _i++) {
+        var stream = streams_1[_i];
+        var rdb = "<input class=\"rdbStream\" name=\"streams\" type='radio' data-stream='" + stream + "'>&nbsp;";
+        $("#rdbStreams").append(rdb);
+    }
+    sim.selectedStream = streams[0];
+    $(".rdbStream[data-stream='" + sim.selectedStream + "']").prop("checked", true);
     // connect to the nodejs server with a websocket
     console.log("Connecting to websocket");
     var sock = io.connect("http://" + window.location.host + "/");
     sock.on("connect", function (data) {
         console.log("Websocket connected, listening for events");
-        evManager = new EventManager(sim, sock);
+        evManager = new EventManager(sim);
+        console.log("Subscribing to " + streams);
+        sock.emit("subscribe", {
+            simulations: streams
+        });
     }).on("error", function () {
         console.log("Unable to connect to server websocket endpoint");
     });
+    sock.on("error", function (data) {
+        alert("Error: " + data);
+    });
+    sock.on("entry", function (data) {
+        evManager.onReceive(data);
+        //console.log("Received " + data.stream + ": " + data.line);
+    });
     $(canvas).click(function (ev) {
+        if (!sim.simulationContainer.hasSimulations())
+            return;
         var rect = canvas.getBoundingClientRect();
         var x = (ev.clientX - rect.left) / (canvas.width / sim.area);
         var y = (ev.clientY - rect.top) / (canvas.width / sim.area);
         var selectedNode = null;
-        for (var _i = 0, _a = sim.simulation.nodes; _i < _a.length; _i++) {
+        for (var _i = 0, _a = sim.simulationContainer.getFirstSimulation().nodes; _i < _a.length; _i++) {
             var n = _a[_i];
             var dist = Math.sqrt(Math.pow((n.x - x), 2) + Math.pow((n.y - y), 2));
             if (dist < 20) {
@@ -621,6 +716,16 @@ $(document).ready(function () {
     });
     $("#chkShowDeltas").change(function (ev) {
         sim.updateNodeGUI(true);
+    });
+    $(".rdbStream").change(function (ev) {
+        var rdbs = $(".rdbStream");
+        for (var i = 0; i < rdbs.length; i++) {
+            var rdb = $(rdbs.get(i));
+            if (rdb.prop("checked")) {
+                sim.selectedStream = rdb.attr("data-stream");
+                sim.updateNodeGUI(true);
+            }
+        }
     });
     loop();
     function loop() {
@@ -667,14 +772,14 @@ var SimulationNode = (function () {
         this.tcpCongestionWindow = [];
     }
     return SimulationNode;
-})();
+}());
 var Value = (function () {
     function Value(timestamp, value) {
         this.timestamp = timestamp;
         this.value = value;
     }
     return Value;
-})();
+}());
 var APNode = (function (_super) {
     __extends(APNode, _super);
     function APNode() {
@@ -682,7 +787,7 @@ var APNode = (function (_super) {
         this.type = "AP";
     }
     return APNode;
-})(SimulationNode);
+}(SimulationNode));
 var STANode = (function (_super) {
     __extends(STANode, _super);
     function STANode() {
@@ -691,18 +796,18 @@ var STANode = (function (_super) {
         this.isAssociated = false;
     }
     return STANode;
-})(SimulationNode);
+}(SimulationNode));
 var SimulationConfiguration = (function () {
     function SimulationConfiguration() {
         this.name = "";
     }
     return SimulationConfiguration;
-})();
+}());
 var Simulation = (function () {
     function Simulation() {
         this.nodes = [];
         this.config = new SimulationConfiguration();
     }
     return Simulation;
-})();
+}());
 //# sourceMappingURL=main.js.map

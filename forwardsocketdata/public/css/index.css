@@ -34,3 +34,11 @@ body{
 .col-offset-800 {
     padding-left:815px !important;
 }
+
+#rdbStreams > input {
+    margin:5px;
+}
+
+#rdbStreams {
+    margin-top: -20px;
+}

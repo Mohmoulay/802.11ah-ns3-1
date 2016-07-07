@@ -8,8 +8,10 @@ import * as net from "net";
 import * as qs from "querystring";
 import * as express from "express";
 import * as socket from "socket.io"
-import events = require('events');
 
+import * as readline from "readline";
+
+import events = require('events');
 
 var ss = require('socket.io-stream');
 
@@ -20,10 +22,51 @@ const LISTENER_PORT = 7707;
 const PATH = "testfile.txt";
 
 
+class SocketManager {
+
+    private activeSockets = {};
+
+    addSocket(stream:string, sock:SocketIO.Socket):void {
+        console.log("Adding socket " + sock.id + " for stream " + stream);
+        if(typeof this.activeSockets[stream] == "undefined")
+            this.activeSockets[stream] = [];
+
+        let sockets = (<SocketIO.Socket[]>this.activeSockets[stream]);
+        sockets.push(sock);
+    }
+
+    removeSocket(sock:SocketIO.Socket) {
+        console.log("Removing socket " + sock.id);
+        for(let key in this.activeSockets) {
+            let sockets = (<SocketIO.Socket[]>this.activeSockets[key]);
+             let idx = sockets.indexOf(sock);
+                if (idx >= 0)
+                    sockets.splice(idx, 1);
+        }
+    }
+
+    getSocketsFor(stream:string):SocketIO.Socket[] {
+        if(typeof this.activeSockets[stream] == "undefined")
+            return [];
+        else {
+            let sockets = (<SocketIO.Socket[]>this.activeSockets[stream]);
+            return sockets;
+        }
+    }
+}
+
+interface ISubscriptionRequest {
+    simulations:string[];
+}
+
+class Entry {
+    public constructor(public stream:string, public line:string) {}
+}
+
 export class Program {
 
     // a list of active connections from the website
-    private activeSockets: SocketIO.Socket[] = [];
+    private activeSocketManager:SocketManager = new SocketManager();
 
     constructor() {
         this.initialize();
@@ -67,34 +110,63 @@ export class Program {
         let io = socket.listen(server);
         io.on("connection", sock => {
 
-            this.onWebClientConnected(sock);
-
-            this.activeSockets.push(sock);
             sock.on("close", () => {
-                let idx = this.activeSockets.indexOf(sock);
-                if (idx >= 0)
-                    this.activeSockets.splice(idx, 1);
+                this.activeSocketManager.removeSocket(sock);
             });
+
+            sock.on("subscribe", (data:ISubscriptionRequest) => {
+
+                console.log("subscription request " + data.simulations);
+                for(let stream of data.simulations) {
+                    this.activeSocketManager.addSocket(stream, sock);
+
+                    if(stream == "live") {
+                        for (let initLine of this.liveSimulationInitializationLines)
+                            sock.emit("entry",new Entry("live", initLine));
+                    } else {
+                        this.sendSimulationToSocket(stream, sock);
+                    }
+                }
+            })
+
+        });
+    }
+
+    sendSimulationToSocket(stream:string, sock:SocketIO.Socket) {
+        let filename = stream + ".nss";
+        if(!fs.existsSync(this.getPathForSimulationName(filename))) {
+            sock.emit("error", "Simulation file " + stream + " not found");
+            return;
+        }
+            
+        var instream = fs.createReadStream(this.getPathForSimulationName(filename));
+        var outstream = new (require('stream'))();
+        var rl = readline.createInterface(instream,outstream);
+        rl.on('line', function(line) {
+            //console.log("Writing entry for " + stream + ": " + line);
+            sock.emit("entry",new Entry(stream, line));
+        });
+
+        rl.on('close', function() {
 
         });
     }
 
 
-    private buffer: string = "";
-
+    private liveBuffer: string = "";
     /**
    * Fired when the client has received data. Append the received data to the buffer
    * and split on newlines (\n delimiter). As soon as a full line is received, process it
    */
     private onDataReceived(data: string) {
-        this.buffer += data;
+        this.liveBuffer += data;
 
         let stop = false;
         while (!stop) {
-            let parts: string[] = this.buffer.split('\n');
+            let parts: string[] = this.liveBuffer.split('\n');
             if (parts.length > 1) {
                 let line = parts[0].trim();
-                this.buffer = this.buffer.substr(parts[0].length + 1);
+                this.liveBuffer = this.liveBuffer.substr(parts[0].length + 1);
                 try {
                     this.processMessage(line);
                 }
@@ -107,44 +179,42 @@ export class Program {
         }
     }
 
-    private onWebClientConnected(sock: SocketIO.Socket) {
-        for (let initLine of this.simulationInitializationLines) {
-            sock.emit("entry", initLine);
-        }
+    private getPathForSimulationName(simulationName:string):string {
+        return path.resolve(__dirname, "simulations", simulationName);
     }
 
-    simulationInitializationLines: string[] = [];
-    simulationName: string = "";
+    liveSimulationInitializationLines: string[] = [];
+    liveSimulationName: string = "";
     private processMessage(line: string) {
 
 
         // retain config & base data to allow users to jump in simulation when it's already busy
         var parts = line.split(';');
         if (parts[1] == "start") {
-            this.simulationInitializationLines = [];
-            this.simulationName = parts[parts.length - 1] + ".nss";
+            this.liveSimulationInitializationLines = [];
+            this.liveSimulationName = parts[parts.length - 1] + ".nss";
 
             try {
-                if (this.simulationName != "") {
-                    fs.unlinkSync(path.resolve(__dirname, "simulations", this.simulationName));
+                if (this.liveSimulationName != "") {
+                    fs.unlinkSync(this.getPathForSimulationName(this.liveSimulationName));
                 }
             }
             catch (e) {
             }
 
-            this.simulationInitializationLines.push(line);
+            this.liveSimulationInitializationLines.push(line);
         }
         else if (parts[1] == "stanodeadd" || parts[1] == "apnodeadd" || parts[1] == "stanodeassoc")
-            this.simulationInitializationLines.push(line);
+            this.liveSimulationInitializationLines.push(line);
 
-        for (let s of this.activeSockets) {
-            s.emit("entry", line);
+        for (let s of this.activeSocketManager.getSocketsFor("live")) {
+            s.emit("entry", new Entry("live", line));
         }
 
         try {
-            if (this.simulationName != "") {
+            if (this.liveSimulationName != "") {
                 //console.log("Writing to file " + path.resolve(__dirname, "simulations", this.simulationName));        
-                fs.appendFileSync(path.resolve(__dirname, "simulations", this.simulationName), line + "\n");
+                fs.appendFileSync(this.getPathForSimulationName(this.liveSimulationName), line + "\n");
             }
         }
         catch (e) {
