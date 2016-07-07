@@ -252,13 +252,13 @@ namespace ns3 {
         RPS::RawAssignment ass;
         ass.SetRawControl(m_raw[0]);
 
-        uint16_t slot = m_raw[2] << 8 + m_raw[1];
+        uint16_t slot =(uint16_t(m_raw[2]) << 8) | (uint16_t(m_raw[1]));
         ass.SetSlot(slot);
 
         ass.SetRawStart(m_raw[3]);
-        ass.SetRawGroup(((int) m_raw[6] << 16) + ((int) m_raw[5] << 8) + m_raw[4]);
-        ass.SetChannelInd(((int) m_raw[8] << 16) + m_raw[7]);
-        ass.SetPRAW(((int) m_raw[11] << 16) + ((int) m_raw[10] << 8) + m_raw[9]);
+        ass.SetRawGroup((uint32_t(m_raw[6]) << 16) + (uint32_t(m_raw[5]) << 8) + uint32_t(m_raw[4]));
+        ass.SetChannelInd((uint16_t(m_raw[8]) << 16) + uint16_t(m_raw[7]));
+        ass.SetPRAW((uint32_t(m_raw[11]) << 16) + (uint32_t(m_raw[10]) << 8) + uint32_t(m_raw[9]));
         
         return ass;
     }

@@ -27,6 +27,7 @@
 #include "ns3/nstime.h"
 #include "ns3/object.h"
 #include "ns3/wifi-mac-header.h"
+#include "ns3/wifi-mac-queue.h"
 #include "ns3/wifi-mode.h"
 #include "ns3/wifi-remote-station-manager.h"
 #include "ns3/dcf.h"
@@ -35,7 +36,7 @@ namespace ns3 {
 
 class DcfState;
 class DcfManager;
-class WifiMacQueue;
+//class WifiMacQueue;
 class MacLow;
 class WifiMacParameters;
 class MacTxMiddle;

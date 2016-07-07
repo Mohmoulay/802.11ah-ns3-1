@@ -409,9 +409,10 @@ void printStatistics() {
 
 		cout << "Total transmit time: " << std::to_string(stats.get(i).TotalTransmitTime.GetMilliSeconds()) << "ms" << endl;
 		cout << "Total receive time: " << std::to_string(stats.get(i).TotalReceiveTime.GetMilliSeconds()) << "ms" << endl;
-		cout << "    Total active receive time: " << std::to_string(stats.get(i).TotalReceiveActiveTime.GetMilliSeconds()) << "ms" << endl;
-		cout << "    Total doze receive time: " << std::to_string(stats.get(i).TotalReceiveDozeTime.GetMilliSeconds()) << "ms" << endl;
-
+		cout << "" << endl;
+		cout << "Total active time: " << std::to_string(stats.get(i).TotalActiveTime.GetMilliSeconds()) << "ms" << endl;
+		cout << "Total doze time: " << std::to_string(stats.get(i).TotalDozeTime.GetMilliSeconds()) << "ms" << endl;
+		cout << "" << endl;
 		cout << "Number of transmissions: " << std::to_string(stats.get(i).NumberOfTransmissions) << endl;
 		cout << "Number of transmissions dropped: " << std::to_string(stats.get(i).NumberOfTransmissionsDropped) << endl;
 		cout << "Number of receives: " << std::to_string(stats.get(i).NumberOfReceives) << endl;

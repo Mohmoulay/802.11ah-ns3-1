@@ -49,11 +49,10 @@ void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
 
 void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
 	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
-	  //<< "End Tx " << packet->GetUid() << " (current group: " << lastBeaconAIDStart << " - " << lastBeaconAIDEnd << ")" << endl;
+	//<< "End Tx " << packet->GetUid() << " (current group: " << lastBeaconAIDStart << " - " << lastBeaconAIDEnd << ")" << endl;
 
-	if(packet->GetUid() == 68)
+	if (packet->GetUid() == 68)
 		packet->Print(cout);
-
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
 		Time oldTime = txMap[packet->GetUid()];
@@ -116,42 +115,37 @@ void NodeEntry::OnEndOfReceive(Ptr<const Packet> packet) {
 			pCopy->RemoveHeader(hdr);
 			pCopy->RemoveHeader(s1gBeaconHeader);
 
-
 			//       cout << "[" << this->id << "] " <<  "Received S1g beacon " << endl;
 			auto raw = s1gBeaconHeader.GetRPS().GetRawAssigmentObj();
 
 			this->lastBeaconAIDStart = raw.GetRawGroupAIDStart();
 			this->lastBeaconAIDEnd = raw.GetRawGroupAIDEnd();
 
-
-			if(s1gBeaconHeader.GetTIM().GetTIMCount() == 0) {
+			if (s1gBeaconHeader.GetTIM().GetTIMCount() == 0) {
 				// DTIM data
 				uint32_t vmap = s1gBeaconHeader.GetTIM().GetPartialVBitmap();
 
 				/*if(vmap != 0x0) {
-					std::cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "]" << " DTIM beacon received, VMAP: ";
-					for(int i = 31; i >= 0; i--)
-						cout << ((vmap >> i) & 0x01);
-					cout << endl;
-				}*/
-
+				 std::cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "]" << " DTIM beacon received, VMAP: ";
+				 for(int i = 31; i >= 0; i--)
+				 cout << ((vmap >> i) & 0x01);
+				 cout << endl;
+				 }*/
 
 				/*	std::cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "]" << " DTIM beacon received, VMAP: ";
-										for(int i = 31; i >= 0; i--)
-											cout << ((vmap >> i) & 0x01);
-										cout << endl;
-				*/
+				 for(int i = 31; i >= 0; i--)
+				 cout << ((vmap >> i) & 0x01);
+				 cout << endl;
+				 */
 
-				if((vmap >> this->rawGroupNumber) & 0x01 == 0x01) {
+				if ((vmap >> this->rawGroupNumber) & 0x01 == 0x01) {
 					// there is pending data at the AP
 					rawTIMGroupFlaggedAsDataAvailableInDTIM = true;
-				}
-				else {
+				} else {
 					// no pending data at the AP
 					rawTIMGroupFlaggedAsDataAvailableInDTIM = false;
 				}
 			}
-
 
 			//cout << "S1g beacon received" << endl;
 			//cout << "RAW Group: page=" << std::to_string(raw.GetRawGroupPage()) << ", aId start=" << std::to_string(lastBeaconAIDStart) << ", aId end=" << std::to_string(lastBeaconAIDEnd) << endl;
@@ -164,20 +158,21 @@ void NodeEntry::OnEndOfReceive(Ptr<const Packet> packet) {
 		// Rx.
 		// The STA will only become awake if the DTIM data specified that there is data pending
 
-	/*	if(this->id==48) {
-			cout << "Receive on node 48 " << endl;
-			cout << "TIM group was flagged in last DTIM?: " << rawTIMGroupFlaggedAsDataAvailableInDTIM << endl;
-			cout << "Last beacon range: " << lastBeaconAIDStart << " - " << lastBeaconAIDEnd << endl;
-		}
-		*/
-		if (rawTIMGroupFlaggedAsDataAvailableInDTIM && aId >= lastBeaconAIDStart && aId <= lastBeaconAIDEnd) {
+		/*	if(this->id==48) {
+		 cout << "Receive on node 48 " << endl;
+		 cout << "TIM group was flagged in last DTIM?: " << rawTIMGroupFlaggedAsDataAvailableInDTIM << endl;
+		 cout << "Last beacon range: " << lastBeaconAIDStart << " - " << lastBeaconAIDEnd << endl;
+		 }
+		 */
+		/*if (rawTIMGroupFlaggedAsDataAvailableInDTIM && aId >= lastBeaconAIDStart
+				&& aId <= lastBeaconAIDEnd) {
 			// the last beacon received was a beacon for a RAW slot for the current station
 			stats->get(this->id).TotalReceiveActiveTime += (Simulator::Now()
 					- oldTime);
 		} else {
 			stats->get(this->id).TotalReceiveDozeTime += (Simulator::Now()
 					- oldTime);
-		}
+		}*/
 
 		//s1gBeaconHeader.Print(cout);
 	} else {
@@ -200,7 +195,27 @@ void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet) {
 void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 		const Time duration, const WifiPhy::State state) {
 
-	/*cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << "State change, new state is ";
+	switch (state) {
+
+		case WifiPhy::State::SLEEP:
+			stats->get(this->id).TotalDozeTime += duration;
+			break;
+
+		case WifiPhy::State::IDLE:
+		case WifiPhy::State::TX:
+		case WifiPhy::State::RX:
+		case WifiPhy::State::SWITCHING:
+			stats->get(this->id).TotalActiveTime += duration;
+			break;
+
+
+		case WifiPhy::State::CCA_BUSY:
+			// not sure why this is counted as the same as sleep
+			// so state change is fired with the same duration for both SLEEP and CCA_BUSY
+			break;
+	}
+
+	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << "State change, new state is ";
 
 	 switch (state) {
 	 case WifiPhy::State::IDLE:
@@ -223,14 +238,16 @@ void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 	 break;
 
 	 }
+
+	 cout << ", duration is " << duration.GetMicroSeconds() << "µs" << ", start is " << start.GetMicroSeconds() << "µs";
 	 cout << endl;
-	 */
+
 
 }
 
-
 void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
-	cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] " << "TCP packet sent " << endl;
+	cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
+			<< "TCP packet sent " << endl;
 
 	stats->get(this->id).NumberOfSentPackets++;
 }
@@ -238,15 +255,15 @@ void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
 void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
 		Address from) {
 
-
 	auto pCopy = packet->Copy();
 	SeqTsHeader seqTs;
 	pCopy->RemoveHeader(seqTs);
 	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
-	cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] " << " Echo packet received back from AP ("
-				<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ") after "
-				<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
+	cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
+			<< " Echo packet received back from AP ("
+			<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ") after "
+			<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
 
 	stats->get(this->id).NumberOfSuccessfulRoundtripPackets++;
 	stats->get(this->id).TotalPacketRoundtripTime += timeDiff;
@@ -259,8 +276,9 @@ void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 	pCopy->RemoveHeader(seqTs);
 	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
-	cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "] " << "TCP packet received at AP after "
-	<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
+	cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "] "
+			<< "TCP packet received at AP after "
+			<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
 
 	stats->get(this->id).NumberOfSuccessfulPackets++;
 	stats->get(this->id).TotalPacketSentReceiveTime += timeDiff;
@@ -271,7 +289,6 @@ void NodeEntry::OnTcpCongestionWindowChanged(uint32_t oldval, uint32_t newval) {
 	this->congestionWindowValue = newval;
 	stats->get(this->id).TCPCongestionWindow = newval;
 }
-
 
 void NodeEntry::OnUdpPacketSent(Ptr<const Packet> packet) {
 //cout << "[" << this->id << "] " << "UDP packet sent " << endl;
@@ -292,7 +309,7 @@ void NodeEntry::OnUdpPacketSent(Ptr<const Packet> packet) {
 void NodeEntry::OnUdpEchoPacketReceived(Ptr<const Packet> packet,
 		Address from) {
 	//cout << "Echo packet received back from AP ("
-		//	<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ")" << endl;
+	//	<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ")" << endl;
 
 	auto pCopy = packet->Copy();
 	SeqTsHeader seqTs;

@@ -11,8 +11,8 @@ class NodeStatistics {
 public:
     Time TotalTransmitTime = Time();
     Time TotalReceiveTime = Time();
-    Time TotalReceiveDozeTime = Time();
-    Time TotalReceiveActiveTime = Time();
+    Time TotalDozeTime = Time();
+    Time TotalActiveTime = Time();
     
     long NumberOfTransmissions = 0;
     long NumberOfTransmissionsDropped = 0;

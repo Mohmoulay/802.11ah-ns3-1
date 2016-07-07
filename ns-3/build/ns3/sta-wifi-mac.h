@@ -28,6 +28,8 @@
 #include "ns3/traced-callback.h"
 #include "supported-rates.h"
 #include "amsdu-subframe-header.h"
+#include "s1g-beacon-compatibility.h"
+#include "extension-headers.h"
 
 namespace ns3  {
 
@@ -204,11 +206,15 @@ private:
   void InsideBackoff (void);
   void RawSlotStartBackoff (void);
     
-    
+  bool IsTherePendingOutgoingData();
+
   void SetDataBuffered (void);
   void ClearDataBuffered (void);
   void SetInRAWgroup(void);
   void UnsetInRAWgroup(void);
+
+  void OnSleepEnd();
+  void HandleS1gSleepFromBeacon(S1gBeaconHeader& beacon);
 
   Time m_lastRawDurationus;
   Time m_lastRawStart;
@@ -237,6 +243,8 @@ private:
   bool m_activeProbing;
   Ptr<DcaTxop> m_pspollDca;  //!< Dedicated DcaTxop for beacons
   virtual void DoDispose (void);
+
+
 
   TracedCallback<Mac48Address> m_assocLogger;
   TracedCallback<Mac48Address> m_deAssocLogger;
