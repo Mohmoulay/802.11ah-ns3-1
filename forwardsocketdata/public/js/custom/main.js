@@ -258,7 +258,7 @@ var EventManager = (function () {
         n.nrOfSuccessfulRoundtripPackets.push(new Value(timestamp, nrOfSuccessfulRoundtripPackets));
         n.avgRoundtripTime.push(new Value(timestamp, avgRoundTripTime));
         n.tcpCongestionWindow.push(new Value(timestamp, tcpCongestionWindow));
-        if (stream == this.sim.simulationContainer.getFirstStream()) {
+        if (stream == this.sim.selectedStream) {
             if (this.hasIncreased(n.totalTransmitTime)) {
                 this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));
             }
@@ -295,11 +295,8 @@ var SimulationContainer = (function () {
     SimulationContainer.prototype.hasSimulations = function () {
         return this.keys.length > 0;
     };
-    SimulationContainer.prototype.getFirstSimulation = function () {
-        return this.simulations[this.keys[0]];
-    };
-    SimulationContainer.prototype.getFirstStream = function () {
-        return this.keys[0];
+    SimulationContainer.prototype.getStream = function (idx) {
+        return this.keys[idx];
     };
     SimulationContainer.prototype.getSimulations = function () {
         var sims = [];
@@ -344,7 +341,8 @@ var SimulationGUI = (function () {
         if (!this.simulationContainer.hasSimulations())
             return;
         this.ctx.strokeStyle = "#CCC";
-        for (var _i = 0, _a = this.simulationContainer.getFirstSimulation().nodes; _i < _a.length; _i++) {
+        var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
             var n = _a[_i];
             if (n.type == "AP") {
                 for (var i = 1; i <= 10; i++) {
@@ -361,7 +359,8 @@ var SimulationGUI = (function () {
             return 0;
         var curMax = Number.MIN_VALUE;
         if (prop != "") {
-            for (var _i = 0, _a = this.simulationContainer.getFirstSimulation().nodes; _i < _a.length; _i++) {
+            var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+            for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
                 var n = _a[_i];
                 var values = n[this.selectedPropertyForChart];
                 if (values.length > 0) {
@@ -406,7 +405,8 @@ var SimulationGUI = (function () {
         if (!this.simulationContainer.hasSimulations())
             return;
         var curMax = this.getMaxOfProperty(this.selectedPropertyForChart);
-        for (var _i = 0, _a = this.simulationContainer.getFirstSimulation().nodes; _i < _a.length; _i++) {
+        var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
             var n = _a[_i];
             this.ctx.beginPath();
             if (n.type == "AP") {
@@ -452,7 +452,7 @@ var SimulationGUI = (function () {
             this.updateNodeGUI(true);
     };
     SimulationGUI.prototype.onNodeAssociated = function (stream, id) {
-        if (stream == this.simulationContainer.getFirstStream()) {
+        if (stream == this.selectedStream) {
             var n = this.simulationContainer.getSimulation(stream).nodes[id];
             this.addAnimation(new AssociatedAnimation(n.x, n.y));
         }
@@ -468,10 +468,10 @@ var SimulationGUI = (function () {
         var _this = this;
         if (!this.simulationContainer.hasSimulations())
             return;
-        if (this.selectedNode < 0 || this.selectedNode >= this.simulationContainer.getFirstSimulation().nodes.length)
+        var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        if (this.selectedNode < 0 || this.selectedNode >= selectedSimulation.nodes.length)
             return;
         var simulations = this.simulationContainer.getSimulations();
-        var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
         var node = selectedSimulation.nodes[this.selectedNode];
         $("#simulationName").text(selectedSimulation.config.name);
         $("#nodeTitle").text("Node " + node.id);
@@ -529,7 +529,7 @@ var SimulationGUI = (function () {
                             selectedData.push({ x: values[i_2].timestamp, y: values[i_2].value - values[i_2 - 1].value });
                     }
                     series.push({
-                        name: "[" + i + "] " + this.selectedPropertyForChart,
+                        name: this.simulationContainer.getStream(i),
                         data: selectedData
                     });
                 }
@@ -696,8 +696,9 @@ $(document).ready(function () {
         var rect = canvas.getBoundingClientRect();
         var x = (ev.clientX - rect.left) / (canvas.width / sim.area);
         var y = (ev.clientY - rect.top) / (canvas.width / sim.area);
+        var selectedSimulation = sim.simulationContainer.getSimulation(sim.selectedStream);
         var selectedNode = null;
-        for (var _i = 0, _a = sim.simulationContainer.getFirstSimulation().nodes; _i < _a.length; _i++) {
+        for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
             var n = _a[_i];
             var dist = Math.sqrt(Math.pow((n.x - x), 2) + Math.pow((n.y - y), 2));
             if (dist < 20) {

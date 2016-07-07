@@ -314,8 +314,8 @@ void configureTCPEchoClients() {
 
 		clientApp.Get(0)->TraceConnectWithoutContext("CongestionWindow", MakeCallback(&NodeEntry::OnTcpCongestionWindowChanged, nodes[i]));
 
-		double random = (rand() % (config.trafficInterval/1000*4)) / (double)4;
-		clientApp.Start(Seconds(0+random));
+		double random = (rand() % (config.trafficInterval));
+		clientApp.Start(MilliSeconds(0+random));
 		//clientApp.Stop(Seconds(simulationTime + 1));
 	}
 }

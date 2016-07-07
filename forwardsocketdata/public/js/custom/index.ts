@@ -24,12 +24,8 @@ class SimulationContainer {
         return this.keys.length > 0;
     }
 
-    getFirstSimulation():Simulation {
-        return this.simulations[this.keys[0]];
-    }
-
-    getFirstStream():string {
-        return this.keys[0];
+    getStream(idx:number):string {
+        return this.keys[idx];
     }
 
     getSimulations():Simulation[] {
@@ -84,7 +80,9 @@ class SimulationGUI {
             return;
 
         this.ctx.strokeStyle = "#CCC";
-        for (let n of this.simulationContainer.getFirstSimulation().nodes) {
+
+        let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        for (let n of selectedSimulation.nodes) {
             if (n.type == "AP") {
                 for (let i = 1; i <= 10; i++) {
                     let radius = 100 * i * (this.canvas.width / this.area);
@@ -102,7 +100,8 @@ class SimulationGUI {
 
         let curMax: number = Number.MIN_VALUE;
         if (prop != "") {
-            for (let n of this.simulationContainer.getFirstSimulation().nodes) {
+            let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+            for (let n of selectedSimulation.nodes) {
                 let values = (<Value[]>n[this.selectedPropertyForChart]);
                 if (values.length > 0) {
                     let value = values[values.length - 1].value;
@@ -153,7 +152,8 @@ class SimulationGUI {
 
         let curMax = this.getMaxOfProperty(this.selectedPropertyForChart);
 
-        for (let n of this.simulationContainer.getFirstSimulation().nodes) {
+        let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        for (let n of selectedSimulation.nodes) {
             this.ctx.beginPath();
 
             if (n.type == "AP") {
@@ -206,7 +206,7 @@ class SimulationGUI {
     }
 
     onNodeAssociated(stream:string, id: number) {
-        if(stream == this.simulationContainer.getFirstStream()) {
+        if(stream == this.selectedStream) {
             let n = this.simulationContainer.getSimulation(stream).nodes[id];
             this.addAnimation(new AssociatedAnimation(n.x, n.y));
         }
@@ -228,12 +228,12 @@ class SimulationGUI {
         if(!this.simulationContainer.hasSimulations())
             return;
 
-        if (this.selectedNode < 0 || this.selectedNode >= this.simulationContainer.getFirstSimulation().nodes.length)
+        let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+
+        if (this.selectedNode < 0 || this.selectedNode >= selectedSimulation.nodes.length)
             return;
 
         let simulations = this.simulationContainer.getSimulations();
-
-        let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
 
         let node = selectedSimulation.nodes[this.selectedNode];
 
@@ -306,7 +306,7 @@ class SimulationGUI {
                     }
 
                     series.push({
-                        name: "[" + i + "] " + this.selectedPropertyForChart,
+                        name: this.simulationContainer.getStream(i),
                         data: selectedData
                     });
                 }
@@ -505,8 +505,9 @@ $(document).ready(function () {
         let x = (ev.clientX - rect.left) / (canvas.width / sim.area);
         let y = (ev.clientY - rect.top) / (canvas.width / sim.area);
 
+        let selectedSimulation = sim.simulationContainer.getSimulation(sim.selectedStream);
         let selectedNode: SimulationNode = null;
-        for (let n of sim.simulationContainer.getFirstSimulation().nodes) {
+        for (let n of selectedSimulation.nodes) {
 
             let dist = Math.sqrt((n.x - x) ** 2 + (n.y - y) ** 2);
             if (dist < 20) {

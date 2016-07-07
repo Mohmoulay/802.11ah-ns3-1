@@ -153,7 +153,7 @@ class EventManager {
 
         n.tcpCongestionWindow.push(new Value(timestamp, tcpCongestionWindow));
 
-        if(stream == this.sim.simulationContainer.getFirstStream()) {
+        if(stream == this.sim.selectedStream) {
             if (this.hasIncreased(n.totalTransmitTime)) {
                 this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));
             }

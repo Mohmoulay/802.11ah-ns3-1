@@ -42,7 +42,7 @@ struct Configuration {
 
 	string name = "";
 
-	uint32_t trafficInterval = 9876;
+	uint32_t trafficInterval = 987;
 	uint16_t trafficPacketSize = 100;
 	Configuration();
 	Configuration(int argc, char** argv);
