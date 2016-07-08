@@ -91,6 +91,11 @@ typedef std::deque<RttHistory> RttHistory_t;
 class TcpSocketBase : public TcpSocket
 {
 public:
+
+	typedef void (* RetransmissionCallBack)
+	            (Address);
+
+
   /**
    * Get the type ID.
    * \brief Get the type ID.
@@ -746,6 +751,8 @@ protected:
   bool                     m_shutdownRecv;  //!< Receive no longer allowed
   bool                     m_connected;     //!< Connection established
   double                   m_msl;           //!< Max segment lifetime
+
+  TracedCallback<Address> m_retransmission;
 
   // Window management
   uint32_t              m_segmentSize; //!< Segment size

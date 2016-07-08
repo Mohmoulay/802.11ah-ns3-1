@@ -42,6 +42,7 @@ public:
     
     uint32_t aId = 0;
     uint8_t rawGroupNumber = 0;
+    uint8_t rawSlotIndex = 0;
     
     double x = 0;
     double y = 0;
@@ -71,6 +72,9 @@ public:
     void OnTcpEchoPacketReceived(Ptr<const Packet> packet, Address from);
     void OnTcpPacketReceivedAtAP(Ptr<const Packet> packet);
     void OnTcpCongestionWindowChanged(uint32_t oldval, uint32_t newval);
+
+    void OnTcpRetransmission(Address to);
+    void OnTcpRetransmissionAtAP();
 
 
     void OnUdpPacketSent(Ptr<const Packet> packet);

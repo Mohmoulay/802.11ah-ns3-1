@@ -47,6 +47,9 @@ public:
 
 	typedef void (* PacketReceivedCallback)
 	            (Ptr<const Packet>, Address from);
+	typedef void (* RetransmissionCallBack)
+		            (Address);
+
 
   static TypeId GetTypeId (void);
   TcpEchoServer ();
@@ -90,11 +93,14 @@ private:
 
   void HandleRead (Ptr<Socket> socket);
 
+  void OnRetransmission(Address a);
+
   Ptr<Socket> m_socket;
   uint16_t m_port;
   bool m_running;
 
   TracedCallback<Ptr<const Packet>, Address> m_packetReceived;
+  TracedCallback<Address> m_retransmission;
 
 };
 

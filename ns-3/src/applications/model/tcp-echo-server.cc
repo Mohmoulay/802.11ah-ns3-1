@@ -47,7 +47,12 @@ TcpEchoServer::GetTypeId (void)
    .AddTraceSource("Rx",
 					"A packet is received",
 					MakeTraceSourceAccessor(&TcpEchoServer::m_packetReceived),
-					"ns3::TcpEchoServer::PacketReceivedCallback");
+					"ns3::TcpEchoServer::PacketReceivedCallback")
+	.AddTraceSource ("Retransmission",
+						  "Occurs when TCP socket does a retransmission",
+						  MakeTraceSourceAccessor (&TcpEchoServer::m_retransmission),
+						  "ns3::TcpEchoServer::RetransmissionCallBack")
+
   ;
   return tid;
 }
@@ -83,6 +88,9 @@ TcpEchoServer::StartApplication (void)
     {
       TypeId tid = TypeId::LookupByName ("ns3::TcpSocketFactory");
       m_socket = Socket::CreateSocket (GetNode (), tid);
+
+      m_socket->TraceConnectWithoutContext("Retransmission", MakeCallback(&TcpEchoServer::OnRetransmission, this));
+
       InetSocketAddress listenAddress = InetSocketAddress (Ipv4Address::GetAny (), m_port);
       m_socket->Bind (listenAddress);
       m_socket->Listen();
@@ -92,6 +100,11 @@ TcpEchoServer::StartApplication (void)
       MakeNullCallback<bool, Ptr<Socket>, const Address &> (),
       MakeCallback (&TcpEchoServer::HandleAccept, this));
 }
+
+void TcpEchoServer::OnRetransmission(Address a) {
+	m_retransmission(a);
+}
+
 
 void
 TcpEchoServer::StopApplication ()

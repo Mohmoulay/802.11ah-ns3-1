@@ -20,6 +20,7 @@ Configuration::Configuration(int argc, char** argv) {
 
     cmd.AddValue("TrafficInterval", "Traffic interval time in ms", trafficInterval);
     cmd.AddValue("TrafficPacketSize", "Size of packets to send in bytes", trafficPacketSize);
+    cmd.AddValue("TrafficType", "Kind of traffic (udp, udpecho, tcpecho)", trafficType);
 
     cmd.AddValue("DataMode", "Date mode", DataMode);
     cmd.AddValue("Datarate", "data rate in Mbps", datarate);

@@ -150,6 +150,10 @@ TcpSocketBase::GetTypeId (void)
                      "Highest ack received from peer",
                      MakeTraceSourceAccessor (&TcpSocketBase::m_highRxAckMark),
                      "ns3::SequenceNumber32TracedValueCallback")
+	 .AddTraceSource ("Retransmission",
+			 	 	 	 "Occurs when TCP socket does a retransmission",
+						  MakeTraceSourceAccessor (&TcpSocketBase::m_retransmission),
+						  "ns3::TcpSocketBase::RetransmissionCallBack")
   ;
   return tid;
 }
@@ -2022,7 +2026,7 @@ TcpSocketBase::SendDataPacket (SequenceNumber32 seq, uint32_t maxSize, bool with
   AddOptions (header);
 
   if (m_retxEvent.IsExpired () )
-    {
+  {
       // RFC 6298, clause 2.5
       Time doubledRto = m_rto + m_rto;
       m_rto = Min (doubledRto, Time::FromDouble (60,  Time::S));
@@ -2033,7 +2037,9 @@ TcpSocketBase::SendDataPacket (SequenceNumber32 seq, uint32_t maxSize, bool with
                     Simulator::Now ().GetSeconds () << " to expire at time " <<
                     (Simulator::Now () + m_rto.Get ()).GetSeconds () );
       m_retxEvent = Simulator::Schedule (m_rto, &TcpSocketBase::ReTxTimeout, this);
-    }
+
+  }
+
   NS_LOG_LOGIC ("Send packet via TcpL4Protocol with flags 0x" << std::hex << static_cast<uint32_t> (flags) << std::dec);
   if (m_endPoint)
     {
@@ -2350,6 +2356,7 @@ TcpSocketBase::ReTxTimeout ()
       return;
     }
 
+
   Retransmit ();
 }
 
@@ -2428,6 +2435,9 @@ TcpSocketBase::Retransmit ()
 void
 TcpSocketBase::DoRetransmit ()
 {
+	m_retransmission(m_endPoint->GetPeerAddress ());
+	std::cout << "Retransmit tcp from " << m_endPoint->GetLocalAddress() << " to " << m_endPoint->GetPeerAddress () << std::endl;
+
   NS_LOG_FUNCTION (this);
   // Retransmit SYN packet
   if (m_state == SYN_SENT)

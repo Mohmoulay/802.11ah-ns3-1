@@ -44,6 +44,8 @@ struct Configuration {
 
 	uint32_t trafficInterval = 987;
 	uint16_t trafficPacketSize = 100;
+	string trafficType = "tcpecho";
+
 	Configuration();
 	Configuration(int argc, char** argv);
 

@@ -40,7 +40,7 @@
 #include "ht-capabilities.h"
 #include "random-stream.h"
 
-#define LOG_SLEEP(msg)	if(false) std::cout << msg << std::endl;
+#define LOG_SLEEP(msg)	if(true) std::cout << "[" << GetAID() << "] " << msg << std::endl;
 
 /*
  * The state machine for this STA is:
@@ -848,7 +848,11 @@ StaWifiMac::HandleS1gSleepFromSTATIMGroupBeacon(S1gBeaconHeader& beacon) {
 		remainingBeaconsUntilDTIM = beacon.GetTIM().GetDTIMPeriod();
 	}
 
-	Time sleepTime = MicroSeconds(beacon.GetBeaconCompatibility().GetBeaconInterval()) * remainingBeaconsUntilDTIM;
+	auto beaconTime = beacon.GetBeaconCompatibility().GetBeaconInterval() * remainingBeaconsUntilDTIM;
+
+	LOG_SLEEP("Remaining beacons: " << remainingBeaconsUntilDTIM << ", beacon interval * rem beacons: " << beaconTime << " slot start offset: " << slotStartOffset << ", slot duration: " << slotDuration);
+
+	Time sleepTime = MicroSeconds(beacon.GetBeaconCompatibility().GetBeaconInterval() * remainingBeaconsUntilDTIM);
 	sleepTime = sleepTime - (slotStartOffset + slotDuration);
 
 	// but subtract the end of slot to have the correct period:
@@ -878,7 +882,7 @@ StaWifiMac::HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon) {
 
 	int rawGroupSize = (rawObj.GetRawGroupAIDEnd() - rawObj.GetRawGroupAIDStart()) + 1;
 
-	uint8_t staTIMGroup = (GetAID() + 1) / rawGroupSize;
+	uint8_t staTIMGroup = (GetAID() - 1) / rawGroupSize;
 	auto beaconInterval = MicroSeconds(beacon.GetBeaconCompatibility().GetBeaconInterval());
 
 	if(beacon.GetTIM().GetTIMCount() == 0) {
@@ -1022,7 +1026,7 @@ StaWifiMac::GoToSleep(Time duration) {
 	// wake up sliiiiiiiiiiiightly earlier or the station will miss the
 	// data that it's supposed to receive
 	// this greatly depends on how fast the radio can go from sleep -> active
-	auto earlyWake = MilliSeconds(2);
+	auto earlyWake = MilliSeconds(4);
 	if(duration > earlyWake) {
 		auto sleepTime = duration - earlyWake;
 		LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " Sleeping for " << sleepTime.GetMicroSeconds() << "µs");
