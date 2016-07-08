@@ -31,8 +31,8 @@ void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 }
 
 void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
-	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
-			<< "µs " << "Begin Tx " << packet->GetUid() << endl;
+	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+	//		<< "µs " << "Begin Tx " << packet->GetUid() << endl;
 	txMap.emplace(packet->GetUid(), Simulator::Now());
 
 	if (txMap.size() > 1)
@@ -48,11 +48,8 @@ void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
-	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
-	<< "End Tx " << packet->GetUid() << " (current group: " << lastBeaconAIDStart << " - " << lastBeaconAIDEnd << ")" << endl;
-
-	if (packet->GetUid() == 68)
-		packet->Print(cout);
+	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
+	//<< "End Tx " << packet->GetUid() << " (current group: " << lastBeaconAIDStart << " - " << lastBeaconAIDEnd << ")" << endl;
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
 		Time oldTime = txMap[packet->GetUid()];

@@ -40,6 +40,8 @@
 #include "ht-capabilities.h"
 #include "random-stream.h"
 
+#define LOG_SLEEP(msg)	if(false) std::cout << msg << std::endl;
+
 /*
  * The state machine for this STA is:
  --------------                                          -----------
@@ -826,12 +828,12 @@ StaWifiMac::HandleS1gSleepFromSTATIMGroupBeacon(S1gBeaconHeader& beacon) {
 
 	if(slotStartOffset > Time(0)) {
 		// go to sleep to wait until the slot comes up
-		std::cout << Simulator::Now().GetMicroSeconds() << " Our slot only starts after " << slotStartOffset << " sleeping until then." << std::endl;
+		LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " Our slot only starts after " << slotStartOffset << " sleeping until then.");
 		GoToSleep(slotStartOffset);
 	}
 	else {
 		// no time for sleep, RAW slot immediately follows the beacon
-		std::cout << Simulator::Now().GetMicroSeconds() << " Our slot immediately follows our TIM group beacon, no sleep time." << std::endl;
+		LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " Our slot immediately follows our TIM group beacon, no sleep time.");
 	}
 
 	// schedule sleeping after slot has passed
@@ -858,7 +860,7 @@ StaWifiMac::HandleS1gSleepFromSTATIMGroupBeacon(S1gBeaconHeader& beacon) {
 	//					   [-------]
 	//					    ^ slotStartOffset + slotDuration
 
-	std::cout << "Scheduling sleep on " << (Simulator::Now() + endOfSlotTime).GetMicroSeconds() << "µs to sleep for " << sleepTime.GetMicroSeconds() << "µs" << std::endl;
+	LOG_SLEEP("Scheduling sleep on " << (Simulator::Now() + endOfSlotTime).GetMicroSeconds() << "µs to sleep for " << sleepTime.GetMicroSeconds() << "µs");
 	Simulator::Schedule(endOfSlotTime, &StaWifiMac::GoToSleep, this, sleepTime);
 
 	Simulator::Schedule(slotStartOffset, &StaWifiMac::OnRAWSlotStart, this);
@@ -891,7 +893,7 @@ StaWifiMac::HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon) {
 			// there is data or we need to send data, sleep until our TIM group beacon arrives
 			if(staTIMGroup == 0) {
 				// but wait, it's this beacon!
-				std::cout << Simulator::Now().GetMicroSeconds() << " There is pending data to be received or transmitted, the DTIM beacon IS our TIM group" << std::endl;
+				LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " There is pending data to be received or transmitted, the DTIM beacon IS our TIM group");
 				HandleS1gSleepFromSTATIMGroupBeacon(beacon);
 			}
 			else {
@@ -899,13 +901,13 @@ StaWifiMac::HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon) {
 				// this is TIM group 0, we're waiting for TIM group x
 				// so sleep x * beaconInterval
 				//Simulator::Schedule(beaconInterval * staTIMGroup, &StaWifiMac::OnSleepEnd, this);
-				std::cout << Simulator::Now().GetMicroSeconds() << " There is pending data to be received or transmitted, go to sleep until our TIM beacon is scheduled to arrive" << std::endl;
+				LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " There is pending data to be received or transmitted, go to sleep until our TIM beacon is scheduled to arrive");
 				GoToSleep(beaconInterval * staTIMGroup);
 			}
 		} else {
 			// no pending data, sleep for entire period
 
-			std::cout << Simulator::Now().GetMicroSeconds() << " No pending data flagged in DTIM or in the queues, go to sleep for entire cycle" << std::endl;
+			LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " No pending data flagged in DTIM or in the queues, go to sleep for entire cycle");
 			GoToSleep(beaconInterval * beacon.GetTIM().GetDTIMPeriod());
 			//m_phy->SetSleepMode();
 
@@ -919,7 +921,7 @@ StaWifiMac::HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon) {
 			// our TIM group beacon
 			// great, let's process the RAW then go back to sleep again
 			// let's sleep until our slot comes up
-			std::cout << Simulator::Now().GetMicroSeconds() << " We've received our TIM group beacon" << std::endl;
+			LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " We've received our TIM group beacon");
 			HandleS1gSleepFromSTATIMGroupBeacon(beacon);
 		}
 		else {
@@ -931,7 +933,7 @@ StaWifiMac::HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon) {
 				// sleep until our TIM group beacon arrives
 				int nrOfBeacons = staTIMGroup - beaconTIMGroup;
 
-				std::cout << Simulator::Now().GetMicroSeconds() << " Starting sleep because beacon received is not ours (beacon TIM group is " << std::to_string(beaconTIMGroup) << ")" << std::endl;
+				LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " Starting sleep because beacon received is not ours (beacon TIM group is " << std::to_string(beaconTIMGroup) << ")");
 				GoToSleep(beaconInterval * nrOfBeacons);
 				//m_phy->SetSleepMode();
 				//Simulator::Schedule(beaconInterval * nrOfBeacons, &StaWifiMac::OnSleepEnd, this);
@@ -940,7 +942,7 @@ StaWifiMac::HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon) {
 				// DTIM is first, sleep until DTIM
 				int remainingBeaconsUntilDTIM = beacon.GetTIM().GetTIMCount();
 
-				std::cout << Simulator::Now().GetMicroSeconds() << " Starting sleep because beacon received is not ours, (beacon TIM group is " << std::to_string(beaconTIMGroup) << ")" << " DTIM comes first" << std::endl;
+				LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " Starting sleep because beacon received is not ours, (beacon TIM group is " << std::to_string(beaconTIMGroup) << ")" << " DTIM comes first");
 				GoToSleep(beaconInterval * remainingBeaconsUntilDTIM);
 
 				//m_phy->SetSleepMode();
@@ -996,13 +998,13 @@ StaWifiMac::DenyDCAAccess() {
 
 void
 StaWifiMac::OnRAWSlotStart() {
-	std::cout << Simulator::Now().GetMicroSeconds() <<  " RAW SLOT START " << std::endl;
+	LOG_SLEEP(Simulator::Now().GetMicroSeconds() <<  " RAW SLOT START ");
 	GrantDCAAccess();
 }
 
 void
 StaWifiMac::OnRAWSlotEnd() {
-	std::cout << Simulator::Now().GetMicroSeconds() <<  " RAW SLOT END " << std::endl;
+	LOG_SLEEP(Simulator::Now().GetMicroSeconds() <<  " RAW SLOT END ");
 	DenyDCAAccess();
 }
 
@@ -1023,7 +1025,7 @@ StaWifiMac::GoToSleep(Time duration) {
 	auto earlyWake = MilliSeconds(2);
 	if(duration > earlyWake) {
 		auto sleepTime = duration - earlyWake;
-		std::cout << Simulator::Now().GetMicroSeconds() << " Sleeping for " << sleepTime.GetMicroSeconds() << "µs" << std::endl;
+		LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " Sleeping for " << sleepTime.GetMicroSeconds() << "µs");
 		Simulator::Schedule(sleepTime, &StaWifiMac::OnSleepEnd, this);
 	}
 }
