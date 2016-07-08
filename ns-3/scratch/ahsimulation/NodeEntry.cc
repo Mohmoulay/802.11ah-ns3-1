@@ -31,8 +31,8 @@ void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 }
 
 void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
-	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
-	//		<< "µs " << "Begin Tx " << packet->GetUid() << endl;
+	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+			<< "µs " << "Begin Tx " << packet->GetUid() << endl;
 	txMap.emplace(packet->GetUid(), Simulator::Now());
 
 	if (txMap.size() > 1)
@@ -48,8 +48,8 @@ void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
-	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
-	//<< "End Tx " << packet->GetUid() << " (current group: " << lastBeaconAIDStart << " - " << lastBeaconAIDEnd << ")" << endl;
+	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
+	<< "End Tx " << packet->GetUid() << " (current group: " << lastBeaconAIDStart << " - " << lastBeaconAIDEnd << ")" << endl;
 
 	if (packet->GetUid() == 68)
 		packet->Print(cout);
@@ -215,7 +215,7 @@ void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 			break;
 	}
 
-	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << "State change, new state is ";
+	/*cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << "State change, new state is ";
 
 	 switch (state) {
 	 case WifiPhy::State::IDLE:
@@ -241,7 +241,7 @@ void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 
 	 cout << ", duration is " << duration.GetMicroSeconds() << "µs" << ", start is " << start.GetMicroSeconds() << "µs";
 	 cout << endl;
-
+*/
 
 }
 

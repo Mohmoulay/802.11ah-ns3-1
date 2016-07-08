@@ -299,108 +299,6 @@ bool StaWifiMac::IsTherePendingOutgoingData() {
 }
 
 void
-StaWifiMac::S1gBeaconReceived (void)
-{
-    if (m_outsideRawEvent.IsRunning ())
-     {
-        m_outsideRawEvent.Cancel ();          //avoid error when actual beacon interval become shorter, otherwise, AccessAllowedIfRaw will set again after raw starting
-        //Simulator::ScheduleNow(&StaWifiMac::OutsideRawStartBackoff, this);
-     }
-
-  if (m_aid == 8192) // send assoication request when Staion is not assoicated
-    {
-      m_dca->AccessAllowedIfRaw (true);
-    }
-  else if (m_rawStart & m_inRawGroup && m_pagedStaRaw && m_dataBuffered ) // if m_pagedStaRaw is true, only m_dataBuffered can access channel
-    {
-      m_outsideRawEvent = Simulator::Schedule(m_lastRawDurationus, &StaWifiMac::OutsideRawStartBackoff, this);
-
-      m_pspollDca->AccessAllowedIfRaw (true);
-      m_dca->AccessAllowedIfRaw (false);
-      m_edca.find (AC_VO)->second->AccessAllowedIfRaw (false);
-      m_edca.find (AC_VI)->second->AccessAllowedIfRaw (false);
-      m_edca.find (AC_BE)->second->AccessAllowedIfRaw (false);
-      m_edca.find (AC_BK)->second->AccessAllowedIfRaw (false);
-      StartRawbackoff();
-    }
-  else if (m_rawStart && m_inRawGroup && !m_pagedStaRaw  )
-    {
-      m_outsideRawEvent = Simulator::Schedule(m_lastRawDurationus, &StaWifiMac::OutsideRawStartBackoff, this);
-
-      m_pspollDca->AccessAllowedIfRaw (false);
-      m_dca->AccessAllowedIfRaw (false);
-      m_edca.find (AC_VO)->second->AccessAllowedIfRaw (false);
-      m_edca.find (AC_VI)->second->AccessAllowedIfRaw (false);
-      m_edca.find (AC_BE)->second->AccessAllowedIfRaw (false);
-      m_edca.find (AC_BK)->second->AccessAllowedIfRaw (false);
-      Simulator::Schedule(m_statSlotStart, &StaWifiMac::RawSlotStartBackoff, this);
-    }
-  else if (m_rawStart && !m_inRawGroup) //|| (m_rawStart && m_inRawGroup && m_pagedStaRaw && !m_dataBuffered)
-    {
-      m_outsideRawEvent = Simulator::Schedule(m_lastRawDurationus, &StaWifiMac::OutsideRawStartBackoff, this);
-
-      m_pspollDca->AccessAllowedIfRaw (false);
-      m_dca->AccessAllowedIfRaw (false);
-      m_edca.find (AC_VO)->second->AccessAllowedIfRaw (false);
-      m_edca.find (AC_VI)->second->AccessAllowedIfRaw (false);
-      m_edca.find (AC_BE)->second->AccessAllowedIfRaw (false);
-      m_edca.find (AC_BK)->second->AccessAllowedIfRaw (false);
-      StartRawbackoff();
-    }
-    // else (!m_rawStart),  this case cannot happen, since we assume s1g beacon always indicating one raw
-    m_rawStart = false;
-}
-
-void
-StaWifiMac::RawSlotStartBackoff (void)
-{
-    Simulator::Schedule(m_slotDuration, &StaWifiMac::InsideBackoff, this);
-    m_pspollDca->AccessAllowedIfRaw (true);
-    m_dca->AccessAllowedIfRaw (true);
-    m_edca.find (AC_VO)->second->AccessAllowedIfRaw (true);
-    m_edca.find (AC_VI)->second->AccessAllowedIfRaw (true);
-    m_edca.find (AC_BE)->second->AccessAllowedIfRaw (true);
-    m_edca.find (AC_BK)->second->AccessAllowedIfRaw (true);
-    StartRawbackoff();
-}
-
-void
-StaWifiMac::InsideBackoff (void)
-{
-   m_pspollDca->AccessAllowedIfRaw (false);
-   m_dca->AccessAllowedIfRaw (false);
-   m_edca.find (AC_VO)->second->AccessAllowedIfRaw (false);
-   m_edca.find (AC_VI)->second->AccessAllowedIfRaw (false);
-   m_edca.find (AC_BE)->second->AccessAllowedIfRaw (false);
-   m_edca.find (AC_BK)->second->AccessAllowedIfRaw (false);
-}
-
-
-void
-StaWifiMac::StartRawbackoff (void)
-{
-  m_pspollDca->RawStart (); //not really start raw useless allowedAccessRaw is true;
-  m_dca->RawStart ();
-  m_edca.find (AC_VO)->second->RawStart ();
-  m_edca.find (AC_VI)->second->RawStart ();
-  m_edca.find (AC_BE)->second->RawStart ();
-  m_edca.find (AC_BK)->second->RawStart ();
-
-}
-
-
-void
-StaWifiMac::OutsideRawStartBackoff (void)
-{
-  Simulator::ScheduleNow(&DcaTxop::OutsideRawStart, StaWifiMac::m_pspollDca);
-  Simulator::ScheduleNow(&DcaTxop::OutsideRawStart, StaWifiMac::m_dca);
-  Simulator::ScheduleNow(&EdcaTxopN::OutsideRawStart, StaWifiMac::m_edca.find (AC_VO)->second);
-  Simulator::ScheduleNow(&EdcaTxopN::OutsideRawStart, StaWifiMac::m_edca.find (AC_VI)->second);
-  Simulator::ScheduleNow(&EdcaTxopN::OutsideRawStart, StaWifiMac::m_edca.find (AC_BE)->second);
-  Simulator::ScheduleNow(&EdcaTxopN::OutsideRawStart, StaWifiMac::m_edca.find (AC_BK)->second);
-}
-
-void
 StaWifiMac::SetWifiRemoteStationManager (Ptr<WifiRemoteStationManager> stationManager)
 {
   NS_LOG_FUNCTION (this << stationManager);
@@ -773,18 +671,14 @@ StaWifiMac::Receive(Ptr<Packet> packet, const WifiMacHeader *hdr) {
 			uint8_t rawtypeindex = rawassign[0] & 0x07;
 			uint8_t pageindex = rawassign[4] & 0x03;
 
-			uint16_t m_rawslot;
-			m_rawslot = (uint16_t(rawassign[2]) << 8)
-					| (uint16_t(rawassign[1]));
-
-			uint8_t m_SlotFormat = uint8_t(m_rawslot >> 15) & 0x0001;
-			uint8_t m_slotCrossBoundary = uint8_t(m_rawslot >> 14) & 0x0002;
+			uint8_t m_SlotFormat = rawObj.GetSlotFormat();
+			uint8_t m_slotCrossBoundary = rawObj.GetSlotCrossBoundary();
 			uint16_t m_slotDurationCount = rawObj.GetSlotDurationCount();
 			uint16_t m_slotNum = rawObj.GetSlotNum();
 
 			NS_ASSERT(m_SlotFormat <= 1);
 
-			m_slotDuration = MicroSeconds(500 + m_slotDurationCount * 120);
+			m_slotDuration = CalculateSlotDuration(m_slotDurationCount);
 			m_lastRawDurationus = m_slotDuration * m_slotNum;
 
 			if (pageindex == ((GetAID() >> 11) & 0x0003)) //in the page indexed
@@ -796,16 +690,14 @@ StaWifiMac::Receive(Ptr<Packet> packet, const WifiMacHeader *hdr) {
 					uint16_t statsPerSlot = 0;
 					uint16_t statRawSlot = 0;
 
-					Ptr<UniformRandomVariable> m_rv = CreateObject<
-							UniformRandomVariable>();
+					Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable>();
 					uint16_t offset = m_rv->GetValue(0, 1023);
 					offset = 0; // for test
 					statsPerSlot = (rawObj.GetRawGroupAIDEnd()
 							- rawObj.GetRawGroupAIDStart() + 1) / m_slotNum;
 					//statRawSlot = ((GetAID() & 0x03ff)-raw_start)/statsPerSlot;
-					statRawSlot = ((GetAID() & 0x03ff) + offset) % m_slotNum;
-					m_statSlotStart = MicroSeconds(
-							(500 + m_slotDurationCount * 120) * statRawSlot);
+					statRawSlot = GetSTARAWSlotIndex(m_slotNum);
+					m_statSlotStart = MicroSeconds(rawObj.GetRawStart()) + m_slotDuration * statRawSlot;
 				}
 			}
 
@@ -823,8 +715,7 @@ StaWifiMac::Receive(Ptr<Packet> packet, const WifiMacHeader *hdr) {
 
 		}
 
-		S1gBeaconReceived();
-		HandleS1gSleepFromBeacon(beacon);
+		HandleS1gSleepAndSlotTimingsFromBeacon(beacon);
 
 		return;
 	} else if (hdr->IsProbeResp()) {
@@ -899,6 +790,7 @@ StaWifiMac::Receive(Ptr<Packet> packet, const WifiMacHeader *hdr) {
 				if (!m_linkUp.IsNull()) {
 					m_linkUp();
 				}
+
 			} else {
 				NS_LOG_DEBUG("assoc refused");
 				SetState(REFUSED);
@@ -913,8 +805,68 @@ StaWifiMac::Receive(Ptr<Packet> packet, const WifiMacHeader *hdr) {
 	RegularWifiMac::Receive(packet, hdr);
 }
 
+uint16_t StaWifiMac::GetSTARAWSlotIndex(uint16_t nrOfSlots) {
+	return GetAID() % nrOfSlots;
+}
+
+Time
+StaWifiMac::CalculateSlotDuration(uint16_t rawSlotDuration) {
+	return MicroSeconds(500 + rawSlotDuration * 120);
+}
+
+
 void
-StaWifiMac::HandleS1gSleepFromBeacon(S1gBeaconHeader& beacon) {
+StaWifiMac::HandleS1gSleepFromSTATIMGroupBeacon(S1gBeaconHeader& beacon) {
+	auto rawObj = beacon.GetRPS().GetRawAssigmentObj();
+
+	uint16_t slotIndex = GetSTARAWSlotIndex(rawObj.GetSlotNum());
+	Time slotDuration = CalculateSlotDuration(rawObj.GetSlotDurationCount());
+
+	Time slotStartOffset = MicroSeconds(rawObj.GetRawStart()) + slotDuration * slotIndex;
+
+	if(slotStartOffset > Time(0)) {
+		// go to sleep to wait until the slot comes up
+		std::cout << Simulator::Now().GetMicroSeconds() << " Our slot only starts after " << slotStartOffset << " sleeping until then." << std::endl;
+		GoToSleep(slotStartOffset);
+	}
+	else {
+		// no time for sleep, RAW slot immediately follows the beacon
+		std::cout << Simulator::Now().GetMicroSeconds() << " Our slot immediately follows our TIM group beacon, no sleep time." << std::endl;
+	}
+
+	// schedule sleeping after slot has passed
+	auto endOfSlotTime = slotStartOffset + slotDuration;
+	// sleep until DTIM beacon after the slot has passed
+	// current beacon time -> DTIM
+	int remainingBeaconsUntilDTIM = beacon.GetTIM().GetTIMCount();
+
+	if(remainingBeaconsUntilDTIM == 0) {
+		// this IS a DTIM beacon, so the next beacon is really only after
+		// nr of TIM groups
+		remainingBeaconsUntilDTIM = beacon.GetTIM().GetDTIMPeriod();
+	}
+
+	Time sleepTime = MicroSeconds(beacon.GetBeaconCompatibility().GetBeaconInterval()) * remainingBeaconsUntilDTIM;
+	sleepTime = sleepTime - (slotStartOffset + slotDuration);
+
+	// but subtract the end of slot to have the correct period:
+	// DT [ | | | | ]      T [ | |x| | ]        T [ | | | | ]      T [ | | | | ]      DT ...
+	//                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	//											^ sleep time ^
+	//					   [----------------------------------------------------------]
+	//								^ beaconInterval * remaining beacons ^
+	//					   [-------]
+	//					    ^ slotStartOffset + slotDuration
+
+	std::cout << "Scheduling sleep on " << (Simulator::Now() + endOfSlotTime).GetMicroSeconds() << "µs to sleep for " << sleepTime.GetMicroSeconds() << "µs" << std::endl;
+	Simulator::Schedule(endOfSlotTime, &StaWifiMac::GoToSleep, this, sleepTime);
+
+	Simulator::Schedule(slotStartOffset, &StaWifiMac::OnRAWSlotStart, this);
+	Simulator::Schedule(endOfSlotTime, &StaWifiMac::OnRAWSlotEnd, this);
+}
+
+void
+StaWifiMac::HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon) {
 
 	// actively try to associate if not associated, so don't go to sleep
 	if(!IsAssociated())
@@ -939,20 +891,26 @@ StaWifiMac::HandleS1gSleepFromBeacon(S1gBeaconHeader& beacon) {
 			// there is data or we need to send data, sleep until our TIM group beacon arrives
 			if(staTIMGroup == 0) {
 				// but wait, it's this beacon!
-				// no sleep now
+				std::cout << Simulator::Now().GetMicroSeconds() << " There is pending data to be received or transmitted, the DTIM beacon IS our TIM group" << std::endl;
+				HandleS1gSleepFromSTATIMGroupBeacon(beacon);
 			}
 			else {
-				m_phy->SetSleepMode();
+				//m_phy->SetSleepMode();
 				// this is TIM group 0, we're waiting for TIM group x
 				// so sleep x * beaconInterval
-				Simulator::Schedule(beaconInterval * staTIMGroup, &StaWifiMac::OnSleepEnd, this);
+				//Simulator::Schedule(beaconInterval * staTIMGroup, &StaWifiMac::OnSleepEnd, this);
+				std::cout << Simulator::Now().GetMicroSeconds() << " There is pending data to be received or transmitted, go to sleep until our TIM beacon is scheduled to arrive" << std::endl;
+				GoToSleep(beaconInterval * staTIMGroup);
 			}
 		} else {
 			// no pending data, sleep for entire period
-			m_phy->SetSleepMode();
+
+			std::cout << Simulator::Now().GetMicroSeconds() << " No pending data flagged in DTIM or in the queues, go to sleep for entire cycle" << std::endl;
+			GoToSleep(beaconInterval * beacon.GetTIM().GetDTIMPeriod());
+			//m_phy->SetSleepMode();
 
 			// next DTIM beacon will be in beacon interval * nr of beacons
-			Simulator::Schedule(beaconInterval * beacon.GetTIM().GetDTIMPeriod(), &StaWifiMac::OnSleepEnd, this);
+			//Simulator::Schedule(beaconInterval * beacon.GetTIM().GetDTIMPeriod(), &StaWifiMac::OnSleepEnd, this);
 		}
 	}
 	else {
@@ -960,6 +918,9 @@ StaWifiMac::HandleS1gSleepFromBeacon(S1gBeaconHeader& beacon) {
 		if(GetAID() >= rawObj.GetRawGroupAIDStart() && GetAID() <= rawObj.GetRawGroupAIDEnd()) {
 			// our TIM group beacon
 			// great, let's process the RAW then go back to sleep again
+			// let's sleep until our slot comes up
+			std::cout << Simulator::Now().GetMicroSeconds() << " We've received our TIM group beacon" << std::endl;
+			HandleS1gSleepFromSTATIMGroupBeacon(beacon);
 		}
 		else {
 			// not our TIM group beacon
@@ -969,23 +930,103 @@ StaWifiMac::HandleS1gSleepFromBeacon(S1gBeaconHeader& beacon) {
 			if(beaconTIMGroup < staTIMGroup) {
 				// sleep until our TIM group beacon arrives
 				int nrOfBeacons = staTIMGroup - beaconTIMGroup;
-				m_phy->SetSleepMode();
-				Simulator::Schedule(beaconInterval * nrOfBeacons, &StaWifiMac::OnSleepEnd, this);
+
+				std::cout << Simulator::Now().GetMicroSeconds() << " Starting sleep because beacon received is not ours (beacon TIM group is " << std::to_string(beaconTIMGroup) << ")" << std::endl;
+				GoToSleep(beaconInterval * nrOfBeacons);
+				//m_phy->SetSleepMode();
+				//Simulator::Schedule(beaconInterval * nrOfBeacons, &StaWifiMac::OnSleepEnd, this);
 			}
 			else {
 				// DTIM is first, sleep until DTIM
 				int remainingBeaconsUntilDTIM = beacon.GetTIM().GetTIMCount();
-				Simulator::Schedule(beaconInterval * remainingBeaconsUntilDTIM, &StaWifiMac::OnSleepEnd, this);
+
+				std::cout << Simulator::Now().GetMicroSeconds() << " Starting sleep because beacon received is not ours, (beacon TIM group is " << std::to_string(beaconTIMGroup) << ")" << " DTIM comes first" << std::endl;
+				GoToSleep(beaconInterval * remainingBeaconsUntilDTIM);
+
+				//m_phy->SetSleepMode();
+				//Simulator::Schedule(beaconInterval * remainingBeaconsUntilDTIM, &StaWifiMac::OnSleepEnd, this);
 			}
 		}
 	}
 }
 
 void
+StaWifiMac::OnAssociated() {
+	m_assocLogger(GetBssid());
+	// start only allowing transmissions during specific slot periods
+	DenyDCAAccess();
+}
+
+void
+StaWifiMac::OnDeassociated() {
+    m_deAssocLogger (GetBssid ());
+    // allow tranmissions until reassociated
+    GrantDCAAccess();
+}
+
+void
+StaWifiMac::GrantDCAAccess() {
+	m_pspollDca->AccessAllowedIfRaw (true);
+	m_dca->AccessAllowedIfRaw (true);
+	m_edca.find (AC_VO)->second->AccessAllowedIfRaw (true);
+	m_edca.find (AC_VI)->second->AccessAllowedIfRaw (true);
+	m_edca.find (AC_BE)->second->AccessAllowedIfRaw (true);
+	m_edca.find (AC_BK)->second->AccessAllowedIfRaw (true);
+	m_dca->RawStart();
+	m_edca.find (AC_VO)->second->RawStart();
+	m_edca.find (AC_VI)->second->RawStart();
+	m_edca.find (AC_BE)->second->RawStart();
+	m_edca.find (AC_BK)->second->RawStart();
+}
+
+void
+StaWifiMac::DenyDCAAccess() {
+	m_pspollDca->AccessAllowedIfRaw (false);
+	m_dca->AccessAllowedIfRaw (false);
+	m_edca.find (AC_VO)->second->AccessAllowedIfRaw (false);
+	m_edca.find (AC_VI)->second->AccessAllowedIfRaw (false);
+	m_edca.find (AC_BE)->second->AccessAllowedIfRaw (false);
+	m_edca.find (AC_BK)->second->AccessAllowedIfRaw (false);
+	m_dca->OutsideRawStart();
+	m_edca.find (AC_VO)->second->OutsideRawStart();
+	m_edca.find (AC_VI)->second->OutsideRawStart();
+	m_edca.find (AC_BE)->second->OutsideRawStart();
+	m_edca.find (AC_BK)->second->OutsideRawStart();
+}
+
+void
+StaWifiMac::OnRAWSlotStart() {
+	std::cout << Simulator::Now().GetMicroSeconds() <<  " RAW SLOT START " << std::endl;
+	GrantDCAAccess();
+}
+
+void
+StaWifiMac::OnRAWSlotEnd() {
+	std::cout << Simulator::Now().GetMicroSeconds() <<  " RAW SLOT END " << std::endl;
+	DenyDCAAccess();
+}
+
+
+void
 StaWifiMac::OnSleepEnd() {
 	m_phy->ResumeFromSleep();
 }
 
+void
+StaWifiMac::GoToSleep(Time duration) {
+
+	m_phy->SetSleepMode();
+
+	// wake up sliiiiiiiiiiiightly earlier or the station will miss the
+	// data that it's supposed to receive
+	// this greatly depends on how fast the radio can go from sleep -> active
+	auto earlyWake = MilliSeconds(2);
+	if(duration > earlyWake) {
+		auto sleepTime = duration - earlyWake;
+		std::cout << Simulator::Now().GetMicroSeconds() << " Sleeping for " << sleepTime.GetMicroSeconds() << "µs" << std::endl;
+		Simulator::Schedule(sleepTime, &StaWifiMac::OnSleepEnd, this);
+	}
+}
 
 
 
@@ -1029,12 +1070,12 @@ StaWifiMac::SetState (MacState value)
   if (value == ASSOCIATED
       && m_state != ASSOCIATED)
     {
-      m_assocLogger (GetBssid ());
+	  OnAssociated();
     }
   else if (value != ASSOCIATED
            && m_state == ASSOCIATED)
     {
-      m_deAssocLogger (GetBssid ());
+	  OnDeassociated();
     }
   m_state = value;
 }

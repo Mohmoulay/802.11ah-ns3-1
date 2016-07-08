@@ -529,6 +529,7 @@ void S1gApWifiMac::SendOneBeacon(void) {
 		raw.SetSlotCrossBoundary(m_slotCrossBoundary);
 		raw.SetSlotDurationCount(m_slotDurationCount);
 		raw.SetSlotNum(m_slotNum);
+		raw.SetRawStart(0); // immediately after the beacon;
 
 		uint32_t page = 0;
 

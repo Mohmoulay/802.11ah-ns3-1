@@ -199,12 +199,8 @@ private:
     
   void SendPspoll (void);
   void SendPspollIfnecessary (void);
-  void S1gBeaconReceived (void);
-  void StartRawbackoff (void);
-  void OutsideRawStartBackoff (void);
+
   bool Is(uint8_t blockbitmap, uint8_t j);
-  void InsideBackoff (void);
-  void RawSlotStartBackoff (void);
     
   bool IsTherePendingOutgoingData();
 
@@ -213,9 +209,33 @@ private:
   void SetInRAWgroup(void);
   void UnsetInRAWgroup(void);
 
+  uint16_t GetSTARAWSlotIndex(uint16_t nrOfSlots);
+  Time CalculateSlotDuration(uint16_t slotDuration);
   void OnSleepEnd();
-  void HandleS1gSleepFromBeacon(S1gBeaconHeader& beacon);
+  void GoToSleep(Time duration);
 
+  void OnRAWSlotStart();
+  void OnRAWSlotEnd();
+
+
+
+  void OnAssociated();
+  void OnDeassociated();
+
+  void GrantDCAAccess();
+  void DenyDCAAccess();
+
+
+  /**
+   * Handle sleeping based on the beacon information
+   */
+  void HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon);
+
+  /**
+   * Handle sleeping when the STA processes the beacon of the TIM group
+   * it belongs to
+   */
+  void HandleS1gSleepFromSTATIMGroupBeacon(S1gBeaconHeader& beacon);
   Time m_lastRawDurationus;
   Time m_lastRawStart;
   Time m_rawDuration;

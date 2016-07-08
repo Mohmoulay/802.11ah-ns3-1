@@ -1021,7 +1021,7 @@ EdcaTxopN::OutsideRawStart ()
 {
   NS_LOG_FUNCTION (this);
     
-  AccessAllowedIfRaw (true);
+  AccessAllowedIfRaw (false);
   m_dcf-> OutsideRawStart ();
   m_stationManager->OutsideRawStart ();
   m_dcf->StartBackoffNow (m_dcf->GetBackoffSlots());
