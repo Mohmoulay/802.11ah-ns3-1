@@ -102,7 +102,8 @@ void configureSTANodes(Ssid& ssid) {
     S1gWifiMacHelper mac = S1gWifiMacHelper::Default();
     mac.SetType("ns3::StaWifiMac",
             "Ssid", SsidValue(ssid),
-            "ActiveProbing", BooleanValue(false));
+            "ActiveProbing", BooleanValue(false),
+			"MaxMissedBeacons", UintegerValue (10 *config.NGroup));
 
     // create wifi
     WifiHelper wifi = WifiHelper::Default();
@@ -121,6 +122,8 @@ void configureSTANodes(Ssid& ssid) {
             "rho", StringValue(config.rho));
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(staNodes);
+
+    phy.EnablePcap("stafile", staNodes, 0);
 }
 
 void OnAPPhyRxBegin(std::string context, Ptr<const Packet> packet) {
@@ -189,7 +192,7 @@ void configureAPNode(Ssid& ssid) {
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeCallback(&OnAPPhyRxDrop));
 
 
-	phy.EnablePcap("pcapfile", apNodes, 0);
+	phy.EnablePcap("apfile", apNodes, 0);
 
 }
 
@@ -212,6 +215,7 @@ void configureNodes() {
 
         NodeEntry* n = new NodeEntry(i, &stats, staNodes.Get(i), staDevices.Get(i));
         n->SetAssociatedCallback([ = ]{onSTAAssociated(i);});
+        n->SetDeassociatedCallback([ = ]{onSTADeassociated(i);});
 
         nodes.push_back(n);
         // hook up Associated and Deassociated events
@@ -340,7 +344,7 @@ void configureUDPClients() {
         clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnUdpPacketSent, nodes[i]));
 
 
-        double random = (rand() % (config.trafficInterval/1000*4)) / (double)4;
+        double random = (rand() % (config.trafficInterval));
         clientApp.Start(Seconds(0+random));
         //clientApp.Stop(Seconds(simulationTime + 1));
     }
@@ -356,7 +360,7 @@ void configureUDPEchoClients() {
 		clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnUdpPacketSent, nodes[i]));
 		clientApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&NodeEntry::OnUdpEchoPacketReceived, nodes[i]));
 
-		double random = (rand() % (config.trafficInterval/1000*4)) / (double)4;
+		double random = (rand() % (config.trafficInterval));
 		clientApp.Start(Seconds(0+random));
 		//clientApp.Stop(Seconds(simulationTime + 1));
 	}
@@ -371,6 +375,7 @@ void onSTAAssociated(int i) {
 	cout << "Node " << std::to_string(i) << " is associated and has aId " << nodes[i]->aId << " and falls in RAW group " << std::to_string(nodes[i]->rawGroupNumber) << endl;
 
     eventManager.onNodeAssociated(*nodes[i]);
+
 
     int nrOfSTAAssociated = 0;
     for (int i = 0; i < config.Nsta; i++) {
@@ -398,6 +403,10 @@ void onSTAAssociated(int i) {
 
         updateNodesQueueLength();
     }
+}
+
+void onSTADeassociated(int i) {
+	eventManager.onNodeDeassociated(*nodes[i]);
 }
 
 
@@ -455,5 +464,5 @@ void printStatistics() {
 
 void sendStatistics() {
 	eventManager.onUpdateStatistics(stats);
-	Simulator::Schedule(Seconds(1), &sendStatistics);
+	Simulator::Schedule(Seconds(config.visualizerSamplingInterval), &sendStatistics);
 }

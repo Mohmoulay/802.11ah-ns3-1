@@ -33,6 +33,7 @@ Configuration::Configuration(int argc, char** argv) {
 
     cmd.AddValue("Name", "Name of the simulation", name);
 
+    cmd.AddValue("VisualizerSamplingInterval", "Sampling interval of statistics in seconds", visualizerSamplingInterval);
 
     cmd.Parse(argc, argv);
 }

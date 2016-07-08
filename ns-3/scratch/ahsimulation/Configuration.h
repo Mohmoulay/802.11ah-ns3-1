@@ -37,6 +37,7 @@ struct Configuration {
 
 	string visualizerIP = "";
 	int visualizerPort = 7707;
+	double visualizerSamplingInterval = 1;
 
 	string rho = "400.0";
 

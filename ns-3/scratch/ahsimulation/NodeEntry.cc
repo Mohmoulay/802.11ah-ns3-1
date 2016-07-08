@@ -28,6 +28,11 @@ void NodeEntry::SetAssociation(std::string context, Mac48Address address) {
 
 void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 	this->isAssociated = false;
+
+	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+				<< " " << "Node is deassociated" << endl;
+
+	this->deAssociatedCallback();
 }
 
 void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
@@ -386,6 +391,10 @@ void NodeEntry::OnUdpPacketReceivedAtAP(Ptr<const Packet> packet) {
 
 void NodeEntry::SetAssociatedCallback(std::function<void()> assocCallback) {
 	this->associatedCallback = assocCallback;
+}
+
+void NodeEntry::SetDeassociatedCallback(std::function<void()> assocCallback) {
+	this->deAssociatedCallback = assocCallback;
 }
 
 void NodeEntry::UpdateQueueLength() {

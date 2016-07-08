@@ -50,6 +50,10 @@ void SimulationEventManager::onNodeAssociated(NodeEntry& node) {
 	send({"stanodeassoc", std::to_string(node.id), std::to_string(node.aId), std::to_string(node.rawGroupNumber), std::to_string(node.rawSlotIndex)});
 }
 
+void SimulationEventManager::onNodeDeassociated(NodeEntry& node) {
+	send({"stanodedeassoc", std::to_string(node.id)});
+}
+
 void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 	for(int i = 0; i < stats.getNumberOfNodes(); i++) {
 		send({"nodestats", std::to_string(i),
@@ -78,9 +82,18 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 
 void SimulationEventManager::send(vector<string> str) {
 	if(this->hostname != "") {
-		int sockfd = stat_connect(this->hostname.c_str(), std::to_string(this->port).c_str());
-		if(sockfd == -1)
-			return;
+
+
+		int sockfd ;
+		//if(socketDescriptor == -1) {
+
+			sockfd = stat_connect(this->hostname.c_str(), std::to_string(this->port).c_str());
+			if(sockfd == -1)
+				return;
+
+			socketDescriptor = sockfd;
+		//}
+
 
 		std::stringstream s;
 		s << Simulator::Now().GetNanoSeconds() << ";";
@@ -88,8 +101,12 @@ void SimulationEventManager::send(vector<string> str) {
 			s << str[i] << ((i != str.size()-1) ? ";" : "");
 		}
 		s << "\n";
-		stat_send(sockfd, string(s.str()).c_str());
-		stat_close(sockfd);
+		bool success = stat_send(sockfd, string(s.str()).c_str());
+
+		//if(!success) {
+			stat_close(sockfd);
+			socketDescriptor = -1;
+		//}
 	}
 }
 

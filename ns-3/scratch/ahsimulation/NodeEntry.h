@@ -24,6 +24,7 @@ private:
 	Ptr<NetDevice> device;
 
     std::function<void()> associatedCallback;
+    std::function<void()> deAssociatedCallback;
     std::map<uint64_t, Time> txMap;
     std::map<uint64_t, Time> rxMap;
     uint16_t lastBeaconAIDStart = 0;
@@ -85,6 +86,7 @@ public:
     void UpdateQueueLength();
     
     void SetAssociatedCallback(std::function<void()> assocCallback);
+    void SetDeassociatedCallback(std::function<void()> assocCallback);
 };
 
 #endif /* NODEENTRY_H */

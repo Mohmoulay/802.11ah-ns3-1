@@ -72,16 +72,20 @@ int stat_connect(const char* hostname, const char* port) {
 	return sockfd;
 }
 
-void stat_send(int sockfd, const char* buf) {
+bool stat_send(int sockfd, const char* buf) {
 	int length = strlen(buf);
 	if(length < MAXDATASIZE) {
 		int bytesSent = send(sockfd, buf, length, 0);
+		return bytesSent != -1;
 	}
 	else {
 		int pos = 0;
 		while(pos < length) {
 			int size = pos +  MAXDATASIZE - 1 < length ?  MAXDATASIZE - 1 : (length - pos-1);
 			int bytesSent = send(sockfd, buf,size, 0);
+			if(bytesSent == -1)
+				return false;
+
 			pos+=bytesSent;
 		}
 	}

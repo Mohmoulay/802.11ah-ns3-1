@@ -40,7 +40,7 @@
 #include "ht-capabilities.h"
 #include "random-stream.h"
 
-#define LOG_SLEEP(msg)	if(true) std::cout << "[" << GetAID() << "] " << msg << std::endl;
+#define LOG_SLEEP(msg)	if(false) std::cout << "[" << GetAID() << "] " << msg << std::endl;
 
 /*
  * The state machine for this STA is:
@@ -968,6 +968,7 @@ StaWifiMac::OnDeassociated() {
     m_deAssocLogger (GetBssid ());
     // allow tranmissions until reassociated
     GrantDCAAccess();
+    TryToEnsureAssociated();
 }
 
 void
@@ -1082,6 +1083,7 @@ StaWifiMac::SetState (MacState value)
            && m_state == ASSOCIATED)
     {
 	  OnDeassociated();
+	  std::cout << "New state is " << value << std::endl;
     }
   m_state = value;
 }
