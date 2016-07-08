@@ -8,29 +8,33 @@ declare class io {
 
 class SimulationContainer {
 
-    private keys:string[] = [];
+    private keys: string[] = [];
 
     private simulations = {};
-    getSimulation(stream:string):Simulation {
+    getSimulation(stream: string): Simulation {
         return this.simulations[stream];
     }
 
-    setSimulation(stream:string, sim:Simulation) {
+    setSimulation(stream: string, sim: Simulation) {
         this.simulations[stream] = sim;
         this.keys.push(stream);
     }
 
-    hasSimulations():boolean {
+    hasSimulations(): boolean {
         return this.keys.length > 0;
     }
 
-    getStream(idx:number):string {
+    getStream(idx: number): string {
         return this.keys[idx];
     }
 
-    getSimulations():Simulation[] {
-        let sims:Simulation[] = [];
-        for(let k of this.keys) {
+    getStreams(): string[] {
+        return this.keys.slice(0);
+    }
+
+    getSimulations(): Simulation[] {
+        let sims: Simulation[] = [];
+        for (let k of this.keys) {
             sims.push(this.simulations[k]);
         }
         return sims;
@@ -39,10 +43,10 @@ class SimulationContainer {
 }
 class SimulationGUI {
 
-    public simulationContainer: SimulationContainer  = new SimulationContainer();
+    public simulationContainer: SimulationContainer = new SimulationContainer();
     public selectedNode: number = 0;
     public selectedPropertyForChart: string = "totalTransmitTime";
-    public selectedStream:string = "";
+    public selectedStream: string = "";
 
     private ctx: CanvasRenderingContext2D;
     private animations: Animation[] = [];
@@ -52,7 +56,17 @@ class SimulationGUI {
     private currentChart: HighchartsChartObject = null;
 
     private heatMapPalette: Palette;
-    private rawGroupColors: Color[] = [new Color(0, 0, 255), new Color(0, 128, 255), new Color(0, 255, 128), new Color(0, 255, 255), new Color(128, 0, 255), new Color(255, 0, 255)];
+    private rawGroupColors: Color[] = [new Color(200, 0, 0),
+        new Color(0, 200, 0),
+        new Color(0, 0, 200),
+        new Color(200, 0, 200),
+        new Color(200, 200, 0),
+        new Color(0, 200, 200),
+        new Color(100, 100, 0),
+        new Color(100, 0, 100),
+        new Color(0, 0, 100),
+        new Color(0, 0, 0)];
+
 
     constructor(private canvas: HTMLCanvasElement) {
         this.ctx = <CanvasRenderingContext2D>canvas.getContext("2d");
@@ -76,7 +90,7 @@ class SimulationGUI {
     }
 
     private drawRange() {
-        if(!this.simulationContainer.hasSimulations())
+        if (!this.simulationContainer.hasSimulations())
             return;
 
         this.ctx.strokeStyle = "#CCC";
@@ -94,11 +108,12 @@ class SimulationGUI {
         }
     }
 
-    private getMaxOfProperty(prop: string): number {
-        if(!this.simulationContainer.hasSimulations())
-            return 0;
+    private getMinMaxOfProperty(prop: string): number[] {
+        if (!this.simulationContainer.hasSimulations())
+            return [0,0];
 
         let curMax: number = Number.MIN_VALUE;
+        let curMin: number = Number.MAX_VALUE;
         if (prop != "") {
             let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
             for (let n of selectedSimulation.nodes) {
@@ -106,20 +121,25 @@ class SimulationGUI {
                 if (values.length > 0) {
                     let value = values[values.length - 1].value;
                     if (curMax < value) curMax = value;
+                    if (curMin > value) curMin = value;
                 }
             }
-            return curMax;
+            return [ curMin, curMax];
         }
         else
-            return 0;
+            return [0,0];
 
     }
-    private getColorForNode(n: SimulationNode, curMax: number): string {
+    private getColorForNode(n: SimulationNode, curMax: number, curMin:number): string {
         if (this.selectedPropertyForChart != "") {
             let el = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "']").get(0));
             let type = el.attr("data-type");
             if (typeof type != "undefined" && type != "") {
-                let min = parseInt(el.attr("data-min"));
+                let min;
+                if (el.attr("data-max") == "*")
+                    min = curMin;
+                else
+                    min = parseInt(el.attr("data-min"));
                 let max: number;
                 if (el.attr("data-max") == "*")
                     max = curMax;
@@ -147,11 +167,12 @@ class SimulationGUI {
     }
 
     private drawNodes() {
-        if(!this.simulationContainer.hasSimulations())
-                    return;
+        if (!this.simulationContainer.hasSimulations())
+            return;
 
-        let curMax = this.getMaxOfProperty(this.selectedPropertyForChart);
-
+        let minmax = this.getMinMaxOfProperty(this.selectedPropertyForChart);
+        let curMax = minmax[1];
+        let curMin = minmax[0];
         let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
         for (let n of selectedSimulation.nodes) {
             this.ctx.beginPath();
@@ -161,7 +182,7 @@ class SimulationGUI {
                 this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 6, 0, Math.PI * 2, false);
             }
             else {
-                this.ctx.fillStyle = this.getColorForNode(n, curMax);
+                this.ctx.fillStyle = this.getColorForNode(n, curMax, curMin);
                 this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 3, 0, Math.PI * 2, false);
             }
             this.ctx.fill();
@@ -195,18 +216,18 @@ class SimulationGUI {
         this.animations.push(anim);
     }
 
-    onNodeUpdated(stream:string, id: number) {
+    onNodeUpdated(stream: string, id: number) {
         if (id == this.selectedNode)
             this.updateNodeGUI(false);
     }
 
-    onNodeAdded(stream:string, id: number) {
+    onNodeAdded(stream: string, id: number) {
         if (id == this.selectedNode)
             this.updateNodeGUI(true);
     }
 
-    onNodeAssociated(stream:string, id: number) {
-        if(stream == this.selectedStream) {
+    onNodeAssociated(stream: string, id: number) {
+        if (stream == this.selectedStream) {
             let n = this.simulationContainer.getSimulation(stream).nodes[id];
             this.addAnimation(new AssociatedAnimation(n.x, n.y));
         }
@@ -221,11 +242,11 @@ class SimulationGUI {
         this.updateNodeGUI(true);
     }
 
-    private refreshTimerId:number = -1;
-    private lastUpdatedOn:Date = new Date();
+    private refreshTimerId: number = -1;
+    private lastUpdatedOn: Date = new Date();
 
     updateNodeGUI(full: boolean) {
-        if(!this.simulationContainer.hasSimulations())
+        if (!this.simulationContainer.hasSimulations())
             return;
 
         let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
@@ -247,6 +268,7 @@ class SimulationGUI {
         else {
             $("#nodeAID").text(node.aId);
             $("#nodeGroupNumber").text(node.groupNumber);
+            $("#nodeRawSlotIndex").text(node.rawSlotIndex);
         }
 
         var configElements = $(".configProperty");
@@ -255,23 +277,57 @@ class SimulationGUI {
             $($(configElements[i]).find("td").get(1)).text(selectedSimulation.config[prop]);
         }
 
+
         var propertyElements = $(".nodeProperty");
         for (let i = 0; i < propertyElements.length; i++) {
             let prop = $(propertyElements[i]).attr("data-property");
+
             let values = <Value[]>node[prop];
-            if (values.length > 0)
-                $($(propertyElements[i]).find("td").get(1)).text(values[values.length - 1].value);
+
+            let el: string = "";
+
+            if (values.length > 0) {
+                if (simulations.length > 1) {
+                    // compare with avg of others
+                    let sumVal = 0;
+                    let nrVals = 0;
+                    for (let j = 0; j < simulations.length; j++) {
+                        if (simulations[j] != selectedSimulation && this.selectedNode < simulations[j].nodes.length) {
+                            let vals = (<Value[]>simulations[j].nodes[this.selectedNode][prop]);
+                            if (vals.length > 0) {
+                                sumVal += vals[vals.length - 1].value;
+                                nrVals++;
+                            }
+                        }
+                    }
+
+                    let avg = sumVal / nrVals;
+                    if (values[values.length - 1].value > avg)
+                        el = `<div class='valueup' title='Value has increased compared to average (${avg}) of other simulations'>${values[values.length - 1].value}</div>`;
+                    else if (values[values.length - 1].value < avg)
+                        el = `<div class='valuedown' title='Value has decreased compared to average (${avg}) of other simulations'>${values[values.length - 1].value}</div>`;
+                    else
+                        el = values[values.length - 1].value + "";
+                }
+                else {
+                    el = values[values.length - 1].value + "";
+                }
+
+
+                $($(propertyElements[i]).find("td").get(1)).empty().append(el);
+
+            }
         }
 
 
         // prevent update flood by max 1 update per second or when gui changed
         let timeDiff = new Date().getTime() - this.lastUpdatedOn.getTime();
-        if(timeDiff > 1000 || full) {
+        if (timeDiff > 1000 || full) {
             this.updateCharts(simulations, full);
             this.lastUpdatedOn = new Date();
         }
         else {
-            
+
             window.clearTimeout(this.refreshTimerId);
             this.refreshTimerId = window.setTimeout(() => {
                 this.updateCharts(simulations, full);
@@ -280,20 +336,20 @@ class SimulationGUI {
         }
     }
 
-    private updateCharts(simulations:Simulation[], full:boolean) {
+    private updateCharts(simulations: Simulation[], full: boolean) {
         let showDeltas: boolean = $("#chkShowDeltas").prop("checked");
 
         let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
         let firstNode = selectedSimulation.nodes[this.selectedNode];
-        
+
         if ((<Value[]>firstNode[this.selectedPropertyForChart]).length > 0) {
             if (this.currentChart == null || full) {
 
                 let series = [];
-                for(let i = 0; i < simulations.length; i++) {
+                for (let i = 0; i < simulations.length; i++) {
                     let values = <Value[]>simulations[i].nodes[this.selectedNode][this.selectedPropertyForChart];
 
-                     var selectedData = [];
+                    var selectedData = [];
 
                     if (!showDeltas) {
                         for (let i = 0; i < values.length; i++)
@@ -310,13 +366,13 @@ class SimulationGUI {
                         data: selectedData
                     });
                 }
-                
-              
+
+
 
                 let self = this;
                 let title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
 
-             
+
                 $('#nodeChart').empty().highcharts({
                     chart: {
                         type: 'spline',
@@ -355,22 +411,22 @@ class SimulationGUI {
 
             }
             else {
-                for(let s = 0; s < simulations.length; s++) {
+                for (let s = 0; s < simulations.length; s++) {
                     let values = <Value[]>simulations[s].nodes[this.selectedNode][this.selectedPropertyForChart];
-                    if (!showDeltas || values.length < 2) {  
-                        for(let i = this.currentChart.series[s].data.length; i < values.length; i++) {
+                    if (!showDeltas || values.length < 2) {
+                        for (let i = this.currentChart.series[s].data.length; i < values.length; i++) {
                             let val = values[i];
                             this.currentChart.series[s].addPoint([val.timestamp, val.value], true, false);
                         }
                     }
                     else {
-                        for(let i = this.currentChart.series[s].data.length; i < values.length; i++) {
-                            let beforeVal = values[i-1];
+                        for (let i = this.currentChart.series[s].data.length; i < values.length; i++) {
+                            let beforeVal = values[i - 1];
                             let val = values[i];
                             this.currentChart.series[s].addPoint([val.timestamp, val.value - beforeVal.value], true, false);
                         }
                     }
-                 }
+                }
             }
         }
 
@@ -431,11 +487,11 @@ class SimulationGUI {
 }
 
 interface IEntry {
-    stream:string;
-    line:string;
+    stream: string;
+    line: string;
 }
 
-function getParameterByName(name:string, url?:string) {
+function getParameterByName(name: string, url?: string) {
     if (!url) url = window.location.href;
     name = name.replace(/[\[\]]/g, "\\$&");
     var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
@@ -457,13 +513,13 @@ $(document).ready(function () {
     let canvas = <HTMLCanvasElement>$("#canv").get(0);
     sim = new SimulationGUI(canvas);
 
-    let streams:string[];
+    let streams: string[];
     let compare = getParameterByName("compare");
-    if(compare == "") 
+    if (compare == "")
         streams = ["live"];
     else
         streams = compare.split(',');
-    for(let stream of streams) {
+    for (let stream of streams) {
         let rdb = `<input class="rdbStream" name="streams" type='radio' data-stream='${stream}'>&nbsp;`;
         $("#rdbStreams").append(rdb);
     }
@@ -477,28 +533,28 @@ $(document).ready(function () {
         console.log("Websocket connected, listening for events");
         evManager = new EventManager(sim);
 
-     
-        
+
+
         console.log("Subscribing to " + streams);
         sock.emit("subscribe", {
             simulations: streams
         });
-        
+
     }).on("error", function () {
         console.log("Unable to connect to server websocket endpoint");
     });
 
-    sock.on("error", function (data:string) {
-        alert("Error: "  + data);
+    sock.on("error", function (data: string) {
+        alert("Error: " + data);
     });
 
-    sock.on("entry", function (data:IEntry) {
+    sock.on("entry", function (data: IEntry) {
         evManager.onReceive(data);
         //console.log("Received " + data.stream + ": " + data.line);
     });
 
     $(canvas).click(ev => {
-        if(!sim.simulationContainer.hasSimulations())
+        if (!sim.simulationContainer.hasSimulations())
             return;
 
         var rect = canvas.getBoundingClientRect();
@@ -530,11 +586,11 @@ $(document).ready(function () {
         sim.updateNodeGUI(true);
     });
 
-    $(".rdbStream").change(function(ev) {
+    $(".rdbStream").change(function (ev) {
         let rdbs = $(".rdbStream");
-        for(let i = 0; i < rdbs.length; i++) {
+        for (let i = 0; i < rdbs.length; i++) {
             let rdb = $(rdbs.get(i));
-            if(rdb.prop("checked")) {
+            if (rdb.prop("checked")) {
                 sim.selectedStream = rdb.attr("data-stream");
                 sim.updateNodeGUI(true);
             }

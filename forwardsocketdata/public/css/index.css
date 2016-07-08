@@ -25,6 +25,10 @@ body{
     overflow-y:scroll;
 }
 
+.scrollTable td {
+    padding:2px !important;
+}
+
 .col-fixed-800{
     width:800px;
     position:fixed;
@@ -41,4 +45,18 @@ body{
 
 #rdbStreams {
     margin-top: -20px;
+}
+
+.valueup {
+    background-position: center left;
+    background-image: url('/images/arrow_up.png');
+    background-repeat: no-repeat;
+    padding-left:15px;
+}
+
+.valuedown {
+    background-position: center left;
+    background-image: url('/images/arrow_down.png');
+    background-repeat: no-repeat;
+    padding-left:15px;
 }
