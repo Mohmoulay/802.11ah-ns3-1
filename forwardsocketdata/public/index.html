@@ -102,8 +102,8 @@
                                                     <td id="nodePosition">---</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>AID</td>
-                                                    <td><span id="nodeAID">---</span> (grp: <span id="nodeGroupNumber">---</span>)</td>
+                                                    <td>Association ID, TIM group and RAW slot</td>
+                                                    <td><span id="nodeAID">---</span> (grp: <span id="nodeGroupNumber">---</span>) (slot: <span id="nodeRawSlotIndex">---</span>)</td>
                                                 </tr>
                                                 <!-- use data-max="*" to automatically determine the max value present -->
 
@@ -143,10 +143,15 @@
                                                     <td>Number of receives</td>
                                                     <td id="nodeNrOfReceives">---</td>
                                                 </tr>
-                                                <tr class="nodeProperty" data-property="nrOfReceivesDropped" data-max="*" data-min="0" data-type="LOWER_IS_BETTER">
+                                                <tr class="nodeProperty" data-property="nrOfReceivesDropped" data-max="*" data-min="*" data-type="LOWER_IS_BETTER">
                                                     <td>Number of receives dropped</td>
                                                     <td id="nodeNrOfReceivesDropped">---</td>
                                                 </tr>
+                                                <tr class="nodeProperty" data-property="nrOfReceivesDroppedByDestination" data-max="*" data-min="0" data-type="LOWER_IS_BETTER">
+                                                    <td>Number of receives dropped by destination</td>
+                                                    <td id="nodeNrOfReceivesDroppedByDestination">---</td>
+                                                </tr>
+                                                
                                                 <tr class="nodeProperty" data-property="nrOfSentPackets">
                                                     <td>Number of sent packets</td>
                                                     <td id="nodeNrOfSentPackets">---</td>
@@ -176,6 +181,10 @@
                                                     <td>TCP Congestion window (bytes)</td>
                                                     <td id="nodeTCPCongestionWindow">---</td>
                                                 </tr>
+                                                <tr class="nodeProperty" data-property="numberOfTCPRetransmissions" data-max="*" data-min="0" data-type="LOWER_IS_BETTER">
+                                                    <td>Number of TCP Retransmissions</td>
+                                                    <td id="nodeNumberOfTCPRetransmissions">---</td>
+                                                </tr>                                                
                                             </table>
                                         </div>
                                         <label>Show delta's <input id="chkShowDeltas" type="checkbox"></label>

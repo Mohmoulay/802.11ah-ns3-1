@@ -24,7 +24,11 @@ class EventManager {
                         break;
 
                     case 'stanodeassoc':
-                        this.onNodeAssociated(ev.stream,parseInt(ev.parts[2]), parseInt(ev.parts[3]), parseInt(ev.parts[4]));
+                        this.onNodeAssociated(ev.stream,parseInt(ev.parts[2]), parseInt(ev.parts[3]), parseInt(ev.parts[4]), parseInt(ev.parts[5]));
+                        break;
+                        
+                    case 'stanodedeassoc':
+                        this.onNodeDeassociated(ev.stream,parseInt(ev.parts[2])):
                         break;
 
                     case 'apnodeadd':
@@ -37,7 +41,8 @@ class EventManager {
                             parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]),
                             parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]),
                             parseFloat(ev.parts[14]), parseFloat(ev.parts[15]),
-                            parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]));
+                            parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]), parseInt(ev.parts[20]),
+                            parseInt(ev.parts[21]));
                         break;
                     default:
                 }
@@ -62,8 +67,11 @@ class EventManager {
         dataMode: string, dataRate: number, bandwidth: number, trafficInterval: number, trafficPacketsize: number, beaconInterval: number,
         name: string) {
 
-        let simulation = new Simulation();
-        this.sim.simulationContainer.setSimulation(stream,simulation);
+        let simulation = this.sim.simulationContainer.getSimulation(stream);
+        if(typeof simulation == "undefined") {
+            simulation = new Simulation();
+            this.sim.simulationContainer.setSimulation(stream,simulation);
+        }
 
         simulation.nodes = [];
         let config = simulation.config;
@@ -93,14 +101,26 @@ class EventManager {
         this.sim.onNodeAdded(stream, id);
     }
 
-    onNodeAssociated(stream:string,id: number, aId: number, groupNumber: number) {
+    onNodeAssociated(stream:string,id: number, aId: number, groupNumber: number, rawSlotIndex:number) {
         let simulation = this.sim.simulationContainer.getSimulation(stream);
         if (id < 0 || id >= simulation.nodes.length) return;
 
         let n = simulation.nodes[id];
         n.aId = aId;
         n.groupNumber = groupNumber;
+        n.rawSlotIndex = rawSlotIndex;
         (<STANode>n).isAssociated = true;
+
+        this.sim.onNodeAssociated(stream, id);
+    }
+
+    
+    onNodeDeassociated(stream:string,id: number) {
+        let simulation = this.sim.simulationContainer.getSimulation(stream);
+        if (id < 0 || id >= simulation.nodes.length) return;
+
+        let n = simulation.nodes[id];
+        (<STANode>n).isAssociated = false;
 
         this.sim.onNodeAssociated(stream, id);
     }
@@ -121,7 +141,8 @@ class EventManager {
         nrOfTransmissions: number, nrOfTransmissionsDropped: number, nrOfReceives: number, nrOfReceivesDropped: number,
         nrOfSentPackets: number, nrOfSuccessfulPackets: number, nrOfDroppedPackets: number,
         avgPacketTimeOfFlight: number, goodputKbit: number,
-        edcaQueueLength: number, nrOfSuccessfulRoundtripPackets: number, avgRoundTripTime: number, tcpCongestionWindow: number) {
+        edcaQueueLength: number, nrOfSuccessfulRoundtripPackets: number, avgRoundTripTime: number, tcpCongestionWindow: number,
+        numberOfTCPRetransmissions:number, nrOfReceivesDroppedByDestination:number) {
 
         let simulation = this.sim.simulationContainer.getSimulation(stream);
 
@@ -139,6 +160,7 @@ class EventManager {
         n.nrOfTransmissionsDropped.push(new Value(timestamp, nrOfTransmissionsDropped));
         n.nrOfReceives.push(new Value(timestamp, nrOfReceives));
         n.nrOfReceivesDropped.push(new Value(timestamp, nrOfReceivesDropped));
+        n.nrOfReceivesDroppedByDestination.push(new Value(timestamp, nrOfReceivesDroppedByDestination));
 
         n.nrOfSentPackets.push(new Value(timestamp, nrOfSentPackets));
         n.nrOfSuccessfulPackets.push(new Value(timestamp, nrOfSuccessfulPackets));
@@ -152,6 +174,7 @@ class EventManager {
         n.avgRoundtripTime.push(new Value(timestamp, avgRoundTripTime));
 
         n.tcpCongestionWindow.push(new Value(timestamp, tcpCongestionWindow));
+        n.numberOfTCPRetransmissions.push(new Value(timestamp, numberOfTCPRetransmissions));
 
         if(stream == this.sim.selectedStream) {
             if (this.hasIncreased(n.totalTransmitTime)) {

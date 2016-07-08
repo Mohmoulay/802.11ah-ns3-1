@@ -12,7 +12,7 @@ var Animation = (function () {
         this.time += dt;
     };
     return Animation;
-}());
+})();
 var BroadcastAnimation = (function (_super) {
     __extends(BroadcastAnimation, _super);
     function BroadcastAnimation(x, y) {
@@ -35,7 +35,7 @@ var BroadcastAnimation = (function (_super) {
         return this.time >= this.max_time;
     };
     return BroadcastAnimation;
-}(Animation));
+})(Animation);
 var ReceivedAnimation = (function (_super) {
     __extends(ReceivedAnimation, _super);
     function ReceivedAnimation(x, y) {
@@ -59,7 +59,7 @@ var ReceivedAnimation = (function (_super) {
         return this.time >= this.max_time;
     };
     return ReceivedAnimation;
-}(Animation));
+})(Animation);
 var AssociatedAnimation = (function (_super) {
     __extends(AssociatedAnimation, _super);
     function AssociatedAnimation(x, y) {
@@ -84,7 +84,7 @@ var AssociatedAnimation = (function (_super) {
         return this.time >= this.max_time;
     };
     return AssociatedAnimation;
-}(Animation));
+})(Animation);
 var Color = (function () {
     function Color(red, green, blue, alpha, position) {
         if (alpha === void 0) { alpha = 1; }
@@ -99,7 +99,7 @@ var Color = (function () {
         return "rgba(" + this.red + ", " + this.green + "," + this.blue + ", " + this.alpha + ")";
     };
     return Color;
-}());
+})();
 var Palette = (function () {
     function Palette() {
         this.colors = [];
@@ -151,7 +151,7 @@ var Palette = (function () {
         }
     };
     return Palette;
-}());
+})();
 var EventManager = (function () {
     function EventManager(sim) {
         this.sim = sim;
@@ -168,13 +168,16 @@ var EventManager = (function () {
                     this.onNodeAdded(ev.stream, true, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseInt(ev.parts[5]));
                     break;
                 case 'stanodeassoc':
-                    this.onNodeAssociated(ev.stream, parseInt(ev.parts[2]), parseInt(ev.parts[3]), parseInt(ev.parts[4]));
+                    this.onNodeAssociated(ev.stream, parseInt(ev.parts[2]), parseInt(ev.parts[3]), parseInt(ev.parts[4]), parseInt(ev.parts[5]));
+                    break;
+                case 'stanodedeassoc':
+                    this.onNodeDeassociated(ev.stream, parseInt(ev.parts[2]));
                     break;
                 case 'apnodeadd':
                     this.onNodeAdded(ev.stream, false, -1, parseFloat(ev.parts[2]), parseFloat(ev.parts[3]), -1);
                     break;
                 case 'nodestats':
-                    this.onStatsUpdated(ev.stream, ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]));
+                    this.onStatsUpdated(ev.stream, ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]), parseInt(ev.parts[20]), parseInt(ev.parts[21]));
                     break;
                 default:
             }
@@ -190,8 +193,11 @@ var EventManager = (function () {
         this.events.push(ev);
     };
     EventManager.prototype.onStart = function (stream, aidRAWRange, numberOfRAWGroups, RAWSlotFormat, RAWSlotDuration, numberOfRAWSlots, dataMode, dataRate, bandwidth, trafficInterval, trafficPacketsize, beaconInterval, name) {
-        var simulation = new Simulation();
-        this.sim.simulationContainer.setSimulation(stream, simulation);
+        var simulation = this.sim.simulationContainer.getSimulation(stream);
+        if (typeof simulation == "undefined") {
+            simulation = new Simulation();
+            this.sim.simulationContainer.setSimulation(stream, simulation);
+        }
         simulation.nodes = [];
         var config = simulation.config;
         config.AIDRAWRange = aidRAWRange;
@@ -216,14 +222,23 @@ var EventManager = (function () {
         this.sim.simulationContainer.getSimulation(stream).nodes.push(n);
         this.sim.onNodeAdded(stream, id);
     };
-    EventManager.prototype.onNodeAssociated = function (stream, id, aId, groupNumber) {
+    EventManager.prototype.onNodeAssociated = function (stream, id, aId, groupNumber, rawSlotIndex) {
         var simulation = this.sim.simulationContainer.getSimulation(stream);
         if (id < 0 || id >= simulation.nodes.length)
             return;
         var n = simulation.nodes[id];
         n.aId = aId;
         n.groupNumber = groupNumber;
+        n.rawSlotIndex = rawSlotIndex;
         n.isAssociated = true;
+        this.sim.onNodeAssociated(stream, id);
+    };
+    EventManager.prototype.onNodeDeassociated = function (stream, id) {
+        var simulation = this.sim.simulationContainer.getSimulation(stream);
+        if (id < 0 || id >= simulation.nodes.length)
+            return;
+        var n = simulation.nodes[id];
+        n.isAssociated = false;
         this.sim.onNodeAssociated(stream, id);
     };
     EventManager.prototype.hasIncreased = function (values) {
@@ -235,7 +250,7 @@ var EventManager = (function () {
         else
             return false;
     };
-    EventManager.prototype.onStatsUpdated = function (stream, timestamp, id, totalTransmitTime, totalReceiveTime, totalReceiveDozeTime, totalReceiveActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTime, tcpCongestionWindow) {
+    EventManager.prototype.onStatsUpdated = function (stream, timestamp, id, totalTransmitTime, totalReceiveTime, totalReceiveDozeTime, totalReceiveActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTime, tcpCongestionWindow, numberOfTCPRetransmissions, nrOfReceivesDroppedByDestination) {
         var simulation = this.sim.simulationContainer.getSimulation(stream);
         if (id < 0 || id >= simulation.nodes.length)
             return;
@@ -249,6 +264,7 @@ var EventManager = (function () {
         n.nrOfTransmissionsDropped.push(new Value(timestamp, nrOfTransmissionsDropped));
         n.nrOfReceives.push(new Value(timestamp, nrOfReceives));
         n.nrOfReceivesDropped.push(new Value(timestamp, nrOfReceivesDropped));
+        n.nrOfReceivesDroppedByDestination.push(new Value(timestamp, nrOfReceivesDroppedByDestination));
         n.nrOfSentPackets.push(new Value(timestamp, nrOfSentPackets));
         n.nrOfSuccessfulPackets.push(new Value(timestamp, nrOfSuccessfulPackets));
         n.nrOfDroppedPackets.push(new Value(timestamp, nrOfDroppedPackets));
@@ -258,6 +274,7 @@ var EventManager = (function () {
         n.nrOfSuccessfulRoundtripPackets.push(new Value(timestamp, nrOfSuccessfulRoundtripPackets));
         n.avgRoundtripTime.push(new Value(timestamp, avgRoundTripTime));
         n.tcpCongestionWindow.push(new Value(timestamp, tcpCongestionWindow));
+        n.numberOfTCPRetransmissions.push(new Value(timestamp, numberOfTCPRetransmissions));
         if (stream == this.sim.selectedStream) {
             if (this.hasIncreased(n.totalTransmitTime)) {
                 this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));
@@ -268,7 +285,7 @@ var EventManager = (function () {
         this.sim.onNodeUpdated(stream, id);
     };
     return EventManager;
-}());
+})();
 var SimulationEvent = (function () {
     function SimulationEvent(stream, time, parts) {
         this.stream = stream;
@@ -276,7 +293,7 @@ var SimulationEvent = (function () {
         this.parts = parts;
     }
     return SimulationEvent;
-}());
+})();
 /// <reference path="../../../typings/globals/jquery/index.d.ts" />
 /// <reference path="../../../typings/globals/socket.io/index.d.ts" />
 /// <reference path="../../../typings/globals/highcharts/index.d.ts" />
@@ -298,6 +315,9 @@ var SimulationContainer = (function () {
     SimulationContainer.prototype.getStream = function (idx) {
         return this.keys[idx];
     };
+    SimulationContainer.prototype.getStreams = function () {
+        return this.keys.slice(0);
+    };
     SimulationContainer.prototype.getSimulations = function () {
         var sims = [];
         for (var _i = 0, _a = this.keys; _i < _a.length; _i++) {
@@ -307,7 +327,7 @@ var SimulationContainer = (function () {
         return sims;
     };
     return SimulationContainer;
-}());
+})();
 var SimulationGUI = (function () {
     function SimulationGUI(canvas) {
         this.canvas = canvas;
@@ -318,7 +338,16 @@ var SimulationGUI = (function () {
         this.animations = [];
         this.area = 2000;
         this.currentChart = null;
-        this.rawGroupColors = [new Color(0, 0, 255), new Color(0, 128, 255), new Color(0, 255, 128), new Color(0, 255, 255), new Color(128, 0, 255), new Color(255, 0, 255)];
+        this.rawGroupColors = [new Color(200, 0, 0),
+            new Color(0, 200, 0),
+            new Color(0, 0, 200),
+            new Color(200, 0, 200),
+            new Color(200, 200, 0),
+            new Color(0, 200, 200),
+            new Color(100, 100, 0),
+            new Color(100, 0, 100),
+            new Color(0, 0, 100),
+            new Color(0, 0, 0)];
         this.refreshTimerId = -1;
         this.lastUpdatedOn = new Date();
         this.ctx = canvas.getContext("2d");
@@ -354,10 +383,11 @@ var SimulationGUI = (function () {
             }
         }
     };
-    SimulationGUI.prototype.getMaxOfProperty = function (prop) {
+    SimulationGUI.prototype.getMinMaxOfProperty = function (prop) {
         if (!this.simulationContainer.hasSimulations())
-            return 0;
+            return [0, 0];
         var curMax = Number.MIN_VALUE;
+        var curMin = Number.MAX_VALUE;
         if (prop != "") {
             var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
             for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
@@ -367,20 +397,26 @@ var SimulationGUI = (function () {
                     var value = values[values.length - 1].value;
                     if (curMax < value)
                         curMax = value;
+                    if (curMin > value)
+                        curMin = value;
                 }
             }
-            return curMax;
+            return [curMin, curMax];
         }
         else
-            return 0;
+            return [0, 0];
     };
-    SimulationGUI.prototype.getColorForNode = function (n, curMax) {
+    SimulationGUI.prototype.getColorForNode = function (n, curMax, curMin) {
         if (this.selectedPropertyForChart != "") {
             var el = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "']").get(0));
             var type = el.attr("data-type");
             if (typeof type != "undefined" && type != "") {
-                var min = parseInt(el.attr("data-min"));
-                var max = void 0;
+                var min;
+                if (el.attr("data-max") == "*")
+                    min = curMin;
+                else
+                    min = parseInt(el.attr("data-min"));
+                var max;
                 if (el.attr("data-max") == "*")
                     max = curMax;
                 else
@@ -404,7 +440,9 @@ var SimulationGUI = (function () {
     SimulationGUI.prototype.drawNodes = function () {
         if (!this.simulationContainer.hasSimulations())
             return;
-        var curMax = this.getMaxOfProperty(this.selectedPropertyForChart);
+        var minmax = this.getMinMaxOfProperty(this.selectedPropertyForChart);
+        var curMax = minmax[1];
+        var curMin = minmax[0];
         var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
         for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
             var n = _a[_i];
@@ -414,7 +452,7 @@ var SimulationGUI = (function () {
                 this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 6, 0, Math.PI * 2, false);
             }
             else {
-                this.ctx.fillStyle = this.getColorForNode(n, curMax);
+                this.ctx.fillStyle = this.getColorForNode(n, curMax, curMin);
                 this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 3, 0, Math.PI * 2, false);
             }
             this.ctx.fill();
@@ -482,6 +520,7 @@ var SimulationGUI = (function () {
         else {
             $("#nodeAID").text(node.aId);
             $("#nodeGroupNumber").text(node.groupNumber);
+            $("#nodeRawSlotIndex").text(node.rawSlotIndex);
         }
         var configElements = $(".configProperty");
         for (var i = 0; i < configElements.length; i++) {
@@ -492,8 +531,34 @@ var SimulationGUI = (function () {
         for (var i = 0; i < propertyElements.length; i++) {
             var prop = $(propertyElements[i]).attr("data-property");
             var values = node[prop];
-            if (values.length > 0)
-                $($(propertyElements[i]).find("td").get(1)).text(values[values.length - 1].value);
+            var el = "";
+            if (values.length > 0) {
+                if (simulations.length > 1) {
+                    // compare with avg of others
+                    var sumVal = 0;
+                    var nrVals = 0;
+                    for (var j = 0; j < simulations.length; j++) {
+                        if (simulations[j] != selectedSimulation && this.selectedNode < simulations[j].nodes.length) {
+                            var vals = simulations[j].nodes[this.selectedNode][prop];
+                            if (vals.length > 0) {
+                                sumVal += vals[vals.length - 1].value;
+                                nrVals++;
+                            }
+                        }
+                    }
+                    var avg = sumVal / nrVals;
+                    if (values[values.length - 1].value > avg)
+                        el = "<div class='valueup' title='Value has increased compared to average (" + avg + ") of other simulations'>" + values[values.length - 1].value + "</div>";
+                    else if (values[values.length - 1].value < avg)
+                        el = "<div class='valuedown' title='Value has decreased compared to average (" + avg + ") of other simulations'>" + values[values.length - 1].value + "</div>";
+                    else
+                        el = values[values.length - 1].value + "";
+                }
+                else {
+                    el = values[values.length - 1].value + "";
+                }
+                $($(propertyElements[i]).find("td").get(1)).empty().append(el);
+            }
         }
         // prevent update flood by max 1 update per second or when gui changed
         var timeDiff = new Date().getTime() - this.lastUpdatedOn.getTime();
@@ -639,7 +704,7 @@ var SimulationGUI = (function () {
         });
     };
     return SimulationGUI;
-}());
+})();
 function getParameterByName(name, url) {
     if (!url)
         url = window.location.href;
@@ -663,8 +728,8 @@ $(document).ready(function () {
         streams = ["live"];
     else
         streams = compare.split(',');
-    for (var _i = 0, streams_1 = streams; _i < streams_1.length; _i++) {
-        var stream = streams_1[_i];
+    for (var _i = 0; _i < streams.length; _i++) {
+        var stream = streams[_i];
         var rdb = "<input class=\"rdbStream\" name=\"streams\" type='radio' data-stream='" + stream + "'>&nbsp;";
         $("#rdbStreams").append(rdb);
     }
@@ -753,6 +818,7 @@ var SimulationNode = (function () {
         this.y = 0;
         this.aId = 0;
         this.groupNumber = 0;
+        this.rawSlotIndex = 0;
         this.type = "";
         this.totalTransmitTime = [];
         this.totalReceiveTime = [];
@@ -771,16 +837,18 @@ var SimulationNode = (function () {
         this.nrOfSuccessfulRoundtripPackets = [];
         this.avgRoundtripTime = [];
         this.tcpCongestionWindow = [];
+        this.numberOfTCPRetransmissions = [];
+        this.nrOfReceivesDroppedByDestination = [];
     }
     return SimulationNode;
-}());
+})();
 var Value = (function () {
     function Value(timestamp, value) {
         this.timestamp = timestamp;
         this.value = value;
     }
     return Value;
-}());
+})();
 var APNode = (function (_super) {
     __extends(APNode, _super);
     function APNode() {
@@ -788,7 +856,7 @@ var APNode = (function (_super) {
         this.type = "AP";
     }
     return APNode;
-}(SimulationNode));
+})(SimulationNode);
 var STANode = (function (_super) {
     __extends(STANode, _super);
     function STANode() {
@@ -797,18 +865,18 @@ var STANode = (function (_super) {
         this.isAssociated = false;
     }
     return STANode;
-}(SimulationNode));
+})(SimulationNode);
 var SimulationConfiguration = (function () {
     function SimulationConfiguration() {
         this.name = "";
     }
     return SimulationConfiguration;
-}());
+})();
 var Simulation = (function () {
     function Simulation() {
         this.nodes = [];
         this.config = new SimulationConfiguration();
     }
     return Simulation;
-}());
+})();
 //# sourceMappingURL=main.js.map

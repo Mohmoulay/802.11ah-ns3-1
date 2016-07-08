@@ -6,6 +6,7 @@ abstract class SimulationNode {
     y: number = 0;
     aId: number = 0;
     groupNumber: number = 0;
+    rawSlotIndex: number = 0;
 
     type: string = "";
 
@@ -31,7 +32,9 @@ abstract class SimulationNode {
     avgRoundtripTime: Value[] = [];
 
     tcpCongestionWindow: Value[] = [];
+    numberOfTCPRetransmissions: Value[] = [];
 
+    nrOfReceivesDroppedByDestination: Value[] = [];
 }
 
 class Value {
