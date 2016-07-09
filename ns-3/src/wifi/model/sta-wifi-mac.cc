@@ -40,7 +40,7 @@
 #include "ht-capabilities.h"
 #include "random-stream.h"
 
-#define LOG_SLEEP(msg)	if(false) std::cout << "[" << GetAID() << "] " << msg << std::endl;
+#define LOG_SLEEP(msg)	if(true) std::cout << "[" << (GetAID()) << "] " << msg << std::endl;
 
 /*
  * The state machine for this STA is:
@@ -293,11 +293,11 @@ StaWifiMac::SendPspollIfnecessary (void)
 
 
 bool StaWifiMac::IsTherePendingOutgoingData() {
-    return !m_dca->GetQueue()->IsEmpty() ||
-    !m_edca.find (AC_VO)->second->GetEdcaQueue()->IsEmpty() ||
-	!m_edca.find (AC_VI)->second->GetEdcaQueue()->IsEmpty() ||
-	!m_edca.find (AC_BE)->second->GetEdcaQueue()->IsEmpty() ||
-	!m_edca.find (AC_BK)->second->GetEdcaQueue()->IsEmpty();
+    return !m_dca->NeedsAccess() ||
+    !m_edca.find (AC_VO)->second->NeedsAccess() ||
+	!m_edca.find (AC_VI)->second->NeedsAccess() ||
+	!m_edca.find (AC_BE)->second->NeedsAccess() ||
+	!m_edca.find (AC_BK)->second->NeedsAccess();
 }
 
 void
@@ -478,7 +478,7 @@ StaWifiMac::RestartBeaconWatchdog (Time delay)
       && m_beaconWatchdog.IsExpired ())
     {
       NS_LOG_DEBUG ("really restart watchdog.");
-      m_beaconWatchdog = Simulator::Schedule (delay, &StaWifiMac::MissedBeacons, this);
+
     }
 }
 
@@ -652,6 +652,7 @@ StaWifiMac::Receive(Ptr<Packet> packet, const WifiMacHeader *hdr) {
 			Time delay = MicroSeconds(
 					beacon.GetBeaconCompatibility().GetBeaconInterval()
 							* m_maxMissedBeacons);
+
 			RestartBeaconWatchdog(delay);
 			//SetBssid (beacon.GetSA ());
 			SetBssid(hdr->GetAddr3()); //for debug
@@ -897,7 +898,7 @@ StaWifiMac::HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon) {
 			// there is data or we need to send data, sleep until our TIM group beacon arrives
 			if(staTIMGroup == 0) {
 				// but wait, it's this beacon!
-				LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " There is pending data to be received or transmitted, the DTIM beacon IS our TIM group");
+				LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " There is pending data to be received or transmitted (R:" << isThereDataToBeReceived << "," << "S:" << isThereDataToBeTransmitted << ")" << " , the DTIM beacon IS our TIM group");
 				HandleS1gSleepFromSTATIMGroupBeacon(beacon);
 			}
 			else {
@@ -905,7 +906,7 @@ StaWifiMac::HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon) {
 				// this is TIM group 0, we're waiting for TIM group x
 				// so sleep x * beaconInterval
 				//Simulator::Schedule(beaconInterval * staTIMGroup, &StaWifiMac::OnSleepEnd, this);
-				LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " There is pending data to be received or transmitted, go to sleep until our TIM beacon is scheduled to arrive");
+				LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " There is pending data to be received or transmitted," << "(R:" << isThereDataToBeReceived << "," << "S:" << isThereDataToBeTransmitted << ")" << " go to sleep until our TIM beacon is scheduled to arrive");
 				GoToSleep(beaconInterval * staTIMGroup);
 			}
 		} else {
@@ -1004,6 +1005,7 @@ StaWifiMac::DenyDCAAccess() {
 void
 StaWifiMac::OnRAWSlotStart() {
 	LOG_SLEEP(Simulator::Now().GetMicroSeconds() <<  " RAW SLOT START ");
+	LOG_SLEEP("Is there pending data to be transmitted: " << this->IsTherePendingOutgoingData())
 	GrantDCAAccess();
 }
 
@@ -1021,14 +1023,12 @@ StaWifiMac::OnSleepEnd() {
 
 void
 StaWifiMac::GoToSleep(Time duration) {
-
-	m_phy->SetSleepMode();
-
 	// wake up sliiiiiiiiiiiightly earlier or the station will miss the
 	// data that it's supposed to receive
 	// this greatly depends on how fast the radio can go from sleep -> active
 	auto earlyWake = MilliSeconds(4);
 	if(duration > earlyWake) {
+		m_phy->SetSleepMode();
 		auto sleepTime = duration - earlyWake;
 		LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " Sleeping for " << sleepTime.GetMicroSeconds() << "µs");
 		Simulator::Schedule(sleepTime, &StaWifiMac::OnSleepEnd, this);

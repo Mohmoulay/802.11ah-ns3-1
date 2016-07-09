@@ -36,7 +36,7 @@ void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 }
 
 void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
-	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+	//cout << "[" << this->aId << "] " << Simulator::Now().GetMicroSeconds()
 	//		<< "µs " << "Begin Tx " << packet->GetUid() << endl;
 	txMap.emplace(packet->GetUid(), Simulator::Now());
 
@@ -53,8 +53,8 @@ void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
-	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
-	//<< "End Tx " << packet->GetUid() << " (current group: " << lastBeaconAIDStart << " - " << lastBeaconAIDEnd << ")" << endl;
+	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+	<< "End Tx " << packet->GetUid() << endl;
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
 		Time oldTime = txMap[packet->GetUid()];
@@ -67,7 +67,7 @@ void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyTxDrop(std::string context, Ptr<const Packet> packet) {
-	//cout << "[" << this->id << "] " << "Tx Dropped " << packet->GetUid() << endl;
+	cout << "[" << this->aId << "] " << "Tx Dropped " << packet->GetUid() << endl;
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
 		Time oldTime = txMap[packet->GetUid()];
@@ -81,7 +81,7 @@ void NodeEntry::OnPhyTxDrop(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyRxBegin(std::string context, Ptr<const Packet> packet) {
-	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+	//cout << "[" << this->aId << "] " << Simulator::Now().GetMicroSeconds()
 	//<< " Begin Rx " << packet->GetUid() << endl;
 
 	rxMap.emplace(packet->GetUid(), Simulator::Now());
@@ -92,8 +92,8 @@ void NodeEntry::OnPhyRxBegin(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyRxEnd(std::string context, Ptr<const Packet> packet) {
-	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
-	//<< " End Rx " << packet->GetUid() << endl;
+	cout  << Simulator::Now().GetMicroSeconds() << "[" << this->aId << "] "
+	<< " End Rx " << packet->GetUid() << endl;
 
 	this->OnEndOfReceive(packet);
 }
@@ -187,7 +187,7 @@ void NodeEntry::OnEndOfReceive(Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet) {
-//cout << "[" << this->id << "] " << "Rx Dropped " << packet->GetUid() << endl;
+
 
 	this->OnEndOfReceive(packet);
 
@@ -219,6 +219,10 @@ void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet) {
 
 				stats->get(this->id).NumberOfReceiveDroppedByDestination++;
 				//cout << "Dropped packet that was sent to this station" << endl;
+
+				cout  << Simulator::Now().GetMicroSeconds() << "[" << this->aId << "] "
+					<< " Drop Rx for STA " << packet->GetUid() << endl;
+
 			}
 			//hdr->Print(cout);
 			delete chunk;
@@ -388,6 +392,27 @@ void NodeEntry::OnUdpPacketReceivedAtAP(Ptr<const Packet> packet) {
 
 	stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
 }
+
+void NodeEntry::OnMacTxRtsFailed(Mac48Address address) {
+	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+		<< " MAC Tx Rts Failed" << endl;
+}
+
+void NodeEntry::OnMacTxDataFailed(Mac48Address address) {
+	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+			<< " MAC Tx Data Failed" << endl;
+}
+
+void NodeEntry::OnMacTxFinalRtsFailed(Mac48Address address) {
+	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+			<< " MAC Tx Rts Failed" << endl;
+}
+
+void NodeEntry::OnMacTxFinalDataFailed(Mac48Address address) {
+	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+			<< " MAC Tx Final data Failed" << endl;
+}
+
 
 void NodeEntry::SetAssociatedCallback(std::function<void()> assocCallback) {
 	this->associatedCallback = assocCallback;

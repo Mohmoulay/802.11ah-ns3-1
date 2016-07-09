@@ -160,6 +160,16 @@ public:
   void RawStart (void);
   void OutsideRawStart (void);
 
+
+  /**
+     * Check if the DCF requires access.
+     *
+     * \return true if the DCF requires access,
+     *         false otherwise
+     */
+    bool NeedsAccess (void) const;
+
+
 private:
   class TransmissionListener;
   class NavListener;
@@ -180,13 +190,7 @@ private:
   Ptr<MacLow> Low (void);
   void DoInitialize ();
   /* dcf notifications forwarded here */
-  /**
-   * Check if the DCF requires access.
-   *
-   * \return true if the DCF requires access,
-   *         false otherwise
-   */
-  bool NeedsAccess (void) const;
+
 
   /**
    * Notify the DCF that access has been granted.

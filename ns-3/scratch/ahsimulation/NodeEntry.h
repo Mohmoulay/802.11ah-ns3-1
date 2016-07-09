@@ -67,6 +67,13 @@ public:
     void OnPhyRxEnd(std::string context,Ptr<const Packet> packet);
     void OnPhyRxDrop(std::string context,Ptr<const Packet> packet);
 
+
+    void OnMacTxRtsFailed(Mac48Address address);
+    void OnMacTxDataFailed(Mac48Address address);
+    void OnMacTxFinalRtsFailed(Mac48Address address);
+    void OnMacTxFinalDataFailed(Mac48Address address);
+
+
     void OnPhyStateChange(std::string context, const Time start, const Time duration, const WifiPhy::State state);
 
     void OnTcpPacketSent(Ptr<const Packet> packet);

@@ -306,7 +306,7 @@ DcaTxop::RestartAccessIfNeeded (void)
   if ((m_currentPacket != 0
        || !m_queue->IsEmpty ())
       && !m_dcf->IsAccessRequested ()
-      && AccessIfRaw)          // always TRUE outside RAW
+      && AccessIfRaw)
     {
       m_manager->RequestAccess (m_dcf);
     }
@@ -319,7 +319,7 @@ DcaTxop::StartAccessIfNeeded (void)
   if (m_currentPacket == 0
       && !m_queue->IsEmpty ()
       && !m_dcf->IsAccessRequested ()
-      && AccessIfRaw)      // always TRUE outside RAW
+      && AccessIfRaw)
     {
       m_manager->RequestAccess (m_dcf);
     }
@@ -331,7 +331,7 @@ DcaTxop::StartAccessIfNeededRaw (void) //possibilely necessary, start new backof
     NS_LOG_FUNCTION (this);
     if (!m_queue->IsEmpty ()
         && !m_dcf->IsAccessRequested ()
-        && AccessIfRaw)      // always TRUE outside RAW
+        && AccessIfRaw)
     {
        m_manager->RequestAccess (m_dcf);
     }

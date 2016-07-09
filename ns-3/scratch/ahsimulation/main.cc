@@ -232,6 +232,13 @@ void configureNodes() {
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxEnd", MakeCallback(&NodeEntry::OnPhyRxEnd, n));
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeCallback(&NodeEntry::OnPhyRxDrop, n));
 
+
+        // hook up MAC traces
+        Config::Connect("/NodeList/" + std::to_string(i) + "//DeviceList/[i]/$ns3::WifiNetDevice/RemoteStationManager/MacTxRtsFailed", MakeCallback(&NodeEntry::OnMacTxRtsFailed, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "//DeviceList/[i]/$ns3::WifiNetDevice/RemoteStationManager/MacTxDataFailed", MakeCallback(&NodeEntry::OnMacTxDataFailed, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "//DeviceList/[i]/$ns3::WifiNetDevice/RemoteStationManager/MacTxFinalRtsFailed", MakeCallback(&NodeEntry::OnMacTxFinalRtsFailed, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "//DeviceList/[i]/$ns3::WifiNetDevice/RemoteStationManager/MacTxFinalDataFailed", MakeCallback(&NodeEntry::OnMacTxFinalDataFailed, n));
+
         // hook up PHY State change
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/State/State", MakeCallback(&NodeEntry::OnPhyStateChange, n));
 
