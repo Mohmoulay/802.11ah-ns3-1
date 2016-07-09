@@ -383,7 +383,7 @@ var SimulationGUI = (function () {
             }
         }
     };
-    SimulationGUI.prototype.getMinMaxOfProperty = function (prop) {
+    SimulationGUI.prototype.getMinMaxOfProperty = function (prop, deltas) {
         if (!this.simulationContainer.hasSimulations())
             return [0, 0];
         var curMax = Number.MIN_VALUE;
@@ -393,7 +393,16 @@ var SimulationGUI = (function () {
             for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
                 var n = _a[_i];
                 var values = n[this.selectedPropertyForChart];
-                if (values.length > 0) {
+                if (deltas && values.length > 1) {
+                    var curVal = values[values.length - 1].value;
+                    var beforeVal = values[values.length - 2].value;
+                    var value = curVal - beforeVal;
+                    if (curMax < value)
+                        curMax = value;
+                    if (curMin > value)
+                        curMin = value;
+                }
+                else if (values.length > 0) {
                     var value = values[values.length - 1].value;
                     if (curMax < value)
                         curMax = value;
@@ -440,7 +449,7 @@ var SimulationGUI = (function () {
     SimulationGUI.prototype.drawNodes = function () {
         if (!this.simulationContainer.hasSimulations())
             return;
-        var minmax = this.getMinMaxOfProperty(this.selectedPropertyForChart);
+        var minmax = this.getMinMaxOfProperty(this.selectedPropertyForChart, false);
         var curMax = minmax[1];
         var curMin = minmax[0];
         var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
@@ -456,7 +465,7 @@ var SimulationGUI = (function () {
                 this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 3, 0, Math.PI * 2, false);
             }
             this.ctx.fill();
-            if (this.selectedNode == n.id) {
+            if (this.selectedNode >= 0 && this.selectedNode == n.id) {
                 this.ctx.beginPath();
                 this.ctx.strokeStyle = "blue";
                 this.ctx.lineWidth = 3;
@@ -483,11 +492,11 @@ var SimulationGUI = (function () {
     };
     SimulationGUI.prototype.onNodeUpdated = function (stream, id) {
         if (id == this.selectedNode)
-            this.updateNodeGUI(false);
+            this.updateGUI(false);
     };
     SimulationGUI.prototype.onNodeAdded = function (stream, id) {
         if (id == this.selectedNode)
-            this.updateNodeGUI(true);
+            this.updateGUI(true);
     };
     SimulationGUI.prototype.onNodeAssociated = function (stream, id) {
         if (stream == this.selectedStream) {
@@ -500,18 +509,29 @@ var SimulationGUI = (function () {
     };
     SimulationGUI.prototype.changeNodeSelection = function (id) {
         this.selectedNode = id;
-        this.updateNodeGUI(true);
+        this.updateGUI(true);
     };
-    SimulationGUI.prototype.updateNodeGUI = function (full) {
-        var _this = this;
+    SimulationGUI.prototype.updateGUI = function (full) {
         if (!this.simulationContainer.hasSimulations())
             return;
-        var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
-        if (this.selectedNode < 0 || this.selectedNode >= selectedSimulation.nodes.length)
-            return;
         var simulations = this.simulationContainer.getSimulations();
-        var node = selectedSimulation.nodes[this.selectedNode];
+        var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        this.updateConfigGUI(selectedSimulation);
+        if (this.selectedNode < 0 || this.selectedNode >= selectedSimulation.nodes.length)
+            this.updateGUIForAll(simulations, selectedSimulation, full);
+        else
+            this.updateGUIForSelectedNode(simulations, selectedSimulation, full);
+    };
+    SimulationGUI.prototype.updateConfigGUI = function (selectedSimulation) {
         $("#simulationName").text(selectedSimulation.config.name);
+        var configElements = $(".configProperty");
+        for (var i = 0; i < configElements.length; i++) {
+            var prop = $(configElements[i]).attr("data-property");
+            $($(configElements[i]).find("td").get(1)).text(selectedSimulation.config[prop]);
+        }
+    };
+    SimulationGUI.prototype.updateGUIForSelectedNode = function (simulations, selectedSimulation, full) {
+        var node = selectedSimulation.nodes[this.selectedNode];
         $("#nodeTitle").text("Node " + node.id);
         $("#nodePosition").text(node.x + "," + node.y);
         if (node.type == "STA" && !node.isAssociated) {
@@ -521,11 +541,6 @@ var SimulationGUI = (function () {
             $("#nodeAID").text(node.aId);
             $("#nodeGroupNumber").text(node.groupNumber);
             $("#nodeRawSlotIndex").text(node.rawSlotIndex);
-        }
-        var configElements = $(".configProperty");
-        for (var i = 0; i < configElements.length; i++) {
-            var prop = $(configElements[i]).attr("data-property");
-            $($(configElements[i]).find("td").get(1)).text(selectedSimulation.config[prop]);
         }
         var propertyElements = $(".nodeProperty");
         for (var i = 0; i < propertyElements.length; i++) {
@@ -548,9 +563,9 @@ var SimulationGUI = (function () {
                     }
                     var avg = sumVal / nrVals;
                     if (values[values.length - 1].value > avg)
-                        el = "<div class='valueup' title='Value has increased compared to average (" + avg + ") of other simulations'>" + values[values.length - 1].value + "</div>";
+                        el = "<div class='valueup' title='Value has increased compared to average (" + avg.toFixed(2) + ") of other simulations'>" + values[values.length - 1].value + "</div>";
                     else if (values[values.length - 1].value < avg)
-                        el = "<div class='valuedown' title='Value has decreased compared to average (" + avg + ") of other simulations'>" + values[values.length - 1].value + "</div>";
+                        el = "<div class='valuedown' title='Value has decreased compared to average (" + avg.toFixed(2) + ") of other simulations'>" + values[values.length - 1].value + "</div>";
                     else
                         el = values[values.length - 1].value + "";
                 }
@@ -560,6 +575,78 @@ var SimulationGUI = (function () {
                 $($(propertyElements[i]).find("td").get(1)).empty().append(el);
             }
         }
+        this.deferUpdateCharts(simulations, full);
+    };
+    SimulationGUI.prototype.getAverageAndStdDevValue = function (simulation, prop) {
+        var sum = 0;
+        var count = 0;
+        for (var i = 0; i < simulation.nodes.length; i++) {
+            var node = simulation.nodes[i];
+            var values = node[prop];
+            if (values.length > 0) {
+                sum += values[values.length - 1].value;
+                count++;
+            }
+        }
+        if (count == 0)
+            return [];
+        var avg = sum / count;
+        var sumSquares = 0;
+        for (var i = 0; i < simulation.nodes.length; i++) {
+            var node = simulation.nodes[i];
+            var values = node[prop];
+            if (values.length > 0) {
+                var val = (values[values.length - 1].value - avg) * (values[values.length - 1].value - avg);
+                sumSquares += val;
+            }
+        }
+        var stddev = Math.sqrt(sumSquares / count);
+        return [avg, stddev];
+    };
+    SimulationGUI.prototype.updateGUIForAll = function (simulations, selectedSimulation, full) {
+        $("#nodeTitle").text("All nodes");
+        $("#nodePosition").text("---");
+        $("#nodeAID").text("---");
+        $("#nodeGroupNumber").text("---");
+        $("#nodeRawSlotIndex").text("---");
+        var propertyElements = $(".nodeProperty");
+        for (var i = 0; i < propertyElements.length; i++) {
+            var prop = $(propertyElements[i]).attr("data-property");
+            var avgAndStdDev = this.getAverageAndStdDevValue(selectedSimulation, prop);
+            var el = "";
+            if (avgAndStdDev.length > 0) {
+                var text = avgAndStdDev[0].toFixed(2) + " (stddev: " + avgAndStdDev[1].toFixed(2) + ")";
+                if (simulations.length > 1) {
+                    // compare with avg of others
+                    var sumVal = 0;
+                    var nrVals = 0;
+                    for (var j = 0; j < simulations.length; j++) {
+                        if (simulations[j] != selectedSimulation) {
+                            var avgAndStdDevOther = this.getAverageAndStdDevValue(simulations[j], prop);
+                            if (avgAndStdDevOther.length > 0) {
+                                sumVal += avgAndStdDevOther[0];
+                                nrVals++;
+                            }
+                        }
+                    }
+                    var avg = sumVal / nrVals;
+                    if (avgAndStdDev[0] > avg)
+                        el = "<div class='valueup' title='Average has increased compared to average (" + avg.toFixed(2) + ") of other simulations'>" + text + "</div>";
+                    else if (avgAndStdDev[0] < avg)
+                        el = "<div class='valuedown' title='Average has decreased compared to average (" + avg.toFixed(2) + ") of other simulations'>" + text + "</div>";
+                    else
+                        el = text;
+                }
+                else {
+                    el = text;
+                }
+                $($(propertyElements[i]).find("td").get(1)).empty().append(el);
+            }
+        }
+        this.deferUpdateCharts(simulations, full);
+    };
+    SimulationGUI.prototype.deferUpdateCharts = function (simulations, full) {
+        var _this = this;
         // prevent update flood by max 1 update per second or when gui changed
         var timeDiff = new Date().getTime() - this.lastUpdatedOn.getTime();
         if (timeDiff > 1000 || full) {
@@ -577,6 +664,12 @@ var SimulationGUI = (function () {
     SimulationGUI.prototype.updateCharts = function (simulations, full) {
         var showDeltas = $("#chkShowDeltas").prop("checked");
         var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        if (this.selectedNode == -1)
+            this.updateChartsForAll(selectedSimulation, simulations, full, showDeltas);
+        else
+            this.updateChartsForNode(selectedSimulation, simulations, full, showDeltas);
+    };
+    SimulationGUI.prototype.updateChartsForNode = function (selectedSimulation, simulations, full, showDeltas) {
         var firstNode = selectedSimulation.nodes[this.selectedNode];
         if (firstNode[this.selectedPropertyForChart].length > 0) {
             if (this.currentChart == null || full) {
@@ -673,6 +766,103 @@ var SimulationGUI = (function () {
         if (firstNode.nrOfSuccessfulPackets.length > 0 && firstNode.nrOfDroppedPackets.length > 0) {
             var activePacketsSuccessDroppedData = [{ name: "OK", y: firstNode.nrOfSuccessfulPackets[firstNode.nrOfSuccessfulPackets.length - 1].value },
                 { name: "Dropped", y: firstNode.nrOfDroppedPackets[firstNode.nrOfDroppedPackets.length - 1].value }];
+            this.createPieChart("#nodeChartPacketSuccessDropped", 'Packets OK/dropped', activePacketsSuccessDroppedData);
+        }
+    };
+    SimulationGUI.prototype.updateChartsForAll = function (selectedSimulation, simulations, full, showDeltas) {
+        var series = [];
+        var minMax = this.getMinMaxOfProperty(this.selectedPropertyForChart, showDeltas);
+        // create 100 classes
+        var nrOfClasses = 100;
+        var classSize = (minMax[1] - minMax[0]) / nrOfClasses;
+        var seriesValues = new Array(nrOfClasses + 1);
+        for (var i_3 = 0; i_3 <= nrOfClasses; i_3++)
+            seriesValues[i_3] = 0;
+        for (var i = 0; i < selectedSimulation.nodes.length; i++) {
+            var values = selectedSimulation.nodes[i][this.selectedPropertyForChart];
+            if (showDeltas && values.length > 1) {
+                var curVal = values[values.length - 1].value;
+                var beforeVal = values[values.length - 2].value;
+                var val = curVal - beforeVal;
+                var alpha = (val - minMax[0]) / (minMax[1] - minMax[0]);
+                seriesValues[Math.round(alpha * nrOfClasses)]++;
+            }
+            else if (values.length > 0) {
+                var val = values[values.length - 1].value;
+                var alpha = (val - minMax[0]) / (minMax[1] - minMax[0]);
+                seriesValues[Math.round(alpha * nrOfClasses)]++;
+            }
+        }
+        for (var i_4 = 0; i_4 <= seriesValues.length; i_4++) {
+            var classStartValue = minMax[0] + classSize * i_4;
+            series.push([classStartValue, seriesValues[i_4]]);
+        }
+        var self = this;
+        var title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
+        $('#nodeChart').empty().highcharts({
+            chart: {
+                type: 'column',
+                animation: "Highcharts.svg",
+                alignTicks: false,
+                events: {
+                    load: function () {
+                        self.currentChart = this;
+                    }
+                }
+            },
+            title: { text: "Distribution of " + title },
+            plotOptions: {
+                series: {
+                    animation: false,
+                    marker: { enabled: false },
+                    shadow: false
+                },
+                column: {
+                    borderWidth: 0,
+                    pointPadding: 0,
+                    groupPadding: 0
+                }
+            },
+            xAxis: {
+                min: minMax[0],
+                max: minMax[1]
+            },
+            yAxis: {
+                endOnTick: false
+            },
+            series: [{
+                    name: " ",
+                    data: series
+                }],
+            legend: { enabled: false },
+            credits: false
+        });
+        var totalReceiveActiveTime = this.getAverageAndStdDevValue(selectedSimulation, "totalReceiveActiveTime");
+        var totalReceiveDozeTime = this.getAverageAndStdDevValue(selectedSimulation, "totalReceiveDozeTime");
+        if (totalReceiveActiveTime.length > 0 && totalReceiveDozeTime.length > 0) {
+            var activeDozePieData = [{ name: "Active", y: totalReceiveActiveTime[0] },
+                { name: "Doze", y: totalReceiveDozeTime[0] }];
+            this.createPieChart("#nodeChartActiveDoze", 'Active/doze time', activeDozePieData);
+        }
+        var nrOfTransmissions = this.getAverageAndStdDevValue(selectedSimulation, "nrOfTransmissions");
+        var nrOfTransmissionsDropped = this.getAverageAndStdDevValue(selectedSimulation, "nrOfTransmissionsDropped");
+        if (nrOfTransmissions.length > 0 && nrOfTransmissionsDropped.length > 0) {
+            var activeTransmissionsSuccessDroppedData = [{ name: "OK", y: nrOfTransmissions[0] - nrOfTransmissionsDropped[0] },
+                { name: "Dropped", y: nrOfTransmissionsDropped[0] }];
+            this.createPieChart("#nodeChartTxSuccessDropped", 'TX OK/dropped', activeTransmissionsSuccessDroppedData);
+        }
+        var nrOfReceives = this.getAverageAndStdDevValue(selectedSimulation, "nrOfReceives");
+        var nrOfReceivesDropped = this.getAverageAndStdDevValue(selectedSimulation, "nrOfReceivesDropped");
+        if (nrOfReceives.length > 0 && nrOfReceivesDropped.length > 0) {
+            var activeReceivesSuccessDroppedData = [{ name: "OK", y: nrOfReceives[0] - nrOfReceivesDropped[0] },
+                { name: "Dropped", y: nrOfReceivesDropped[0] }];
+            this.createPieChart("#nodeChartRxSuccessDropped", 'RX OK/dropped', activeReceivesSuccessDroppedData);
+        }
+        var nrOfSuccessfulPackets = this.getAverageAndStdDevValue(selectedSimulation, "nrOfSuccessfulPackets");
+        var nrOfDroppedPackets = this.getAverageAndStdDevValue(selectedSimulation, "nrOfDroppedPackets");
+        if (nrOfSuccessfulPackets.length > 0 && nrOfDroppedPackets.length > 0) {
+            var activePacketsSuccessDroppedData = [{ name: "OK", y: nrOfSuccessfulPackets[0] },
+                { name: "Dropped", y: nrOfDroppedPackets[0] }];
             this.createPieChart("#nodeChartPacketSuccessDropped", 'Packets OK/dropped', activePacketsSuccessDroppedData);
         }
     };
@@ -773,15 +963,17 @@ $(document).ready(function () {
         }
         if (selectedNode != null)
             sim.changeNodeSelection(selectedNode.id);
+        else
+            sim.changeNodeSelection(-1);
     });
     $(".nodeProperty").click(function (ev) {
         $(".nodeProperty").removeClass("selected");
         $(this).addClass("selected");
         sim.selectedPropertyForChart = $(this).attr("data-property");
-        sim.updateNodeGUI(true);
+        sim.updateGUI(true);
     });
     $("#chkShowDeltas").change(function (ev) {
-        sim.updateNodeGUI(true);
+        sim.updateGUI(true);
     });
     $(".rdbStream").change(function (ev) {
         var rdbs = $(".rdbStream");
@@ -789,7 +981,7 @@ $(document).ready(function () {
             var rdb = $(rdbs.get(i));
             if (rdb.prop("checked")) {
                 sim.selectedStream = rdb.attr("data-stream");
-                sim.updateNodeGUI(true);
+                sim.updateGUI(true);
             }
         }
     });
