@@ -255,6 +255,7 @@ private:
   std::map<Mac48Address, uint16_t> macToAIDMap;
 
   std::vector<int> pendingDataSizeForStations;
+  std::vector<bool> staIsActiveDuringCurrentCycle;
 
   Ptr<DcaTxop> m_beaconDca;                  //!< Dedicated DcaTxop for beacons
   Time m_beaconInterval;                     //!< Interval between beacons

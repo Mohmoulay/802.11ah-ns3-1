@@ -24,7 +24,7 @@ NS_LOG_COMPONENT_DEFINE("S1gApWifiMac");
 
 NS_OBJECT_ENSURE_REGISTERED(S1gApWifiMac);
 
-#define LOG_TRAFFIC(msg)	if(false) std::cout << msg << std::endl;
+#define LOG_TRAFFIC(msg)	if(true) std::cout << msg << std::endl;
 
 TypeId S1gApWifiMac::GetTypeId(void) {
 	static TypeId tid =
@@ -316,23 +316,33 @@ void S1gApWifiMac::Enqueue(Ptr<const Packet> packet, Mac48Address to,
 		pendingDataSizeForStations[aId - 1]++;
 		LOG_TRAFFIC(Simulator::Now().GetMicroSeconds() << " Data for [" << aId << "] ++");
 
-		// technically you can only send it through directly if the previous DTIM
-		// beacon indicated that there's data for this TIM grup
-		// TODO keep track of that
+		uint8_t slotIndex = aId % m_slotNum;
+		// RAW period start is 0 at the moment
+		Time slotDuration = MicroSeconds(500 + 120 * m_slotDurationCount);
+		Time slotTimeOffset = MicroSeconds(0) + slotDuration * slotIndex;
+		int timGroup = (aId-1) / m_rawGroupInterval;
 
-		//if (aId >= current_aid_start && aId <= current_aid_end) {
-			// send it through directly
-			// technically it should be scheduled to the correct RAW slot
-			//std::cout << "sending data directly" << std::endl;
-		//	ForwardDown(packet, from, to);
-		//} else {
-			//std::cout << "enqueuing data for " << aId << std::endl;
-			//this->pendingDataForStations.at(aId-1).push(std::move(PendingData(from,to, &packet)));
+		bool schedulePacketForNextSlot = true;
 
-			// determine when the next raw window hits for this packet
+		if(staIsActiveDuringCurrentCycle[aId-1]) {
+			// station is active in its respective slot until at least the next DTIM beacon is sent
+			// calculate if we are still inside the appropriate slot and transmit immediately if we are
+			// that way we can avoid having to wait an entire cycle until the next slot comes up
 
-			int timGroup = (aId-1) / m_rawGroupInterval;
+			if(timGroup == m_currentBeaconTIMGroup) {
+				// we're still in the correct TIM group, let's see if we're still inside the slot
+				Time currentOffsetSinceLastBeacon = (Simulator::Now() - lastBeaconTime);
+				if(currentOffsetSinceLastBeacon >= slotTimeOffset &&
+				   currentOffsetSinceLastBeacon <= slotTimeOffset + slotDuration) {
+					// still inside the slot too!, send packet immediately, if there is still enough time
+					Time timeRemaining = slotTimeOffset + slotDuration - currentOffsetSinceLastBeacon;
+					schedulePacketForNextSlot = false;
+					LOG_TRAFFIC(Simulator::Now().GetMicroSeconds() << " Data for [" << aId << "] is transmitted immediately because AP can still get it out during the STA slot, in which the STA is actively listening, there's " << timeRemaining.GetMicroSeconds() << "µs remaining until slot is over");
+				}
+			}
+		}
 
+		if(schedulePacketForNextSlot) {
 			int remainingBeacons = 0;
 			int curStart = current_aid_start;
 			int curTIMBeaconNr = m_currentBeaconTIMGroup;
@@ -357,11 +367,6 @@ void S1gApWifiMac::Enqueue(Ptr<const Packet> packet, Mac48Address to,
 
 			//std::cout << "Current TIM beacon " << std::to_string(m_currentBeaconTIMGroup) << ", scheduling packet in " << remainingBeacons << " beacons" << std::endl;
 			Time packetSendTime = m_beaconInterval * remainingBeacons;
-
-			uint8_t slotIndex = aId % m_slotNum;
-
-			// RAW period start is 0 at the moment
-			Time slotTimeOffset = MicroSeconds(0) + MicroSeconds(500 + 120 * m_slotDurationCount) * slotIndex;
 			packetSendTime += slotTimeOffset;
 
 			//align with beacon interval
@@ -373,7 +378,11 @@ void S1gApWifiMac::Enqueue(Ptr<const Packet> packet, Mac48Address to,
 			void (S1gApWifiMac::*fp)(Ptr<const Packet>, Mac48Address,
 					Mac48Address) = &S1gApWifiMac::ForwardDown;
 			Simulator::Schedule(packetSendTime, fp, this, packet, from, to);
-		//}
+		}
+		else {
+			// still within the slot, transmit immediately, gogogo
+			ForwardDown(packet, from, to);
+		}
 	}
 }
 
@@ -586,7 +595,11 @@ void S1gApWifiMac::SendOneBeacon(void) {
 					int group = i / m_rawGroupInterval;
 					//std::cout << Simulator::Now().GetMicroSeconds() << " there is data for " << i << "( " << "group " << group << ")" << std::endl;
 					vmap = vmap | (1 << group);
+
+					staIsActiveDuringCurrentCycle[i] = true;
 				}
+				else
+					staIsActiveDuringCurrentCycle[i] = false;
 			}
 
 /*
@@ -672,6 +685,12 @@ void S1gApWifiMac::Receive(Ptr<Packet> packet, const WifiMacHeader *hdr) {
 	//uint16_t segg =  hdr->GetFrameControl (); // for test
 	//NS_LOG_LOGIC ("AP waiting   " << segg); //for test
 	Mac48Address from = hdr->GetAddr2();
+
+	if(macToAIDMap.find(from) != macToAIDMap.end()) {
+		// we've received data from the STA, which means it's active during its slot
+		auto aId = macToAIDMap[from];
+		staIsActiveDuringCurrentCycle[aId-1] = true;
+	}
 
 	if (hdr->IsData()) {
 		Mac48Address bssid = hdr->GetAddr1();
@@ -844,7 +863,7 @@ void S1gApWifiMac::DoInitialize(void) {
 	m_nrOfTIMGroups = ceil(m_totalStaNum / (float) m_rawGroupInterval);
 	// initialize queue
 	pendingDataSizeForStations = std::vector<int>(m_totalStaNum, 0);
-
+	staIsActiveDuringCurrentCycle = std::vector<bool>(m_totalStaNum, false);
 
 	current_aid_start = 1;
 	current_aid_end = m_rawGroupInterval;
