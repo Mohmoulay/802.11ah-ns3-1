@@ -24,6 +24,8 @@ NS_LOG_COMPONENT_DEFINE("S1gApWifiMac");
 
 NS_OBJECT_ENSURE_REGISTERED(S1gApWifiMac);
 
+#define LOG_TRAFFIC(msg)	if(false) std::cout << msg << std::endl;
+
 TypeId S1gApWifiMac::GetTypeId(void) {
 	static TypeId tid =
 			TypeId("ns3::S1gApWifiMac").SetParent<RegularWifiMac>().SetGroupName(
@@ -246,7 +248,7 @@ void S1gApWifiMac::ForwardDown(Ptr<const Packet> packet, Mac48Address from,
 
 	uint16_t aId = macToAIDMap[to];
 	pendingDataSizeForStations[aId - 1]--;
-	//std::cout << Simulator::Now().GetMicroSeconds() <<  " Data for " << (aId - 1) << " --" << std::endl;
+	LOG_TRAFFIC(Simulator::Now().GetMicroSeconds() <<  " Data for [" << aId << "] --" << std::endl);
 
 	//If we are a QoS AP then we attempt to get a TID for this packet
 	if (m_qosSupported) {
@@ -312,7 +314,7 @@ void S1gApWifiMac::Enqueue(Ptr<const Packet> packet, Mac48Address to,
 
 		uint16_t aId = macToAIDMap[to];
 		pendingDataSizeForStations[aId - 1]++;
-		//std::cout << Simulator::Now().GetMicroSeconds() << " Data for " << (aId - 1) << " ++" << std::endl;
+		LOG_TRAFFIC(Simulator::Now().GetMicroSeconds() << " Data for [" << aId << "] ++");
 
 		// technically you can only send it through directly if the previous DTIM
 		// beacon indicated that there's data for this TIM grup
@@ -356,8 +358,15 @@ void S1gApWifiMac::Enqueue(Ptr<const Packet> packet, Mac48Address to,
 			//std::cout << "Current TIM beacon " << std::to_string(m_currentBeaconTIMGroup) << ", scheduling packet in " << remainingBeacons << " beacons" << std::endl;
 			Time packetSendTime = m_beaconInterval * remainingBeacons;
 
+			uint8_t slotIndex = aId % m_slotNum;
+
+			// RAW period start is 0 at the moment
+			Time slotTimeOffset = MicroSeconds(0) + MicroSeconds(500 + 120 * m_slotDurationCount) * slotIndex;
+			packetSendTime += slotTimeOffset;
+
 			//align with beacon interval
-			//packetSendTime -= (Simulator::Now() - lastBeaconTime);
+			packetSendTime -= (Simulator::Now() - lastBeaconTime);
+
 			// transmit in second half of RAW window
 			//packetSendTime += MilliSeconds(m_beaconInterval/2);
 

@@ -37,6 +37,7 @@ struct Configuration {
 
 	string visualizerIP = "";
 	int visualizerPort = 7707;
+	double visualizerSamplingInterval = 1;
 
 	string rho = "400.0";
 
@@ -44,6 +45,8 @@ struct Configuration {
 
 	uint32_t trafficInterval = 987;
 	uint16_t trafficPacketSize = 100;
+	string trafficType = "tcpecho";
+
 	Configuration();
 	Configuration(int argc, char** argv);
 

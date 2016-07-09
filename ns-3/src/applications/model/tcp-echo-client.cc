@@ -74,6 +74,11 @@ TcpEchoClient::GetTypeId (void)
 					 "The TCP connection's congestion window",
 					 MakeTraceSourceAccessor (&TcpEchoClient::m_cWnd),
 					 "ns3::TracedValue::Uint32Callback")
+	.AddTraceSource ("Retransmission",
+						  "Occurs when a packet has to be scheduled for retransmission",
+						  MakeTraceSourceAccessor (&TcpEchoClient::m_retransmission),
+						  "ns3::TcpEchoClient::RetransmissionCallBack")
+
   ;
   return tid;
 }
@@ -127,6 +132,7 @@ TcpEchoClient::StartApplication (void)
 
 
       m_socket->TraceConnectWithoutContext("CongestionWindow", MakeCallback(&TcpEchoClient::OnCongestionWindowChanged, this));
+      m_socket->TraceConnectWithoutContext("Retransmission", MakeCallback(&TcpEchoClient::OnRetransmission, this));
 
       m_socket->Bind ();
       m_socket->Connect (InetSocketAddress (m_peerAddress, m_peerPort));
@@ -135,6 +141,10 @@ TcpEchoClient::StartApplication (void)
   m_socket->SetRecvCallback (MakeCallback (&TcpEchoClient::ReceivePacket, this));
 
   ScheduleTransmit (Seconds (0.));
+}
+
+void TcpEchoClient::OnRetransmission(Address a) {
+	m_retransmission(a);
 }
 
 void TcpEchoClient::OnCongestionWindowChanged(uint32_t oldval, uint32_t newval) {
@@ -307,6 +317,7 @@ TcpEchoClient::Send (void)
   // call to the trace sinks before the packet is actually sent,
   // so that tags added to the packet can be sent as well
   m_txTrace (p);
+
   m_socket->Send (p);
 
   ++m_sent;

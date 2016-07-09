@@ -19,6 +19,8 @@ private:
 	string hostname;
 	int port;
 
+	int socketDescriptor = -1;
+
 	void send(vector<string> str);
 
 public:
@@ -33,6 +35,7 @@ public:
 	void onSTANodeCreated(NodeEntry& node);
 
 	void onNodeAssociated(NodeEntry& node);
+	void onNodeDeassociated(NodeEntry& node);
 
 	void onUpdateStatistics(Statistics& stats);
 

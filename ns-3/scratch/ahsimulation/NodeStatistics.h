@@ -18,6 +18,7 @@ public:
     long NumberOfTransmissionsDropped = 0;
     long NumberOfReceives = 0;
     long NumberOfReceivesDropped = 0;
+    long NumberOfReceiveDroppedByDestination = 0;
     
     long NumberOfSuccessfulPackets = 0;
     long NumberOfSentPackets = 0;
@@ -39,6 +40,7 @@ public:
     int EDCAQueueLength = 0;
 
     uint32_t TCPCongestionWindow = 0;
+    uint32_t NumberOfTCPRetransmissions = 0;
 
 };
 

@@ -69,6 +69,7 @@ void configureTCPEchoServer();
 
 
 void onSTAAssociated(int i);
+void onSTADeassociated(int i);
     
 void updateNodesQueueLength();
 

@@ -24,6 +24,7 @@ private:
 	Ptr<NetDevice> device;
 
     std::function<void()> associatedCallback;
+    std::function<void()> deAssociatedCallback;
     std::map<uint64_t, Time> txMap;
     std::map<uint64_t, Time> rxMap;
     uint16_t lastBeaconAIDStart = 0;
@@ -42,6 +43,7 @@ public:
     
     uint32_t aId = 0;
     uint8_t rawGroupNumber = 0;
+    uint8_t rawSlotIndex = 0;
     
     double x = 0;
     double y = 0;
@@ -72,6 +74,9 @@ public:
     void OnTcpPacketReceivedAtAP(Ptr<const Packet> packet);
     void OnTcpCongestionWindowChanged(uint32_t oldval, uint32_t newval);
 
+    void OnTcpRetransmission(Address to);
+    void OnTcpRetransmissionAtAP();
+
 
     void OnUdpPacketSent(Ptr<const Packet> packet);
     void OnUdpEchoPacketReceived(Ptr<const Packet> packet, Address from);
@@ -81,6 +86,7 @@ public:
     void UpdateQueueLength();
     
     void SetAssociatedCallback(std::function<void()> assocCallback);
+    void SetDeassociatedCallback(std::function<void()> assocCallback);
 };
 
 #endif /* NODEENTRY_H */

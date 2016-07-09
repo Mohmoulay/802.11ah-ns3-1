@@ -7,6 +7,7 @@ using namespace ns3;
 int main(int argc, char** argv) {
 
 	PacketMetadata::Enable();
+	Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpNewReno"));
 
     config = Configuration(argc, argv);
     stats = Statistics(config.Nsta);
@@ -101,7 +102,8 @@ void configureSTANodes(Ssid& ssid) {
     S1gWifiMacHelper mac = S1gWifiMacHelper::Default();
     mac.SetType("ns3::StaWifiMac",
             "Ssid", SsidValue(ssid),
-            "ActiveProbing", BooleanValue(false));
+            "ActiveProbing", BooleanValue(false),
+			"MaxMissedBeacons", UintegerValue (10 *config.NGroup));
 
     // create wifi
     WifiHelper wifi = WifiHelper::Default();
@@ -120,6 +122,8 @@ void configureSTANodes(Ssid& ssid) {
             "rho", StringValue(config.rho));
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(staNodes);
+
+    phy.EnablePcap("stafile", staNodes, 0);
 }
 
 void OnAPPhyRxBegin(std::string context, Ptr<const Packet> packet) {
@@ -188,7 +192,7 @@ void configureAPNode(Ssid& ssid) {
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeCallback(&OnAPPhyRxDrop));
 
 
-	phy.EnablePcap("pcapfile", apNodes, 0);
+	phy.EnablePcap("apfile", apNodes, 0);
 
 }
 
@@ -211,6 +215,7 @@ void configureNodes() {
 
         NodeEntry* n = new NodeEntry(i, &stats, staNodes.Get(i), staDevices.Get(i));
         n->SetAssociatedCallback([ = ]{onSTAAssociated(i);});
+        n->SetDeassociatedCallback([ = ]{onSTADeassociated(i);});
 
         nodes.push_back(n);
         // hook up Associated and Deassociated events
@@ -233,7 +238,7 @@ void configureNodes() {
     }
 }
 
-void udpPacketReceivedAtServer(Ptr<const Packet> packet, Address from) {
+int getSTAIdFromAddress(Address from) {
     int staId = -1;
     for (int i = 0; i < staNodeInterfaces.GetN(); i++) {
         if (staNodeInterfaces.GetAddress(i) == InetSocketAddress::ConvertFrom(from).GetIpv4()) {
@@ -241,6 +246,11 @@ void udpPacketReceivedAtServer(Ptr<const Packet> packet, Address from) {
             break;
         }
     }
+    return staId;
+}
+
+void udpPacketReceivedAtServer(Ptr<const Packet> packet, Address from) {
+    int staId = getSTAIdFromAddress(from);
     if (staId != -1)
         nodes[staId]->OnUdpPacketReceivedAtAP(packet);
     else
@@ -248,19 +258,19 @@ void udpPacketReceivedAtServer(Ptr<const Packet> packet, Address from) {
 }
 
 void tcpPacketReceivedAtServer (Ptr<const Packet> packet, Address from) {
-	cout << "TCP packet received at server " << endl;
-
-    int staId = -1;
-    for (int i = 0; i < staNodeInterfaces.GetN(); i++) {
-        if (staNodeInterfaces.GetAddress(i) == InetSocketAddress::ConvertFrom(from).GetIpv4()) {
-            staId = i;
-            break;
-        }
-    }
+	int staId = getSTAIdFromAddress(from);
     if (staId != -1)
         nodes[staId]->OnTcpPacketReceivedAtAP(packet);
     else
     	cout << "*** Node could not be determined from received packet at AP " << endl;
+}
+
+void tcpRetransmissionAtServer(Address to) {
+	int staId = getSTAIdFromAddress(to);
+	if (staId != -1)
+		nodes[staId]->OnTcpRetransmissionAtAP();
+	else
+		cout << "*** Node could not be determined from received packet at AP " << endl;
 }
 
 /*void udpPacketReceivedAtClient(Ptr<const Packet> packet, Address from) {
@@ -299,6 +309,7 @@ void configureTCPEchoServer() {
 	TcpEchoServerHelper myServer(80);
 	serverApp = myServer.Install(apNodes);
 	serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&tcpPacketReceivedAtServer));
+	serverApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&tcpRetransmissionAtServer));
 	serverApp.Start(Seconds(0));
 }
 
@@ -313,6 +324,7 @@ void configureTCPEchoClients() {
 		clientApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&NodeEntry::OnTcpEchoPacketReceived, nodes[i]));
 
 		clientApp.Get(0)->TraceConnectWithoutContext("CongestionWindow", MakeCallback(&NodeEntry::OnTcpCongestionWindowChanged, nodes[i]));
+		clientApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&NodeEntry::OnTcpRetransmission, nodes[i]));
 
 		double random = (rand() % (config.trafficInterval));
 		clientApp.Start(MilliSeconds(0+random));
@@ -332,7 +344,7 @@ void configureUDPClients() {
         clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnUdpPacketSent, nodes[i]));
 
 
-        double random = (rand() % (config.trafficInterval/1000*4)) / (double)4;
+        double random = (rand() % (config.trafficInterval));
         clientApp.Start(Seconds(0+random));
         //clientApp.Stop(Seconds(simulationTime + 1));
     }
@@ -348,7 +360,7 @@ void configureUDPEchoClients() {
 		clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnUdpPacketSent, nodes[i]));
 		clientApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&NodeEntry::OnUdpEchoPacketReceived, nodes[i]));
 
-		double random = (rand() % (config.trafficInterval/1000*4)) / (double)4;
+		double random = (rand() % (config.trafficInterval));
 		clientApp.Start(Seconds(0+random));
 		//clientApp.Stop(Seconds(simulationTime + 1));
 	}
@@ -357,9 +369,13 @@ void configureUDPEchoClients() {
 void onSTAAssociated(int i) {
 
     nodes[i]->rawGroupNumber = ((nodes[i]->aId - 1) / (config.NRawSta / config.NGroup));
+
+    nodes[i]->rawSlotIndex = nodes[i]->aId % config.NRawSlotNum;
+
 	cout << "Node " << std::to_string(i) << " is associated and has aId " << nodes[i]->aId << " and falls in RAW group " << std::to_string(nodes[i]->rawGroupNumber) << endl;
 
     eventManager.onNodeAssociated(*nodes[i]);
+
 
     int nrOfSTAAssociated = 0;
     for (int i = 0; i < config.Nsta; i++) {
@@ -368,19 +384,29 @@ void onSTAAssociated(int i) {
     }
 
     if (nrOfSTAAssociated == config.Nsta) {
-    	cout << "All stations associated, configuring UDP clients & server" << endl;
+    	cout << "All stations associated, configuring clients & server" << endl;
         // association complete, start sending packets
     	stats.TimeWhenEverySTAIsAssociated = Simulator::Now();
 
-        //configureUDPServer();
-        //configureUDPClients();
-    	//configureUDPEchoServer();
-    	//configureUDPEchoClients();
-		configureTCPEchoServer();
-		configureTCPEchoClients();
+    	if(config.trafficType == "udp") {
+    		configureUDPServer();
+    		configureUDPClients();
+    	}
+    	else if(config.trafficType == "udpecho") {
+    		configureUDPEchoServer();
+    		configureUDPEchoClients();
+    	}
+    	else if(config.trafficType == "tcpecho") {
+			configureTCPEchoServer();
+			configureTCPEchoClients();
+    	}
 
         updateNodesQueueLength();
     }
+}
+
+void onSTADeassociated(int i) {
+	eventManager.onNodeDeassociated(*nodes[i]);
 }
 
 
@@ -438,5 +464,5 @@ void printStatistics() {
 
 void sendStatistics() {
 	eventManager.onUpdateStatistics(stats);
-	Simulator::Schedule(Seconds(1), &sendStatistics);
+	Simulator::Schedule(Seconds(config.visualizerSamplingInterval), &sendStatistics);
 }

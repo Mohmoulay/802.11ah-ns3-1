@@ -131,6 +131,10 @@ public:
   typedef void (* PacketReceivedCallback)
               (Ptr<const Packet>, Address from);
 
+  typedef void (* RetransmissionScheduledCallBack)
+  		            (Address);
+
+
 
 protected:
   virtual void DoDispose (void);
@@ -146,6 +150,7 @@ private:
   void ReceivePacket (Ptr<Socket> socket);
 
   void OnCongestionWindowChanged(uint32_t oldval, uint32_t newval);
+  void OnRetransmission(Address a);
 
   uint32_t m_count;
   Time m_interval;
@@ -169,6 +174,7 @@ private:
   TracedCallback<Ptr<const Packet> > m_txTrace;
 
   TracedCallback<Ptr<const Packet>, Address> m_packetReceived;
+  TracedCallback<Address> m_retransmission;
 
 
 };

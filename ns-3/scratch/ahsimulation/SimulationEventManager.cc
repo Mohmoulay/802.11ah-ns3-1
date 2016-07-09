@@ -47,7 +47,11 @@ void SimulationEventManager::onSTANodeCreated(NodeEntry& node) {
 }
 
 void SimulationEventManager::onNodeAssociated(NodeEntry& node) {
-	send({"stanodeassoc", std::to_string(node.id), std::to_string(node.aId), std::to_string(node.rawGroupNumber)});
+	send({"stanodeassoc", std::to_string(node.id), std::to_string(node.aId), std::to_string(node.rawGroupNumber), std::to_string(node.rawSlotIndex)});
+}
+
+void SimulationEventManager::onNodeDeassociated(NodeEntry& node) {
+	send({"stanodedeassoc", std::to_string(node.id)});
 }
 
 void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
@@ -56,7 +60,7 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 			std::to_string(stats.get(i).TotalTransmitTime.GetMilliSeconds()),
 			std::to_string(stats.get(i).TotalReceiveTime.GetMilliSeconds()),
 			std::to_string(stats.get(i).TotalDozeTime.GetMilliSeconds()),
-			std::to_string(stats.get(i).TotalActiveTime.GetMilliSeconds()),
+			std::to_string((Simulator::Now() - stats.get(i).TotalDozeTime).GetMilliSeconds()),
 			std::to_string(stats.get(i).NumberOfTransmissions),
 			std::to_string(stats.get(i).NumberOfTransmissionsDropped),
 			std::to_string(stats.get(i).NumberOfReceives),
@@ -69,16 +73,27 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 			std::to_string(stats.get(i).EDCAQueueLength),
 			std::to_string(stats.get(i).NumberOfSuccessfulRoundtripPackets),
 			std::to_string(stats.get(i).getAveragePacketRoundTripTime().GetMilliSeconds()),
-			std::to_string(stats.get(i).TCPCongestionWindow)
+			std::to_string(stats.get(i).TCPCongestionWindow),
+			std::to_string(stats.get(i).NumberOfTCPRetransmissions),
+			std::to_string(stats.get(i).NumberOfReceiveDroppedByDestination)
 		});
 	}
 }
 
 void SimulationEventManager::send(vector<string> str) {
 	if(this->hostname != "") {
-		int sockfd = stat_connect(this->hostname.c_str(), std::to_string(this->port).c_str());
-		if(sockfd == -1)
-			return;
+
+
+		int sockfd ;
+		//if(socketDescriptor == -1) {
+
+			sockfd = stat_connect(this->hostname.c_str(), std::to_string(this->port).c_str());
+			if(sockfd == -1)
+				return;
+
+			socketDescriptor = sockfd;
+		//}
+
 
 		std::stringstream s;
 		s << Simulator::Now().GetNanoSeconds() << ";";
@@ -86,8 +101,12 @@ void SimulationEventManager::send(vector<string> str) {
 			s << str[i] << ((i != str.size()-1) ? ";" : "");
 		}
 		s << "\n";
-		stat_send(sockfd, string(s.str()).c_str());
-		stat_close(sockfd);
+		bool success = stat_send(sockfd, string(s.str()).c_str());
+
+		//if(!success) {
+			stat_close(sockfd);
+			socketDescriptor = -1;
+		//}
 	}
 }
 

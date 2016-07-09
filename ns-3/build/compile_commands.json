@@ -41,6 +41,11 @@
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
+    "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 ../src/internet/model/tcp-tahoe.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/internet/model/tcp-tahoe.cc.1.o", 
+    "file": "../src/internet/model/tcp-tahoe.cc"
+  }, 
+  {
+    "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
     "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -pthread -I. -I.. -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/libpng12 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libxml2 -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 -DHAVE_GTK2=1 -DHAVE_LIBXML2=1 ../src/mesh/helper/mesh-helper.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/mesh/helper/mesh-helper.cc.1.o", 
     "file": "../src/mesh/helper/mesh-helper.cc"
   }, 
@@ -56,8 +61,8 @@
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
-    "command": "/usr/bin/g++ -std=c++0x -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 ../src/tap-bridge/model/tap-encode-decode.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/tap-bridge/model/tap-encode-decode.cc.4.o", 
-    "file": "../src/tap-bridge/model/tap-encode-decode.cc"
+    "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -pthread -I. -I.. -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/libpng12 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libxml2 -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 -DHAVE_GTK2=1 -DHAVE_LIBXML2=1 ../src/applications/model/udp-echo-client.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/applications/model/udp-echo-client.cc.1.o", 
+    "file": "../src/applications/model/udp-echo-client.cc"
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
@@ -131,6 +136,11 @@
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
+    "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 '-DTAP_DEV_CREATOR=\"ns3-dev-tap-device-creator-debug\"' '-DRAW_SOCK_CREATOR=\"ns3-dev-raw-sock-creator-debug\"' -DHAVE_SQLITE3=1 ../src/fd-net-device/helper/tap-fd-net-device-helper.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/fd-net-device/helper/tap-fd-net-device-helper.cc.1.o", 
+    "file": "../src/fd-net-device/helper/tap-fd-net-device-helper.cc"
+  }, 
+  {
+    "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
     "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -pthread -I. -I.. -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/libpng12 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libxml2 -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 -DHAVE_GTK2=1 -DHAVE_LIBXML2=1 ../src/wave/model/bsm-application.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/wave/model/bsm-application.cc.1.o", 
     "file": "../src/wave/model/bsm-application.cc"
   }, 
@@ -161,8 +171,8 @@
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
-    "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 ../src/wifi/model/yans-wifi-channel.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/wifi/model/yans-wifi-channel.cc.1.o", 
-    "file": "../src/wifi/model/yans-wifi-channel.cc"
+    "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 ../src/internet/model/tcp-westwood.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/internet/model/tcp-westwood.cc.1.o", 
+    "file": "../src/internet/model/tcp-westwood.cc"
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
@@ -191,6 +201,11 @@
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
+    "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 ../src/internet/model/tcp-socket-base.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/internet/model/tcp-socket-base.cc.1.o", 
+    "file": "../src/internet/model/tcp-socket-base.cc"
+  }, 
+  {
+    "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
     "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -pthread -I. -I.. -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/libpng12 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libxml2 -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 -DHAVE_GTK2=1 -DHAVE_LIBXML2=1 ../src/mesh/model/mesh-point-device.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/mesh/model/mesh-point-device.cc.1.o", 
     "file": "../src/mesh/model/mesh-point-device.cc"
   }, 
@@ -208,6 +223,11 @@
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
     "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 ../src/wifi/model/mac-low.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/wifi/model/mac-low.cc.1.o", 
     "file": "../src/wifi/model/mac-low.cc"
+  }, 
+  {
+    "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
+    "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 ../src/wifi/model/yans-wifi-channel.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/wifi/model/yans-wifi-channel.cc.1.o", 
+    "file": "../src/wifi/model/yans-wifi-channel.cc"
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
@@ -253,6 +273,11 @@
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
     "command": "/usr/bin/g++ -std=c++0x -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 ../src/tap-bridge/model/tap-creator.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/tap-bridge/model/tap-creator.cc.4.o", 
     "file": "../src/tap-bridge/model/tap-creator.cc"
+  }, 
+  {
+    "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
+    "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 ../src/internet/model/tcp-reno.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/internet/model/tcp-reno.cc.1.o", 
+    "file": "../src/internet/model/tcp-reno.cc"
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
@@ -326,6 +351,11 @@
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
+    "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 ../src/internet/model/tcp-l4-protocol.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/internet/model/tcp-l4-protocol.cc.1.o", 
+    "file": "../src/internet/model/tcp-l4-protocol.cc"
+  }, 
+  {
+    "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
     "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -pthread -I. -I.. -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/libpng12 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libxml2 -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 -DHAVE_GTK2=1 -DHAVE_LIBXML2=1 ../src/wave/model/vsa-manager.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/wave/model/vsa-manager.cc.1.o", 
     "file": "../src/wave/model/vsa-manager.cc"
   }, 
@@ -333,6 +363,11 @@
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
     "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -pthread -I. -I.. -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/libpng12 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libxml2 -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 -DHAVE_GTK2=1 -DHAVE_LIBXML2=1 ../src/mesh/model/dot11s/peer-link.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/mesh/model/dot11s/peer-link.cc.1.o", 
     "file": "../src/mesh/model/dot11s/peer-link.cc"
+  }, 
+  {
+    "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
+    "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 ../src/internet/model/tcp-newreno.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/internet/model/tcp-newreno.cc.1.o", 
+    "file": "../src/internet/model/tcp-newreno.cc"
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
@@ -391,6 +426,11 @@
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
+    "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 ../src/internet/model/tcp-rfc793.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/internet/model/tcp-rfc793.cc.1.o", 
+    "file": "../src/internet/model/tcp-rfc793.cc"
+  }, 
+  {
+    "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
     "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -pthread -I. -I.. -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/libpng12 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libxml2 -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 -DHAVE_GTK2=1 -DHAVE_LIBXML2=1 ../src/mesh/helper/flame/flame-installer.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/mesh/helper/flame/flame-installer.cc.1.o", 
     "file": "../src/mesh/helper/flame/flame-installer.cc"
   }, 
@@ -426,8 +466,8 @@
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
-    "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -pthread -I. -I.. -I/usr/include/gtk-2.0 -I/usr/lib/x86_64-linux-gnu/gtk-2.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/libpng12 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/freetype2 -I/usr/include/libxml2 -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 -DHAVE_GTK2=1 -DHAVE_LIBXML2=1 ../src/applications/model/udp-echo-client.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/applications/model/udp-echo-client.cc.1.o", 
-    "file": "../src/applications/model/udp-echo-client.cc"
+    "command": "/usr/bin/g++ -std=c++0x -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 ../src/tap-bridge/model/tap-encode-decode.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/tap-bridge/model/tap-encode-decode.cc.4.o", 
+    "file": "../src/tap-bridge/model/tap-encode-decode.cc"
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 

@@ -28,6 +28,11 @@ void NodeEntry::SetAssociation(std::string context, Mac48Address address) {
 
 void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 	this->isAssociated = false;
+
+	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+				<< " " << "Node is deassociated" << endl;
+
+	this->deAssociatedCallback();
 }
 
 void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
@@ -80,7 +85,6 @@ void NodeEntry::OnPhyRxBegin(std::string context, Ptr<const Packet> packet) {
 	//<< " Begin Rx " << packet->GetUid() << endl;
 
 	rxMap.emplace(packet->GetUid(), Simulator::Now());
-	stats->get(this->id).NumberOfReceives++;
 
 	if (rxMap.size() > 1)
 		cout << "warning: more than 1 receive active: " << rxMap.size()
@@ -98,6 +102,7 @@ void NodeEntry::OnEndOfReceive(Ptr<const Packet> packet) {
 	WifiMacHeader hdr;
 	packet->PeekHeader(hdr);
 
+	stats->get(this->id).NumberOfReceives++;
 	if (rxMap.find(packet->GetUid()) != rxMap.end()) {
 		Time oldTime = rxMap[packet->GetUid()];
 		rxMap.erase(packet->GetUid());
@@ -186,6 +191,44 @@ void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet) {
 
 	this->OnEndOfReceive(packet);
 
+
+	// THIS REQUIRES PACKET METADATA ENABLE!
+	auto pCopy = packet->Copy();
+	auto it = pCopy->BeginItem();
+	while(it.HasNext()) {
+
+		auto item = it.Next();
+		Callback<ObjectBase *> constructor = item.tid.GetConstructor ();
+
+		ObjectBase *instance = constructor ();
+		Chunk *chunk = dynamic_cast<Chunk *> (instance);
+		chunk->Deserialize (item.current);
+
+		if(dynamic_cast<WifiMacHeader*>(chunk)) {
+
+			/*auto targetAID = ((WifiMacHeader*)chunk)->GetAID();
+			if(targetAID == this->aId) {
+				// it was an packet for this STA
+
+				cout << " Packet meant for this station was dropped " << endl;
+			}*/
+
+			WifiMacHeader* hdr = (WifiMacHeader*)chunk;
+
+			if(hdr->GetAddr1() == node->GetDevice(0)->GetAddress()) {
+
+				stats->get(this->id).NumberOfReceiveDroppedByDestination++;
+				//cout << "Dropped packet that was sent to this station" << endl;
+			}
+			//hdr->Print(cout);
+			delete chunk;
+			break;
+		}
+		else
+			delete chunk;
+
+	}
+
 	stats->get(this->id).NumberOfReceivesDropped++;
 }
 
@@ -243,8 +286,8 @@ void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 }
 
 void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
-	cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
-			<< "TCP packet sent " << endl;
+	//cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
+	//		<< "TCP packet sent " << endl;
 
 	stats->get(this->id).NumberOfSentPackets++;
 }
@@ -257,11 +300,11 @@ void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
 	pCopy->RemoveHeader(seqTs);
 	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
-	cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
+	/*cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
 			<< " Echo packet received back from AP ("
 			<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ") after "
 			<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
-
+	 */
 	stats->get(this->id).NumberOfSuccessfulRoundtripPackets++;
 	stats->get(this->id).TotalPacketRoundtripTime += timeDiff;
 
@@ -273,10 +316,10 @@ void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 	pCopy->RemoveHeader(seqTs);
 	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
-	cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "] "
+	/*cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "] "
 			<< "TCP packet received at AP after "
 			<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
-
+	 */
 	stats->get(this->id).NumberOfSuccessfulPackets++;
 	stats->get(this->id).TotalPacketSentReceiveTime += timeDiff;
 	stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
@@ -286,6 +329,15 @@ void NodeEntry::OnTcpCongestionWindowChanged(uint32_t oldval, uint32_t newval) {
 	this->congestionWindowValue = newval;
 	stats->get(this->id).TCPCongestionWindow = newval;
 }
+
+void NodeEntry::OnTcpRetransmission(Address to) {
+	stats->get(this->id).NumberOfTCPRetransmissions++;
+}
+
+void NodeEntry::OnTcpRetransmissionAtAP() {
+	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << " RETRANSMISSION SCHEDULED FROM AP " << std::endl;
+}
+
 
 void NodeEntry::OnUdpPacketSent(Ptr<const Packet> packet) {
 //cout << "[" << this->id << "] " << "UDP packet sent " << endl;
@@ -339,6 +391,10 @@ void NodeEntry::OnUdpPacketReceivedAtAP(Ptr<const Packet> packet) {
 
 void NodeEntry::SetAssociatedCallback(std::function<void()> assocCallback) {
 	this->associatedCallback = assocCallback;
+}
+
+void NodeEntry::SetDeassociatedCallback(std::function<void()> assocCallback) {
+	this->deAssociatedCallback = assocCallback;
 }
 
 void NodeEntry::UpdateQueueLength() {
