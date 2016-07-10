@@ -41,7 +41,7 @@ private:
 public:
     int id;
     
-    uint32_t aId = 0;
+    uint32_t aId = 8192; // unassociated is 8192
     uint8_t rawGroupNumber = 0;
     uint8_t rawSlotIndex = 0;
     
@@ -68,10 +68,10 @@ public:
     void OnPhyRxDrop(std::string context,Ptr<const Packet> packet);
 
 
-    void OnMacTxRtsFailed(Mac48Address address);
-    void OnMacTxDataFailed(Mac48Address address);
-    void OnMacTxFinalRtsFailed(Mac48Address address);
-    void OnMacTxFinalDataFailed(Mac48Address address);
+    void OnMacTxRtsFailed(std::string context,Mac48Address address);
+    void OnMacTxDataFailed(std::string context,Mac48Address address);
+    void OnMacTxFinalRtsFailed(std::string context,Mac48Address address);
+    void OnMacTxFinalDataFailed(std::string context,Mac48Address address);
 
 
     void OnPhyStateChange(std::string context, const Time start, const Time duration, const WifiPhy::State state);

@@ -40,7 +40,7 @@
 #include "ht-capabilities.h"
 #include "random-stream.h"
 
-#define LOG_SLEEP(msg)	if(true) std::cout << "[" << (GetAID()) << "] " << msg << std::endl;
+#define LOG_SLEEP(msg)	if(false) std::cout << "[" << (GetAID()) << "] " << msg << std::endl;
 
 /*
  * The state machine for this STA is:
@@ -478,7 +478,7 @@ StaWifiMac::RestartBeaconWatchdog (Time delay)
       && m_beaconWatchdog.IsExpired ())
     {
       NS_LOG_DEBUG ("really restart watchdog.");
-
+      m_beaconWatchdog = Simulator::Schedule (delay, &StaWifiMac::MissedBeacons, this);
     }
 }
 

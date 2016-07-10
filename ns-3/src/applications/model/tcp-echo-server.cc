@@ -89,12 +89,13 @@ TcpEchoServer::StartApplication (void)
       TypeId tid = TypeId::LookupByName ("ns3::TcpSocketFactory");
       m_socket = Socket::CreateSocket (GetNode (), tid);
 
-      m_socket->TraceConnectWithoutContext("Retransmission", MakeCallback(&TcpEchoServer::OnRetransmission, this));
-
       InetSocketAddress listenAddress = InetSocketAddress (Ipv4Address::GetAny (), m_port);
       m_socket->Bind (listenAddress);
       m_socket->Listen();
     }
+
+
+
 
   m_socket->SetAcceptCallback (
       MakeNullCallback<bool, Ptr<Socket>, const Address &> (),
@@ -151,6 +152,9 @@ TcpEchoServer::ReceivePacket (Ptr<Socket> s)
 void TcpEchoServer::HandleAccept (Ptr<Socket> s, const Address& from)
 {
   NS_LOG_FUNCTION (this << s << from);
+
+  s->TraceConnectWithoutContext("Retransmission", MakeCallback(&TcpEchoServer::OnRetransmission, this));
+
   s->SetRecvCallback (MakeCallback (&TcpEchoServer::ReceivePacket, this));
   s->SetCloseCallbacks(MakeCallback (&TcpEchoServer::HandleSuccessClose, this),
     MakeNullCallback<void, Ptr<Socket> > () );

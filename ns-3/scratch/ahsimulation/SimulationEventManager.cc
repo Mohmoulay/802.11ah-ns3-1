@@ -75,7 +75,10 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 			std::to_string(stats.get(i).getAveragePacketRoundTripTime().GetMilliSeconds()),
 			std::to_string(stats.get(i).TCPCongestionWindow),
 			std::to_string(stats.get(i).NumberOfTCPRetransmissions),
-			std::to_string(stats.get(i).NumberOfReceiveDroppedByDestination)
+			std::to_string(stats.get(i).NumberOfTCPRetransmissionsFromAP),
+			std::to_string(stats.get(i).NumberOfReceiveDroppedByDestination),
+			std::to_string(stats.get(i).NumberOfMACTxRTSFailed),
+			std::to_string(stats.get(i).NumberOfMACTxDataFailed)
 		});
 	}
 }

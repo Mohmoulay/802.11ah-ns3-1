@@ -27,6 +27,7 @@
 #include "ns3/trace-source-accessor.h"
 #include "tcp-echo-client.h"
 #include "seq-ts-header.h"
+#include "ns3/tcp-socket-base.h"
 
 namespace ns3 {
 
@@ -148,7 +149,7 @@ void TcpEchoClient::OnRetransmission(Address a) {
 }
 
 void TcpEchoClient::OnCongestionWindowChanged(uint32_t oldval, uint32_t newval) {
-	m_cWnd(oldval,newval);
+	m_cWnd(oldval,newval/m_socket->GetObject<TcpSocketBase>()->GetSegSize());
 }
 
 

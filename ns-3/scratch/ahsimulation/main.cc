@@ -234,10 +234,10 @@ void configureNodes() {
 
 
         // hook up MAC traces
-        Config::Connect("/NodeList/" + std::to_string(i) + "//DeviceList/[i]/$ns3::WifiNetDevice/RemoteStationManager/MacTxRtsFailed", MakeCallback(&NodeEntry::OnMacTxRtsFailed, n));
-        Config::Connect("/NodeList/" + std::to_string(i) + "//DeviceList/[i]/$ns3::WifiNetDevice/RemoteStationManager/MacTxDataFailed", MakeCallback(&NodeEntry::OnMacTxDataFailed, n));
-        Config::Connect("/NodeList/" + std::to_string(i) + "//DeviceList/[i]/$ns3::WifiNetDevice/RemoteStationManager/MacTxFinalRtsFailed", MakeCallback(&NodeEntry::OnMacTxFinalRtsFailed, n));
-        Config::Connect("/NodeList/" + std::to_string(i) + "//DeviceList/[i]/$ns3::WifiNetDevice/RemoteStationManager/MacTxFinalDataFailed", MakeCallback(&NodeEntry::OnMacTxFinalDataFailed, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/RemoteStationManager/MacTxRtsFailed", MakeCallback(&NodeEntry::OnMacTxRtsFailed, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/RemoteStationManager/MacTxDataFailed", MakeCallback(&NodeEntry::OnMacTxDataFailed, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/RemoteStationManager/MacTxFinalRtsFailed", MakeCallback(&NodeEntry::OnMacTxFinalRtsFailed, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/RemoteStationManager/MacTxFinalDataFailed", MakeCallback(&NodeEntry::OnMacTxFinalDataFailed, n));
 
         // hook up PHY State change
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/State/State", MakeCallback(&NodeEntry::OnPhyStateChange, n));
@@ -245,10 +245,10 @@ void configureNodes() {
     }
 }
 
-int getSTAIdFromAddress(Address from) {
+int getSTAIdFromAddress(Ipv4Address from) {
     int staId = -1;
     for (int i = 0; i < staNodeInterfaces.GetN(); i++) {
-        if (staNodeInterfaces.GetAddress(i) == InetSocketAddress::ConvertFrom(from).GetIpv4()) {
+        if (staNodeInterfaces.GetAddress(i) == from) {
             staId = i;
             break;
         }
@@ -257,7 +257,7 @@ int getSTAIdFromAddress(Address from) {
 }
 
 void udpPacketReceivedAtServer(Ptr<const Packet> packet, Address from) {
-    int staId = getSTAIdFromAddress(from);
+    int staId = getSTAIdFromAddress(InetSocketAddress::ConvertFrom(from).GetIpv4());
     if (staId != -1)
         nodes[staId]->OnUdpPacketReceivedAtAP(packet);
     else
@@ -265,7 +265,7 @@ void udpPacketReceivedAtServer(Ptr<const Packet> packet, Address from) {
 }
 
 void tcpPacketReceivedAtServer (Ptr<const Packet> packet, Address from) {
-	int staId = getSTAIdFromAddress(from);
+	int staId = getSTAIdFromAddress(InetSocketAddress::ConvertFrom(from).GetIpv4());
     if (staId != -1)
         nodes[staId]->OnTcpPacketReceivedAtAP(packet);
     else
@@ -273,7 +273,7 @@ void tcpPacketReceivedAtServer (Ptr<const Packet> packet, Address from) {
 }
 
 void tcpRetransmissionAtServer(Address to) {
-	int staId = getSTAIdFromAddress(to);
+	int staId = getSTAIdFromAddress(Ipv4Address::ConvertFrom(to));
 	if (staId != -1)
 		nodes[staId]->OnTcpRetransmissionAtAP();
 	else

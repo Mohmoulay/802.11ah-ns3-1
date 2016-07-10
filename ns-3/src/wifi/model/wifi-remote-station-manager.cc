@@ -702,8 +702,6 @@ WifiRemoteStationManager::GetRtsTxVector (Mac48Address address, const WifiMacHea
 void
 WifiRemoteStationManager::ReportRtsFailed (Mac48Address address, const WifiMacHeader *header)
 {
-	std::cout << " Report rts failed " << std::endl;
-
   NS_LOG_FUNCTION (this << address << *header);
   NS_ASSERT (!address.IsGroup ());
   WifiRemoteStation *station = Lookup (address, header);
@@ -715,7 +713,6 @@ WifiRemoteStationManager::ReportRtsFailed (Mac48Address address, const WifiMacHe
 void
 WifiRemoteStationManager::ReportDataFailed (Mac48Address address, const WifiMacHeader *header)
 {
-	std::cout << " Report data failed " << std::endl;
   NS_LOG_FUNCTION (this << address << *header);
   NS_ASSERT (!address.IsGroup ());
   WifiRemoteStation *station = Lookup (address, header);
@@ -751,8 +748,6 @@ WifiRemoteStationManager::ReportDataOk (Mac48Address address, const WifiMacHeade
 void
 WifiRemoteStationManager::ReportFinalRtsFailed (Mac48Address address, const WifiMacHeader *header)
 {
-	std::cout << " Report final rts failed " << std::endl;
-
   NS_LOG_FUNCTION (this << address << *header);
   NS_ASSERT (!address.IsGroup ());
   WifiRemoteStation *station = Lookup (address, header);
@@ -765,8 +760,6 @@ WifiRemoteStationManager::ReportFinalRtsFailed (Mac48Address address, const Wifi
 void
 WifiRemoteStationManager::ReportFinalDataFailed (Mac48Address address, const WifiMacHeader *header)
 {
-	std::cout << " Report final data failed " << std::endl;
-
   NS_LOG_FUNCTION (this << address << *header);
   NS_ASSERT (!address.IsGroup ());
   WifiRemoteStation *station = Lookup (address, header);

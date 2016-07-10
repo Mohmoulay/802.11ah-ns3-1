@@ -39,8 +39,12 @@ public:
 
     int EDCAQueueLength = 0;
 
-    uint32_t TCPCongestionWindow = 0;
-    uint32_t NumberOfTCPRetransmissions = 0;
+    long TCPCongestionWindow = 0;
+    long NumberOfTCPRetransmissions = 0;
+    long NumberOfTCPRetransmissionsFromAP = 0;
+
+    long NumberOfMACTxRTSFailed = 0;
+    long NumberOfMACTxDataFailed = 0;
 
 };
 

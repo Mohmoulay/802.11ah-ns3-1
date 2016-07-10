@@ -193,6 +193,8 @@ public:
   virtual int GetSockName (Address &address) const; // Return local addr:port in address
   virtual void BindToNetDevice (Ptr<NetDevice> netdevice); // NetDevice with my m_endPoint
 
+  virtual uint32_t GetSegSize (void) const;
+
 protected:
   // Implementing ns3::TcpSocket -- Attribute get/set
   // inherited, no need to doc
@@ -202,7 +204,7 @@ protected:
   virtual void     SetRcvBufSize (uint32_t size);
   virtual uint32_t GetRcvBufSize (void) const;
   virtual void     SetSegSize (uint32_t size);
-  virtual uint32_t GetSegSize (void) const;
+
   virtual void     SetInitialSSThresh (uint32_t threshold) = 0;
   virtual uint32_t GetInitialSSThresh (void) const = 0;
   virtual void     SetInitialCwnd (uint32_t cwnd) = 0;

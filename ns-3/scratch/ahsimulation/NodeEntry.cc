@@ -53,8 +53,8 @@ void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
-	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
-	<< "End Tx " << packet->GetUid() << endl;
+	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+	//<< "End Tx " << packet->GetUid() << endl;
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
 		Time oldTime = txMap[packet->GetUid()];
@@ -92,8 +92,8 @@ void NodeEntry::OnPhyRxBegin(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyRxEnd(std::string context, Ptr<const Packet> packet) {
-	cout  << Simulator::Now().GetMicroSeconds() << "[" << this->aId << "] "
-	<< " End Rx " << packet->GetUid() << endl;
+	//cout  << Simulator::Now().GetMicroSeconds() << "[" << this->aId << "] "
+	//<< " End Rx " << packet->GetUid() << endl;
 
 	this->OnEndOfReceive(packet);
 }
@@ -220,8 +220,8 @@ void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet) {
 				stats->get(this->id).NumberOfReceiveDroppedByDestination++;
 				//cout << "Dropped packet that was sent to this station" << endl;
 
-				cout  << Simulator::Now().GetMicroSeconds() << "[" << this->aId << "] "
-					<< " Drop Rx for STA " << packet->GetUid() << endl;
+			//	cout  << Simulator::Now().GetMicroSeconds() << "[" << this->aId << "] "
+			//		<< " Drop Rx for STA " << packet->GetUid() << endl;
 
 			}
 			//hdr->Print(cout);
@@ -339,7 +339,8 @@ void NodeEntry::OnTcpRetransmission(Address to) {
 }
 
 void NodeEntry::OnTcpRetransmissionAtAP() {
-	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << " RETRANSMISSION SCHEDULED FROM AP " << std::endl;
+	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << " RETRANSMISSION SCHEDULED FROM AP " << std::endl;
+	stats->get(this->id).NumberOfTCPRetransmissionsFromAP++;
 }
 
 
@@ -393,24 +394,32 @@ void NodeEntry::OnUdpPacketReceivedAtAP(Ptr<const Packet> packet) {
 	stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
 }
 
-void NodeEntry::OnMacTxRtsFailed(Mac48Address address) {
-	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
-		<< " MAC Tx Rts Failed" << endl;
+void NodeEntry::OnMacTxRtsFailed(std::string context,Mac48Address address) {
+	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+	//	<< " MAC Tx Rts Failed" << endl;
+
+	stats->get(this->id).NumberOfMACTxRTSFailed++;
 }
 
-void NodeEntry::OnMacTxDataFailed(Mac48Address address) {
-	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
-			<< " MAC Tx Data Failed" << endl;
+void NodeEntry::OnMacTxDataFailed(std::string context,Mac48Address address) {
+	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+	//		<< " MAC Tx Data Failed" << endl;
+
+	stats->get(this->id).NumberOfMACTxDataFailed++;
 }
 
-void NodeEntry::OnMacTxFinalRtsFailed(Mac48Address address) {
-	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
-			<< " MAC Tx Rts Failed" << endl;
+void NodeEntry::OnMacTxFinalRtsFailed(std::string context,Mac48Address address) {
+	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+	//		<< " MAC Tx Rts Failed" << endl;
+
+	stats->get(this->id).NumberOfMACTxRTSFailed++;
 }
 
-void NodeEntry::OnMacTxFinalDataFailed(Mac48Address address) {
-	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
-			<< " MAC Tx Final data Failed" << endl;
+void NodeEntry::OnMacTxFinalDataFailed(std::string context,Mac48Address address) {
+	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+	//		<< " MAC Tx Final data Failed" << endl;
+
+	stats->get(this->id).NumberOfMACTxDataFailed++;
 }
 
 

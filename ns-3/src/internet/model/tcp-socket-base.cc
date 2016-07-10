@@ -2435,8 +2435,8 @@ TcpSocketBase::Retransmit ()
 void
 TcpSocketBase::DoRetransmit ()
 {
-	m_retransmission(m_endPoint->GetPeerAddress ());
-	std::cout << "Retransmit tcp from " << m_endPoint->GetLocalAddress() << " to " << m_endPoint->GetPeerAddress () << std::endl;
+	m_retransmission(m_endPoint->GetPeerAddress());
+	//std::cout << "Retransmit tcp from " << m_endPoint->GetLocalAddress() << " to " << m_endPoint->GetPeerAddress () << std::endl;
 
   NS_LOG_FUNCTION (this);
   // Retransmit SYN packet
