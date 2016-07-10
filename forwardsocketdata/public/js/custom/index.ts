@@ -573,7 +573,47 @@ class SimulationGUI {
     }
 
     private updateChartsForAll(selectedSimulation: Simulation, simulations: Simulation[], full: boolean, showDeltas: boolean) {
+        this.updateDistributionChart(selectedSimulation, showDeltas);
+        //this.updateAverageChart(selectedSimulation, showDeltas);
 
+        let totalReceiveActiveTime = this.getAverageAndStdDevValue(selectedSimulation, "totalReceiveActiveTime");
+        let totalReceiveDozeTime = this.getAverageAndStdDevValue(selectedSimulation, "totalReceiveDozeTime");
+
+        if (totalReceiveActiveTime.length > 0 && totalReceiveDozeTime.length > 0) {
+            let activeDozePieData = [{ name: "Active", y: totalReceiveActiveTime[0] },
+                { name: "Doze", y: totalReceiveDozeTime[0] }]
+            this.createPieChart("#nodeChartActiveDoze", 'Active/doze time', activeDozePieData);
+        }
+
+        let nrOfTransmissions = this.getAverageAndStdDevValue(selectedSimulation, "nrOfTransmissions");
+        let nrOfTransmissionsDropped = this.getAverageAndStdDevValue(selectedSimulation, "nrOfTransmissionsDropped");
+
+        if (nrOfTransmissions.length > 0 && nrOfTransmissionsDropped.length > 0) {
+            let activeTransmissionsSuccessDroppedData = [{ name: "OK", y: nrOfTransmissions[0] - nrOfTransmissionsDropped[0] },
+                { name: "Dropped", y: nrOfTransmissionsDropped[0] }]
+            this.createPieChart("#nodeChartTxSuccessDropped", 'TX OK/dropped', activeTransmissionsSuccessDroppedData);
+        }
+
+        let nrOfReceives = this.getAverageAndStdDevValue(selectedSimulation, "nrOfReceives");
+        let nrOfReceivesDropped = this.getAverageAndStdDevValue(selectedSimulation, "nrOfReceivesDropped");
+
+        if (nrOfReceives.length > 0 && nrOfReceivesDropped.length > 0) {
+            let activeReceivesSuccessDroppedData = [{ name: "OK", y: nrOfReceives[0] - nrOfReceivesDropped[0] },
+                { name: "Dropped", y: nrOfReceivesDropped[0] }]
+            this.createPieChart("#nodeChartRxSuccessDropped", 'RX OK/dropped', activeReceivesSuccessDroppedData);
+        }
+
+        let nrOfSuccessfulPackets = this.getAverageAndStdDevValue(selectedSimulation, "nrOfSuccessfulPackets");
+        let nrOfDroppedPackets = this.getAverageAndStdDevValue(selectedSimulation, "nrOfDroppedPackets");
+
+        if (nrOfSuccessfulPackets.length > 0 && nrOfDroppedPackets.length > 0) {
+            let activePacketsSuccessDroppedData = [{ name: "OK", y: nrOfSuccessfulPackets[0] },
+                { name: "Dropped", y: nrOfDroppedPackets[0] }]
+            this.createPieChart("#nodeChartPacketSuccessDropped", 'Packets OK/dropped', activePacketsSuccessDroppedData);
+        }
+    }
+
+    private updateDistributionChart(selectedSimulation: Simulation, showDeltas: boolean) {
         let series = [];
 
         // to ensure we can easily compare we need to have the scale on the X-axis starting and ending on the same values
@@ -662,42 +702,91 @@ class SimulationGUI {
             legend: { enabled: false },
             credits: false
         });
+    }
 
-        let totalReceiveActiveTime = this.getAverageAndStdDevValue(selectedSimulation, "totalReceiveActiveTime");
-        let totalReceiveDozeTime = this.getAverageAndStdDevValue(selectedSimulation, "totalReceiveDozeTime");
 
-        if (totalReceiveActiveTime.length > 0 && totalReceiveDozeTime.length > 0) {
-            let activeDozePieData = [{ name: "Active", y: totalReceiveActiveTime[0] },
-                { name: "Doze", y: totalReceiveDozeTime[0] }]
-            this.createPieChart("#nodeChartActiveDoze", 'Active/doze time', activeDozePieData);
+    private updateAverageChart(selectedSimulation: Simulation, showDeltas: boolean) {
+        
+        let self = this;
+        let title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
+
+        let averages = [];
+        let ranges = [];
+        let nrOfValues = (<Value[]>selectedSimulation.nodes[0][this.selectedPropertyForChart]).length;
+        
+        for (var i = 0; i < nrOfValues; i++) {
+
+            let minVal = Number.MAX_VALUE;
+            let maxVal = Number.MIN_VALUE;
+            let sum = 0;
+            let count = 0;
+
+            let timestamp = (<Value[]>selectedSimulation.nodes[0][this.selectedPropertyForChart])[i].timestamp;
+            for(let n of selectedSimulation.nodes) {
+                let values =  (<Value[]>n[this.selectedPropertyForChart]);
+                if(i < values.length) {
+                    let value = values[i].value;
+                    sum += value;
+                    count++;
+                    if(minVal > value) minVal = value;
+                    if(maxVal < value) maxVal = value;
+                }
+            }
+
+            let avg = sum / count;
+            averages.push([ timestamp, avg ]);
+            ranges.push([timestamp, minVal, maxVal]);
         }
 
-        let nrOfTransmissions = this.getAverageAndStdDevValue(selectedSimulation, "nrOfTransmissions");
-        let nrOfTransmissionsDropped = this.getAverageAndStdDevValue(selectedSimulation, "nrOfTransmissionsDropped");
 
-        if (nrOfTransmissions.length > 0 && nrOfTransmissionsDropped.length > 0) {
-            let activeTransmissionsSuccessDroppedData = [{ name: "OK", y: nrOfTransmissions[0] - nrOfTransmissionsDropped[0] },
-                { name: "Dropped", y: nrOfTransmissionsDropped[0] }]
-            this.createPieChart("#nodeChartTxSuccessDropped", 'TX OK/dropped', activeTransmissionsSuccessDroppedData);
-        }
-
-        let nrOfReceives = this.getAverageAndStdDevValue(selectedSimulation, "nrOfReceives");
-        let nrOfReceivesDropped = this.getAverageAndStdDevValue(selectedSimulation, "nrOfReceivesDropped");
-
-        if (nrOfReceives.length > 0 && nrOfReceivesDropped.length > 0) {
-            let activeReceivesSuccessDroppedData = [{ name: "OK", y: nrOfReceives[0] - nrOfReceivesDropped[0] },
-                { name: "Dropped", y: nrOfReceivesDropped[0] }]
-            this.createPieChart("#nodeChartRxSuccessDropped", 'RX OK/dropped', activeReceivesSuccessDroppedData);
-        }
-
-        let nrOfSuccessfulPackets = this.getAverageAndStdDevValue(selectedSimulation, "nrOfSuccessfulPackets");
-        let nrOfDroppedPackets = this.getAverageAndStdDevValue(selectedSimulation, "nrOfDroppedPackets");
-
-        if (nrOfSuccessfulPackets.length > 0 && nrOfDroppedPackets.length > 0) {
-            let activePacketsSuccessDroppedData = [{ name: "OK", y: nrOfSuccessfulPackets[0] },
-                { name: "Dropped", y: nrOfDroppedPackets[0] }]
-            this.createPieChart("#nodeChartPacketSuccessDropped", 'Packets OK/dropped', activePacketsSuccessDroppedData);
-        }
+        $('#nodeChart').empty().highcharts({
+            chart: {
+                animation: "Highcharts.svg", // don't animate in old IE
+                marginRight: 10,
+                events: {
+                    load: function () {
+                        self.currentChart = (<HighchartsChartObject>this);
+                    }
+                },
+                zoomType: "x"
+            },
+            plotOptions: {
+                series: {
+                    animation: false,
+                    marker: { enabled: false }
+                }
+            },
+            title: { text: title },
+            xAxis: {
+                type: 'linear',
+                tickPixelInterval: 100,
+            },
+            yAxis: {
+                title: { text: 'Value' },
+                plotLines: [{
+                    value: 0,
+                    width: 1,
+                    color: '#808080'
+                }]
+            },
+            legend: { enabled: false },
+               series: [{
+                    name: title,
+                    type:"spline",
+                    data: averages,
+                    zIndex: 1,
+                }, <any>{
+                    name: 'Range',
+                    data: ranges,
+                    type: 'arearange',
+                    zIndex: 0,
+                    lineWidth: 0,
+                    linkedTo: ':previous',
+                    color: Highcharts.getOptions().colors[0],
+                    fillOpacity: 0.3,
+                }],
+            credits: false
+        });
     }
 
     createPieChart(selector: string, title: string, data: any) {
