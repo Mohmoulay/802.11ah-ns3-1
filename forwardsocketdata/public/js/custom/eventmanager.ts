@@ -28,7 +28,7 @@ class EventManager {
                         break;
                         
                     case 'stanodedeassoc':
-                        this.onNodeDeassociated(ev.stream,parseInt(ev.parts[2])):
+                        this.onNodeDeassociated(ev.stream,parseInt(ev.parts[2]));
                         break;
 
                     case 'apnodeadd':
@@ -42,7 +42,7 @@ class EventManager {
                             parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]),
                             parseFloat(ev.parts[14]), parseFloat(ev.parts[15]),
                             parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]), parseInt(ev.parts[20]),
-                            parseInt(ev.parts[21]));
+                            parseInt(ev.parts[21]), parseInt(ev.parts[22]), parseInt(ev.parts[23]), parseInt(ev.parts[24]));
                         break;
                     default:
                 }
@@ -142,7 +142,8 @@ class EventManager {
         nrOfSentPackets: number, nrOfSuccessfulPackets: number, nrOfDroppedPackets: number,
         avgPacketTimeOfFlight: number, goodputKbit: number,
         edcaQueueLength: number, nrOfSuccessfulRoundtripPackets: number, avgRoundTripTime: number, tcpCongestionWindow: number,
-        numberOfTCPRetransmissions:number, nrOfReceivesDroppedByDestination:number) {
+        numberOfTCPRetransmissions:number, numberOfTCPRetransmissionsFromAP:number, nrOfReceivesDroppedByDestination:number,
+        numberOfMACTxRTSFailed:number, numberOfMACTxDataFailed:number) {
 
         let simulation = this.sim.simulationContainer.getSimulation(stream);
 
@@ -175,6 +176,10 @@ class EventManager {
 
         n.tcpCongestionWindow.push(new Value(timestamp, tcpCongestionWindow));
         n.numberOfTCPRetransmissions.push(new Value(timestamp, numberOfTCPRetransmissions));
+        n.numberOfTCPRetransmissionsFromAP.push(new Value(timestamp, numberOfTCPRetransmissionsFromAP));
+
+        n.numberOfMACTxRTSFailed.push(new Value(timestamp, numberOfMACTxRTSFailed));
+        n.numberOfMACTxDataFailed.push(new Value(timestamp, numberOfMACTxDataFailed));
 
         if(stream == this.sim.selectedStream) {
             if (this.hasIncreased(n.totalTransmitTime)) {

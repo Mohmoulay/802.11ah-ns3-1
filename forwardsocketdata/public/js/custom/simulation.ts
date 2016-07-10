@@ -35,6 +35,10 @@ abstract class SimulationNode {
     numberOfTCPRetransmissions: Value[] = [];
 
     nrOfReceivesDroppedByDestination: Value[] = [];
+
+    numberOfTCPRetransmissionsFromAP : Value[] = [];
+    numberOfMACTxRTSFailed : Value[] = [];
+    numberOfMACTxDataFailed : Value[] = [];
 }
 
 class Value {

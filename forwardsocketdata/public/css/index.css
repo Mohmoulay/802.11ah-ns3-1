@@ -25,6 +25,11 @@ body{
     overflow-y:scroll;
 }
 
+.scrollTable th {
+    padding:2px !important;
+    cursor: pointer;
+}
+
 .scrollTable td {
     padding:2px !important;
 }

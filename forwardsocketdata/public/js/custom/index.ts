@@ -108,17 +108,17 @@ class SimulationGUI {
         }
     }
 
-    private getMinMaxOfProperty(prop: string, deltas:boolean): number[] {
+    private getMinMaxOfProperty(stream: string, prop: string, deltas: boolean): number[] {
         if (!this.simulationContainer.hasSimulations())
             return [0, 0];
 
         let curMax: number = Number.MIN_VALUE;
         let curMin: number = Number.MAX_VALUE;
         if (prop != "") {
-            let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+            let selectedSimulation = this.simulationContainer.getSimulation(stream);
             for (let n of selectedSimulation.nodes) {
                 let values = (<Value[]>n[this.selectedPropertyForChart]);
-                if(deltas && values.length > 1) {
+                if (deltas && values.length > 1) {
                     let curVal = values[values.length - 1].value;
                     let beforeVal = values[values.length - 2].value;
                     let value = curVal - beforeVal;
@@ -177,7 +177,7 @@ class SimulationGUI {
         if (!this.simulationContainer.hasSimulations())
             return;
 
-        let minmax = this.getMinMaxOfProperty(this.selectedPropertyForChart, false);
+        let minmax = this.getMinMaxOfProperty(this.selectedStream, this.selectedPropertyForChart, false);
         let curMax = minmax[1];
         let curMin = minmax[0];
         let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
@@ -224,7 +224,8 @@ class SimulationGUI {
     }
 
     onNodeUpdated(stream: string, id: number) {
-        if (id == this.selectedNode)
+        // bit of a hack to only update all overview on node stats with id = 0 because otherwise it would hammer the GUI update
+        if (id == this.selectedNode || (this.selectedNode == -1 && id == 0))
             this.updateGUI(false);
     }
 
@@ -575,7 +576,19 @@ class SimulationGUI {
 
         let series = [];
 
-        let minMax = this.getMinMaxOfProperty(this.selectedPropertyForChart, showDeltas);
+        // to ensure we can easily compare we need to have the scale on the X-axis starting and ending on the same values
+        // so determine the overall minimum and maximum
+        let overallMin = Number.MAX_VALUE;
+        let overallMax = Number.MIN_VALUE;
+        for (let s of this.simulationContainer.getStreams()) {
+            let mm = this.getMinMaxOfProperty(s, this.selectedPropertyForChart, showDeltas);
+            if (mm.length > 0) {
+                if (overallMin > mm[0]) overallMin = mm[0];
+                if (overallMax < mm[1]) overallMax = mm[1];
+            }
+        }
+
+        let minMax = this.getMinMaxOfProperty(this.selectedStream, this.selectedPropertyForChart, showDeltas);
         // create 100 classes
         let nrOfClasses = 100;
 
@@ -631,12 +644,13 @@ class SimulationGUI {
                 column: {
                     borderWidth: 0,
                     pointPadding: 0,
-                    groupPadding: 0
+                    groupPadding: 0,
+                    pointWidth: 10
                 }
             },
             xAxis: {
-                min: minMax[0],
-                max: minMax[1]
+                min: overallMin,
+                max: overallMax
             },
             yAxis: {
                 endOnTick: false
@@ -827,7 +841,14 @@ $(document).ready(function () {
                 sim.updateGUI(true);
             }
         }
-    })
+    });
+
+    $('.header').click(function () {
+        $(this).find('span').text(function (_, value) { return value == '-' ? '+' : '-' });
+        $(this).nextUntil('tr.header').slideToggle(100, function () {
+        });
+    });
+
 
     loop();
 

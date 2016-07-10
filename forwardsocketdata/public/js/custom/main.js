@@ -177,7 +177,7 @@ var EventManager = (function () {
                     this.onNodeAdded(ev.stream, false, -1, parseFloat(ev.parts[2]), parseFloat(ev.parts[3]), -1);
                     break;
                 case 'nodestats':
-                    this.onStatsUpdated(ev.stream, ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]), parseInt(ev.parts[20]), parseInt(ev.parts[21]));
+                    this.onStatsUpdated(ev.stream, ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]), parseInt(ev.parts[20]), parseInt(ev.parts[21]), parseInt(ev.parts[22]), parseInt(ev.parts[23]), parseInt(ev.parts[24]));
                     break;
                 default:
             }
@@ -250,7 +250,7 @@ var EventManager = (function () {
         else
             return false;
     };
-    EventManager.prototype.onStatsUpdated = function (stream, timestamp, id, totalTransmitTime, totalReceiveTime, totalReceiveDozeTime, totalReceiveActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTime, tcpCongestionWindow, numberOfTCPRetransmissions, nrOfReceivesDroppedByDestination) {
+    EventManager.prototype.onStatsUpdated = function (stream, timestamp, id, totalTransmitTime, totalReceiveTime, totalReceiveDozeTime, totalReceiveActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTime, tcpCongestionWindow, numberOfTCPRetransmissions, numberOfTCPRetransmissionsFromAP, nrOfReceivesDroppedByDestination, numberOfMACTxRTSFailed, numberOfMACTxDataFailed) {
         var simulation = this.sim.simulationContainer.getSimulation(stream);
         if (id < 0 || id >= simulation.nodes.length)
             return;
@@ -275,6 +275,9 @@ var EventManager = (function () {
         n.avgRoundtripTime.push(new Value(timestamp, avgRoundTripTime));
         n.tcpCongestionWindow.push(new Value(timestamp, tcpCongestionWindow));
         n.numberOfTCPRetransmissions.push(new Value(timestamp, numberOfTCPRetransmissions));
+        n.numberOfTCPRetransmissionsFromAP.push(new Value(timestamp, numberOfTCPRetransmissionsFromAP));
+        n.numberOfMACTxRTSFailed.push(new Value(timestamp, numberOfMACTxRTSFailed));
+        n.numberOfMACTxDataFailed.push(new Value(timestamp, numberOfMACTxDataFailed));
         if (stream == this.sim.selectedStream) {
             if (this.hasIncreased(n.totalTransmitTime)) {
                 this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));
@@ -383,13 +386,13 @@ var SimulationGUI = (function () {
             }
         }
     };
-    SimulationGUI.prototype.getMinMaxOfProperty = function (prop, deltas) {
+    SimulationGUI.prototype.getMinMaxOfProperty = function (stream, prop, deltas) {
         if (!this.simulationContainer.hasSimulations())
             return [0, 0];
         var curMax = Number.MIN_VALUE;
         var curMin = Number.MAX_VALUE;
         if (prop != "") {
-            var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+            var selectedSimulation = this.simulationContainer.getSimulation(stream);
             for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
                 var n = _a[_i];
                 var values = n[this.selectedPropertyForChart];
@@ -449,7 +452,7 @@ var SimulationGUI = (function () {
     SimulationGUI.prototype.drawNodes = function () {
         if (!this.simulationContainer.hasSimulations())
             return;
-        var minmax = this.getMinMaxOfProperty(this.selectedPropertyForChart, false);
+        var minmax = this.getMinMaxOfProperty(this.selectedStream, this.selectedPropertyForChart, false);
         var curMax = minmax[1];
         var curMin = minmax[0];
         var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
@@ -491,7 +494,8 @@ var SimulationGUI = (function () {
         this.animations.push(anim);
     };
     SimulationGUI.prototype.onNodeUpdated = function (stream, id) {
-        if (id == this.selectedNode)
+        // bit of a hack to only update all overview on node stats with id = 0 because otherwise it would hammer the GUI update
+        if (id == this.selectedNode || (this.selectedNode == -1 && id == 0))
             this.updateGUI(false);
     };
     SimulationGUI.prototype.onNodeAdded = function (stream, id) {
@@ -771,7 +775,21 @@ var SimulationGUI = (function () {
     };
     SimulationGUI.prototype.updateChartsForAll = function (selectedSimulation, simulations, full, showDeltas) {
         var series = [];
-        var minMax = this.getMinMaxOfProperty(this.selectedPropertyForChart, showDeltas);
+        // to ensure we can easily compare we need to have the scale on the X-axis starting and ending on the same values
+        // so determine the overall minimum and maximum
+        var overallMin = Number.MAX_VALUE;
+        var overallMax = Number.MIN_VALUE;
+        for (var _i = 0, _a = this.simulationContainer.getStreams(); _i < _a.length; _i++) {
+            var s = _a[_i];
+            var mm = this.getMinMaxOfProperty(s, this.selectedPropertyForChart, showDeltas);
+            if (mm.length > 0) {
+                if (overallMin > mm[0])
+                    overallMin = mm[0];
+                if (overallMax < mm[1])
+                    overallMax = mm[1];
+            }
+        }
+        var minMax = this.getMinMaxOfProperty(this.selectedStream, this.selectedPropertyForChart, showDeltas);
         // create 100 classes
         var nrOfClasses = 100;
         var classSize = (minMax[1] - minMax[0]) / nrOfClasses;
@@ -820,12 +838,13 @@ var SimulationGUI = (function () {
                 column: {
                     borderWidth: 0,
                     pointPadding: 0,
-                    groupPadding: 0
+                    groupPadding: 0,
+                    pointWidth: 10
                 }
             },
             xAxis: {
-                min: minMax[0],
-                max: minMax[1]
+                min: overallMin,
+                max: overallMax
             },
             yAxis: {
                 endOnTick: false
@@ -985,6 +1004,11 @@ $(document).ready(function () {
             }
         }
     });
+    $('.header').click(function () {
+        $(this).find('span').text(function (_, value) { return value == '-' ? '+' : '-'; });
+        $(this).nextUntil('tr.header').slideToggle(100, function () {
+        });
+    });
     loop();
     function loop() {
         sim.draw();
@@ -1031,6 +1055,9 @@ var SimulationNode = (function () {
         this.tcpCongestionWindow = [];
         this.numberOfTCPRetransmissions = [];
         this.nrOfReceivesDroppedByDestination = [];
+        this.numberOfTCPRetransmissionsFromAP = [];
+        this.numberOfMACTxRTSFailed = [];
+        this.numberOfMACTxDataFailed = [];
     }
     return SimulationNode;
 })();
