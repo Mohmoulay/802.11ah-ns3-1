@@ -12,7 +12,7 @@ var Animation = (function () {
         this.time += dt;
     };
     return Animation;
-})();
+}());
 var BroadcastAnimation = (function (_super) {
     __extends(BroadcastAnimation, _super);
     function BroadcastAnimation(x, y) {
@@ -35,7 +35,7 @@ var BroadcastAnimation = (function (_super) {
         return this.time >= this.max_time;
     };
     return BroadcastAnimation;
-})(Animation);
+}(Animation));
 var ReceivedAnimation = (function (_super) {
     __extends(ReceivedAnimation, _super);
     function ReceivedAnimation(x, y) {
@@ -59,7 +59,7 @@ var ReceivedAnimation = (function (_super) {
         return this.time >= this.max_time;
     };
     return ReceivedAnimation;
-})(Animation);
+}(Animation));
 var AssociatedAnimation = (function (_super) {
     __extends(AssociatedAnimation, _super);
     function AssociatedAnimation(x, y) {
@@ -84,7 +84,7 @@ var AssociatedAnimation = (function (_super) {
         return this.time >= this.max_time;
     };
     return AssociatedAnimation;
-})(Animation);
+}(Animation));
 var Color = (function () {
     function Color(red, green, blue, alpha, position) {
         if (alpha === void 0) { alpha = 1; }
@@ -99,7 +99,7 @@ var Color = (function () {
         return "rgba(" + this.red + ", " + this.green + "," + this.blue + ", " + this.alpha + ")";
     };
     return Color;
-})();
+}());
 var Palette = (function () {
     function Palette() {
         this.colors = [];
@@ -151,7 +151,7 @@ var Palette = (function () {
         }
     };
     return Palette;
-})();
+}());
 var EventManager = (function () {
     function EventManager(sim) {
         this.sim = sim;
@@ -288,7 +288,7 @@ var EventManager = (function () {
         this.sim.onNodeUpdated(stream, id);
     };
     return EventManager;
-})();
+}());
 var SimulationEvent = (function () {
     function SimulationEvent(stream, time, parts) {
         this.stream = stream;
@@ -296,7 +296,7 @@ var SimulationEvent = (function () {
         this.parts = parts;
     }
     return SimulationEvent;
-})();
+}());
 /// <reference path="../../../typings/globals/jquery/index.d.ts" />
 /// <reference path="../../../typings/globals/socket.io/index.d.ts" />
 /// <reference path="../../../typings/globals/highcharts/index.d.ts" />
@@ -330,7 +330,7 @@ var SimulationContainer = (function () {
         return sims;
     };
     return SimulationContainer;
-})();
+}());
 var SimulationGUI = (function () {
     function SimulationGUI(canvas) {
         this.canvas = canvas;
@@ -423,12 +423,12 @@ var SimulationGUI = (function () {
             var el = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "']").get(0));
             var type = el.attr("data-type");
             if (typeof type != "undefined" && type != "") {
-                var min;
+                var min = void 0;
                 if (el.attr("data-max") == "*")
                     min = curMin;
                 else
                     min = parseInt(el.attr("data-min"));
-                var max;
+                var max = void 0;
                 if (el.attr("data-max") == "*")
                     max = curMax;
                 else
@@ -495,8 +495,9 @@ var SimulationGUI = (function () {
     };
     SimulationGUI.prototype.onNodeUpdated = function (stream, id) {
         // bit of a hack to only update all overview on node stats with id = 0 because otherwise it would hammer the GUI update
-        if (id == this.selectedNode || (this.selectedNode == -1 && id == 0))
+        if (id == this.selectedNode || (this.selectedNode == -1 && id == 0)) {
             this.updateGUI(false);
+        }
     };
     SimulationGUI.prototype.onNodeAdded = function (stream, id) {
         if (id == this.selectedNode)
@@ -995,7 +996,7 @@ var SimulationGUI = (function () {
         });
     };
     return SimulationGUI;
-})();
+}());
 function getParameterByName(name, url) {
     if (!url)
         url = window.location.href;
@@ -1019,8 +1020,8 @@ $(document).ready(function () {
         streams = ["live"];
     else
         streams = compare.split(',');
-    for (var _i = 0; _i < streams.length; _i++) {
-        var stream = streams[_i];
+    for (var _i = 0, streams_1 = streams; _i < streams_1.length; _i++) {
+        var stream = streams_1[_i];
         var rdb = "<input class=\"rdbStream\" name=\"streams\" type='radio' data-stream='" + stream + "'>&nbsp;";
         $("#rdbStreams").append(rdb);
     }
@@ -1028,8 +1029,16 @@ $(document).ready(function () {
     $(".rdbStream[data-stream='" + sim.selectedStream + "']").prop("checked", true);
     // connect to the nodejs server with a websocket
     console.log("Connecting to websocket");
+    var opts = {
+        reconnection: false,
+        timeout: 1000000
+    };
+    var hasConnected = false;
     var sock = io.connect("http://" + window.location.host + "/");
     sock.on("connect", function (data) {
+        if (hasConnected)
+            return;
+        hasConnected = true;
         console.log("Websocket connected, listening for events");
         evManager = new EventManager(sim);
         console.log("Subscribing to " + streams);
@@ -1142,14 +1151,14 @@ var SimulationNode = (function () {
         this.numberOfMACTxDataFailed = [];
     }
     return SimulationNode;
-})();
+}());
 var Value = (function () {
     function Value(timestamp, value) {
         this.timestamp = timestamp;
         this.value = value;
     }
     return Value;
-})();
+}());
 var APNode = (function (_super) {
     __extends(APNode, _super);
     function APNode() {
@@ -1157,7 +1166,7 @@ var APNode = (function (_super) {
         this.type = "AP";
     }
     return APNode;
-})(SimulationNode);
+}(SimulationNode));
 var STANode = (function (_super) {
     __extends(STANode, _super);
     function STANode() {
@@ -1166,18 +1175,18 @@ var STANode = (function (_super) {
         this.isAssociated = false;
     }
     return STANode;
-})(SimulationNode);
+}(SimulationNode));
 var SimulationConfiguration = (function () {
     function SimulationConfiguration() {
         this.name = "";
     }
     return SimulationConfiguration;
-})();
+}());
 var Simulation = (function () {
     function Simulation() {
         this.nodes = [];
         this.config = new SimulationConfiguration();
     }
     return Simulation;
-})();
+}());
 //# sourceMappingURL=main.js.map

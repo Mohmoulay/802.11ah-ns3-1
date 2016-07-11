@@ -2,8 +2,13 @@
 /// <reference path="../../../typings/globals/socket.io/index.d.ts" />
 /// <reference path="../../../typings/globals/highcharts/index.d.ts" />
 
-declare class io {
-    static connect(url: string): SocketIO.Socket;
+declare namespace io {
+    class Options {
+        reconnection:boolean;
+        timeout:number;
+    }
+    function connect(url: string): SocketIO.Socket;
+    function socket(url:string, opts:Options): SocketIO.Socket;
 }
 
 class SimulationContainer {
@@ -225,8 +230,9 @@ class SimulationGUI {
 
     onNodeUpdated(stream: string, id: number) {
         // bit of a hack to only update all overview on node stats with id = 0 because otherwise it would hammer the GUI update
-        if (id == this.selectedNode || (this.selectedNode == -1 && id == 0))
-            this.updateGUI(false);
+        if (id == this.selectedNode || (this.selectedNode == -1 && id == 0)) {
+                this.updateGUI(false);
+        }
     }
 
     onNodeAdded(stream: string, id: number) {
@@ -256,6 +262,7 @@ class SimulationGUI {
     updateGUI(full: boolean) {
         if (!this.simulationContainer.hasSimulations())
             return;
+
 
         let simulations = this.simulationContainer.getSimulations();
         let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
@@ -861,8 +868,19 @@ $(document).ready(function () {
 
     // connect to the nodejs server with a websocket
     console.log("Connecting to websocket");
+       let opts =  {
+        reconnection: false,
+        timeout: 1000000
+       };
+
+    
+    let hasConnected = false;
     var sock: SocketIO.Socket = io.connect("http://" + window.location.host + "/");
     sock.on("connect", function (data) {
+        if(hasConnected) // only connect once
+            return;
+
+        hasConnected = true
         console.log("Websocket connected, listening for events");
         evManager = new EventManager(sim);
 
