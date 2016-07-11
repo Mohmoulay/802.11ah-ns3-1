@@ -31,6 +31,7 @@ struct Configuration {
 	uint32_t NGroup = 4;
 	uint32_t BeaconInterval = 102400;
 
+	bool APAlwaysSchedulesForNextSlot = false;
 	string DataMode = "OfdmRate650KbpsBW2MHz";
 	double datarate = 0.65;
 	double bandWidth = 2;

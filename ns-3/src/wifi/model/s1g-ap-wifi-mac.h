@@ -29,7 +29,7 @@
 #include "supported-rates.h"
 #include "ns3/random-variable-stream.h"
 #include "extension-headers.h"
-
+#include "s1g-strategy.h"
 #include <vector>
 #include <queue>
 
@@ -105,6 +105,12 @@ public:
    * \return the interval between two beacon transmissions.
    */
   Time GetBeaconInterval (void) const;
+
+
+  bool GetAlwaysScheduleForNextSlot(void) const;
+
+  void SetAlwaysScheduleForNextSlot(bool value);
+
   /**
    * Start beacon transmission immediately.
    */
@@ -245,6 +251,9 @@ private:
   uint32_t  m_slotNum;
 
 
+
+  bool m_alwaysScheduleForNextSlot = false;
+
   uint8_t m_nrOfTIMGroups;
   uint8_t m_currentBeaconTIMGroup = -1; // -1 because first beacon will have to be 0
   uint32_t current_aid_start = 1;
@@ -256,6 +265,8 @@ private:
 
   std::vector<int> pendingDataSizeForStations;
   std::vector<bool> staIsActiveDuringCurrentCycle;
+
+  S1gStrategy* strategy;
 
   Ptr<DcaTxop> m_beaconDca;                  //!< Dedicated DcaTxop for beacons
   Time m_beaconInterval;                     //!< Interval between beacons

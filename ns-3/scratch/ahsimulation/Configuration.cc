@@ -17,6 +17,7 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("NGroup", "number of RAW group", NGroup);
 
     cmd.AddValue("BeaconInterval", "Beacon interval time in us", BeaconInterval);
+    cmd.AddValue("APAlwaysSchedulesForNextSlot", "AP Always schedules for next slot (true/false)", APAlwaysSchedulesForNextSlot);
 
     cmd.AddValue("TrafficInterval", "Traffic interval time in ms", trafficInterval);
     cmd.AddValue("TrafficPacketSize", "Size of packets to send in bytes", trafficPacketSize);

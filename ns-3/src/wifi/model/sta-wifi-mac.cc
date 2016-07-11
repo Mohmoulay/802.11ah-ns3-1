@@ -148,7 +148,22 @@ StaWifiMac::DoDispose ()
 {
   NS_LOG_FUNCTION (this);
   m_pspollDca = 0;
+
+	if(strategy != nullptr)
+		delete strategy;
+	strategy = nullptr;
+
+
   RegularWifiMac::DoDispose ();
+}
+
+void
+StaWifiMac::DoInitialize() {
+
+	// TODO subclass multiple strategies
+	strategy = new S1gStrategy();
+
+	RegularWifiMac::DoInitialize();
 }
 
 uint32_t
@@ -681,34 +696,32 @@ StaWifiMac::Receive(Ptr<Packet> packet, const WifiMacHeader *hdr) {
 
 			NS_ASSERT(m_SlotFormat <= 1);
 
-			m_slotDuration = CalculateSlotDuration(m_slotDurationCount);
+			m_slotDuration = strategy->GetSlotDuration(m_slotDurationCount);
 			m_lastRawDurationus = m_slotDuration * m_slotNum;
 
-			if (pageindex == ((GetAID() >> 11) & 0x0003)) //in the page indexed
-					{
-				if (m_aid >= rawObj.GetRawGroupAIDStart()
-						&& m_aid <= rawObj.GetRawGroupAIDEnd()) {
-					SetInRAWgroup();
+			auto rps = beacon.GetRPS();
+			if (strategy->STABelongsToRAWGroup(GetAID(), rps)) {
 
-					uint16_t statsPerSlot = 0;
-					uint16_t statRawSlot = 0;
+				SetInRAWgroup();
+				uint16_t statsPerSlot = 0;
+				uint16_t statRawSlot = 0;
 
-					Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable>();
-					uint16_t offset = m_rv->GetValue(0, 1023);
-					offset = 0; // for test
-					statsPerSlot = (rawObj.GetRawGroupAIDEnd()
-							- rawObj.GetRawGroupAIDStart() + 1) / m_slotNum;
-					//statRawSlot = ((GetAID() & 0x03ff)-raw_start)/statsPerSlot;
-					statRawSlot = GetSTARAWSlotIndex(m_slotNum);
-					m_statSlotStart = MicroSeconds(rawObj.GetRawStart()) + m_slotDuration * statRawSlot;
-				}
+				Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable>();
+				uint16_t offset = m_rv->GetValue(0, 1023);
+				offset = 0; // for test
+				statsPerSlot = (rawObj.GetRawGroupAIDEnd()
+						- rawObj.GetRawGroupAIDStart() + 1) / m_slotNum;
+				//statRawSlot = ((GetAID() & 0x03ff)-raw_start)/statsPerSlot;
+				statRawSlot = strategy->GetSlotIndexFromAID(GetAID(), m_slotNum);
+				m_statSlotStart = MicroSeconds(rawObj.GetRawStart()) + m_slotDuration * statRawSlot;
 			}
 
 			m_rawStart = true;
-			if (rawtypeindex == 4) // only support Generic Raw (paged STA RAW or not)
+			/*if (rawtypeindex == 4) // only support Generic Raw (paged STA RAW or not)
 				m_pagedStaRaw = true;
 			else
 				m_pagedStaRaw = false;
+			*/
 
 			AuthenticationCtrl AuthenCtrl;
 			AuthenCtrl = beacon.GetAuthCtrl();
@@ -808,22 +821,14 @@ StaWifiMac::Receive(Ptr<Packet> packet, const WifiMacHeader *hdr) {
 	RegularWifiMac::Receive(packet, hdr);
 }
 
-uint16_t StaWifiMac::GetSTARAWSlotIndex(uint16_t nrOfSlots) {
-	return GetAID() % nrOfSlots;
-}
-
-Time
-StaWifiMac::CalculateSlotDuration(uint16_t rawSlotDuration) {
-	return MicroSeconds(500 + rawSlotDuration * 120);
-}
-
 
 void
 StaWifiMac::HandleS1gSleepFromSTATIMGroupBeacon(S1gBeaconHeader& beacon) {
 	auto rawObj = beacon.GetRPS().GetRawAssigmentObj();
 
-	uint16_t slotIndex = GetSTARAWSlotIndex(rawObj.GetSlotNum());
-	Time slotDuration = CalculateSlotDuration(rawObj.GetSlotDurationCount());
+	uint16_t slotIndex = strategy->GetSlotIndexFromAID(GetAID(), rawObj.GetSlotNum());
+
+	Time slotDuration = strategy->GetSlotDuration(rawObj.GetSlotDurationCount());
 
 	Time slotStartOffset = MicroSeconds(rawObj.GetRawStart()) + slotDuration * slotIndex;
 
@@ -883,7 +888,7 @@ StaWifiMac::HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon) {
 
 	int rawGroupSize = (rawObj.GetRawGroupAIDEnd() - rawObj.GetRawGroupAIDStart()) + 1;
 
-	uint8_t staTIMGroup = (GetAID() - 1) / rawGroupSize;
+	uint8_t staTIMGroup = strategy->GetTIMGroupFromAID(GetAID(), rawGroupSize);
 	auto beaconInterval = MicroSeconds(beacon.GetBeaconCompatibility().GetBeaconInterval());
 
 	if(beacon.GetTIM().GetTIMCount() == 0) {
@@ -922,7 +927,8 @@ StaWifiMac::HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon) {
 	}
 	else {
 
-		if(GetAID() >= rawObj.GetRawGroupAIDStart() && GetAID() <= rawObj.GetRawGroupAIDEnd()) {
+		auto rps = beacon.GetRPS();
+		if(strategy->STABelongsToRAWGroup(GetAID(),rps)) {
 			// our TIM group beacon
 			// great, let's process the RAW then go back to sleep again
 			// let's sleep until our slot comes up
@@ -931,7 +937,7 @@ StaWifiMac::HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon) {
 		}
 		else {
 			// not our TIM group beacon
-			uint8_t beaconTIMGroup = (rawObj.GetRawGroupAIDStart() + 1) / rawGroupSize;
+			uint8_t beaconTIMGroup = strategy->GetTIMGroupFromAID(rawObj.GetRawGroupAIDStart(), rawGroupSize);
 
 			// is our beacon still to come?
 			if(beaconTIMGroup < staTIMGroup) {

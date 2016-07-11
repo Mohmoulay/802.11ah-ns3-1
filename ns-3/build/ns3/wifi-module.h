@@ -58,6 +58,7 @@
 #include "s1g-ap-queue.h"
 #include "s1g-ap-wifi-mac.h"
 #include "s1g-beacon-compatibility.h"
+#include "s1g-strategy.h"
 #include "s1g-wifi-mac-helper.h"
 #include "snr-tag.h"
 #include "ssid.h"

@@ -371,6 +371,11 @@
   }, 
   {
     "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
+    "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 ../src/wifi/model/s1g-strategy.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/wifi/model/s1g-strategy.cc.1.o", 
+    "file": "../src/wifi/model/s1g-strategy.cc"
+  }, 
+  {
+    "directory": "/home/dwight/ns3ah/802.11ah-ns3/ns-3/build", 
     "command": "/usr/bin/g++ -std=c++0x -fPIC -pthread -I. -I.. -DNS3_ASSERT_ENABLE -DNS3_LOG_ENABLE -DHAVE_SYS_IOCTL_H=1 -DHAVE_IF_NETS_H=1 -DHAVE_NET_ETHERNET_H=1 -DHAVE_PACKET_H=1 -DHAVE_IF_TUN_H=1 -DHAVE_SQLITE3=1 ../src/wifi/model/edca-txop-n.cc -c -o /home/dwight/ns3ah/802.11ah-ns3/ns-3/build/src/wifi/model/edca-txop-n.cc.1.o", 
     "file": "../src/wifi/model/edca-txop-n.cc"
   }, 

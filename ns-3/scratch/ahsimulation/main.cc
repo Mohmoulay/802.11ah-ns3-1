@@ -16,6 +16,10 @@ int main(int argc, char** argv) {
 
     RngSeedManager::SetSeed(config.seed);
 
+    if(config.trafficType == "tcpecho") {
+    	Config::SetDefault ("ns3::TcpSocket::DelAckTimeout",TimeValue(Seconds (0.25)));
+    }
+
     // setup wifi channel
     YansWifiChannelHelper channelBuilder = YansWifiChannelHelper();
     channelBuilder.AddPropagationLoss("ns3::LogDistancePropagationLossModel", "Exponent", DoubleValue(3.76), "ReferenceLoss", DoubleValue(8.0), "ReferenceDistance", DoubleValue(1.0));
@@ -152,9 +156,10 @@ void configureAPNode(Ssid& ssid) {
             "NRawGroupStas", UintegerValue(NGroupStas),
             "NRawStations", UintegerValue(config.NRawSta),
             "SlotFormat", UintegerValue(config.SlotFormat),
-            "SlotCrossBoundary", UintegerValue(1),
+            "SlotCrossBoundary", UintegerValue(0),
             "SlotDurationCount", UintegerValue(config.NRawSlotCount),
-            "SlotNum", UintegerValue(config.NRawSlotNum));
+            "SlotNum", UintegerValue(config.NRawSlotNum),
+			"AlwaysScheduleForNextSlot", BooleanValue(config.APAlwaysSchedulesForNextSlot));
 
     // setup physical layer
     YansWifiPhyHelper phy = YansWifiPhyHelper::Default();

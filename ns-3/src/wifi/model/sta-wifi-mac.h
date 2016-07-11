@@ -30,6 +30,7 @@
 #include "amsdu-subframe-header.h"
 #include "s1g-beacon-compatibility.h"
 #include "extension-headers.h"
+#include "s1g-strategy.h"
 
 namespace ns3  {
 
@@ -209,8 +210,6 @@ private:
   void SetInRAWgroup(void);
   void UnsetInRAWgroup(void);
 
-  uint16_t GetSTARAWSlotIndex(uint16_t nrOfSlots);
-  Time CalculateSlotDuration(uint16_t slotDuration);
   void OnSleepEnd();
   void GoToSleep(Time duration);
 
@@ -263,6 +262,9 @@ private:
   bool m_activeProbing;
   Ptr<DcaTxop> m_pspollDca;  //!< Dedicated DcaTxop for beacons
   virtual void DoDispose (void);
+  virtual void DoInitialize(void);
+
+  S1gStrategy* strategy;
 
 
 

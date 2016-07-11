@@ -44,11 +44,19 @@ TypeId S1gApWifiMac::GetTypeId(void) {
 					"If beacons are enabled, whether to jitter the initial send event.",
 					BooleanValue(false),
 					MakeBooleanAccessor(&S1gApWifiMac::m_enableBeaconJitter),
-					MakeBooleanChecker()).AddAttribute("BeaconGeneration",
+					MakeBooleanChecker())
+					.AddAttribute("BeaconGeneration",
 					"Whether or not beacons are generated.", BooleanValue(true),
 					MakeBooleanAccessor(&S1gApWifiMac::SetBeaconGeneration,
 							&S1gApWifiMac::GetBeaconGeneration),
-					MakeBooleanChecker()).AddAttribute("NRawGroupStas",
+					MakeBooleanChecker())
+					.AddAttribute("AlwaysScheduleForNextSlot",
+					"If true never transmit immediately if it's possible to transmit during the slot period", BooleanValue(false),
+					MakeBooleanAccessor(&S1gApWifiMac::SetAlwaysScheduleForNextSlot,
+							&S1gApWifiMac::GetAlwaysScheduleForNextSlot),
+					MakeBooleanChecker())
+
+					.AddAttribute("NRawGroupStas",
 					"Number of stations in one Raw Group", UintegerValue(6000),
 					MakeUintegerAccessor(&S1gApWifiMac::GetRawGroupInterval,
 							&S1gApWifiMac::SetRawGroupInterval),
@@ -111,6 +119,11 @@ void S1gApWifiMac::DoDispose() {
 	NS_LOG_FUNCTION(this);
 	m_beaconDca = 0;
 	m_enableBeaconGeneration = false;
+
+	if(strategy != nullptr)
+		delete strategy;
+	strategy = nullptr;
+
 	m_beaconEvent.Cancel();
 	RegularWifiMac::DoDispose();
 }
@@ -142,6 +155,16 @@ bool S1gApWifiMac::GetBeaconGeneration(void) const {
 Time S1gApWifiMac::GetBeaconInterval(void) const {
 	NS_LOG_FUNCTION(this);
 	return m_beaconInterval;
+}
+
+bool S1gApWifiMac::GetAlwaysScheduleForNextSlot(void) const {
+	NS_LOG_FUNCTION(this);
+	return m_alwaysScheduleForNextSlot;
+}
+
+void S1gApWifiMac::SetAlwaysScheduleForNextSlot(bool value) {
+	NS_LOG_FUNCTION(this);
+	m_alwaysScheduleForNextSlot = value;
 }
 
 uint32_t S1gApWifiMac::GetRawGroupInterval(void) const {
@@ -316,15 +339,16 @@ void S1gApWifiMac::Enqueue(Ptr<const Packet> packet, Mac48Address to,
 		pendingDataSizeForStations[aId - 1]++;
 		LOG_TRAFFIC(Simulator::Now().GetMicroSeconds() << " Data for [" << aId << "] ++");
 
-		uint8_t slotIndex = aId % m_slotNum;
+		uint8_t slotIndex = strategy->GetSlotIndexFromAID(aId, m_slotNum);
 		// RAW period start is 0 at the moment
-		Time slotDuration = MicroSeconds(500 + 120 * m_slotDurationCount);
+		Time slotDuration = strategy->GetSlotDuration(m_slotDurationCount);
 		Time slotTimeOffset = MicroSeconds(0) + slotDuration * slotIndex;
-		int timGroup = (aId-1) / m_rawGroupInterval;
+		int timGroup = strategy->GetTIMGroupFromAID(aId, m_rawGroupInterval);
+
 
 		bool schedulePacketForNextSlot = true;
 
-		if(staIsActiveDuringCurrentCycle[aId-1]) {
+		if(!m_alwaysScheduleForNextSlot && staIsActiveDuringCurrentCycle[aId-1]) {
 			// station is active in its respective slot until at least the next DTIM beacon is sent
 			// calculate if we are still inside the appropriate slot and transmit immediately if we are
 			// that way we can avoid having to wait an entire cycle until the next slot comes up
@@ -488,12 +512,7 @@ void S1gApWifiMac::SendAssocResp(Mac48Address to, bool success) {
 	Ptr<Packet> packet = Create<Packet>();
 	MgtAssocResponseHeader assoc;
 
-	uint8_t mac[6];
-	to.CopyTo(mac);
-	uint8_t aid_l = mac[5];
-	uint8_t aid_h = mac[4] & 0x1f;
-	uint16_t aid = (aid_h << 8) | (aid_l << 0); //assign mac address as AID
-
+	uint16_t aid = strategy->GetAIDFromMacAddress(to);
 	// keep track of a mac -> aid map
 	macToAIDMap[to] = aid;
 
@@ -551,8 +570,7 @@ void S1gApWifiMac::SendOneBeacon(void) {
 
 		uint32_t page = 0;
 
-		uint32_t rawinfo = (current_aid_end << 13) | (current_aid_start << 2)
-				| page;
+		uint32_t rawinfo = (current_aid_end << 13) | (current_aid_start << 2) | page;
 
 		raw.SetRawGroup(rawinfo); // (b0-b1, page index) (b2-b12, raw start AID) (b13-b23, raw end AID)
 
@@ -859,6 +877,9 @@ void S1gApWifiMac::DoInitialize(void) {
 					this);
 		}
 	}
+
+	// TODO subclass multiple strategies
+	strategy = new S1gStrategy();
 
 	m_nrOfTIMGroups = ceil(m_totalStaNum / (float) m_rawGroupInterval);
 	// initialize queue
