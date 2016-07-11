@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
     RngSeedManager::SetSeed(config.seed);
 
     if(config.trafficType == "tcpecho") {
-    	Config::SetDefault ("ns3::TcpSocket::DelAckTimeout",TimeValue(Seconds (0.25)));
+    	Config::SetDefault ("ns3::TcpSocketBase::MinRto",TimeValue(MicroSeconds(config.BeaconInterval * config.NGroup) * 2));
     }
 
     // setup wifi channel
@@ -368,6 +368,7 @@ void configureTCPEchoClients() {
 		clientApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&NodeEntry::OnTcpEchoPacketReceived, nodes[i]));
 
 		clientApp.Get(0)->TraceConnectWithoutContext("CongestionWindow", MakeCallback(&NodeEntry::OnTcpCongestionWindowChanged, nodes[i]));
+		clientApp.Get(0)->TraceConnectWithoutContext("RTO", MakeCallback(&NodeEntry::OnTcpRTOChanged, nodes[i]));
 		clientApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&NodeEntry::OnTcpRetransmission, nodes[i]));
 
 		double random = (rand() % (config.trafficInterval));
@@ -474,7 +475,7 @@ void printStatistics() {
 		cout << "Node " << std::to_string(i) << endl;
 		cout << "X: " << nodes[i]->x << ", Y: " << nodes[i]->y << endl;
 		cout << "Tx Remaining Queue size: " << nodes[i]->queueLength << endl;
-		cout << "Tcp congestion window value: " << nodes[i]->congestionWindowValue << endl;
+		cout << "Tcp congestion window value: " <<  std::to_string(stats.get(i).TCPCongestionWindow) << endl;
 		cout << "--------------" << endl;
 
 		cout << "Total transmit time: " << std::to_string(stats.get(i).TotalTransmitTime.GetMilliSeconds()) << "ms" << endl;

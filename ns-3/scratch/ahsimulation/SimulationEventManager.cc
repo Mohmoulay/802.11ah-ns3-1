@@ -90,7 +90,8 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 			std::to_string(stats.get(i).NumberOfMACTxRTSFailed),
 			std::to_string(stats.get(i).NumberOfMACTxDataFailed),
 			this->SerializeDropReason(stats.get(i).NumberOfDropsByReason),
-			this->SerializeDropReason(stats.get(i).NumberOfDropsByReasonAtAP)
+			this->SerializeDropReason(stats.get(i).NumberOfDropsByReasonAtAP),
+			std::to_string(stats.get(i).TCPRTOValue)
 		});
 	}
 }

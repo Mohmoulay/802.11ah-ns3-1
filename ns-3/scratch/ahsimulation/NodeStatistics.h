@@ -48,6 +48,8 @@ public:
     int EDCAQueueLength = 0;
 
     long TCPCongestionWindow = 0;
+    long TCPRTOValue = 0;
+
     long NumberOfTCPRetransmissions = 0;
     long NumberOfTCPRetransmissionsFromAP = 0;
 

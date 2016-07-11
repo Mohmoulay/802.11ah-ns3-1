@@ -150,6 +150,8 @@ private:
   void ReceivePacket (Ptr<Socket> socket);
 
   void OnCongestionWindowChanged(uint32_t oldval, uint32_t newval);
+  void OnRTOChanged(uint32_t oldval, uint32_t newval);
+
   void OnRetransmission(Address a);
 
   uint32_t m_count;
@@ -175,6 +177,9 @@ private:
 
   TracedCallback<Ptr<const Packet>, Address> m_packetReceived;
   TracedCallback<Address> m_retransmission;
+
+  TracedCallback<uint32_t,uint32_t>  m_rtoChanged;
+
 
 
 };

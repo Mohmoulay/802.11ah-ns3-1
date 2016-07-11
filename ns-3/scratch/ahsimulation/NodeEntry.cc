@@ -302,8 +302,12 @@ void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnTcpCongestionWindowChanged(uint32_t oldval, uint32_t newval) {
-	this->congestionWindowValue = newval;
+
 	stats->get(this->id).TCPCongestionWindow = newval;
+}
+
+void NodeEntry::OnTcpRTOChanged(uint32_t oldval, uint32_t newval) {
+	stats->get(this->id).TCPRTOValue = newval;
 }
 
 void NodeEntry::OnTcpRetransmission(Address to) {

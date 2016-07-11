@@ -50,8 +50,8 @@ public:
     double y = 0;
     bool isAssociated = false;
     uint32_t queueLength = 0;
-    uint32_t congestionWindowValue = 0;
     
+
     NodeEntry(int id, Statistics* stats,Ptr<Node> node, Ptr<NetDevice> device);
 
     virtual ~NodeEntry();
@@ -81,6 +81,8 @@ public:
     void OnTcpEchoPacketReceived(Ptr<const Packet> packet, Address from);
     void OnTcpPacketReceivedAtAP(Ptr<const Packet> packet);
     void OnTcpCongestionWindowChanged(uint32_t oldval, uint32_t newval);
+    void OnTcpRTOChanged(uint32_t oldval, uint32_t newval);
+
 
     void OnTcpRetransmission(Address to);
     void OnTcpRetransmissionAtAP();
