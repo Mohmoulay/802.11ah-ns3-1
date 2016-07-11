@@ -81,7 +81,7 @@ public:
     void OnTcpEchoPacketReceived(Ptr<const Packet> packet, Address from);
     void OnTcpPacketReceivedAtAP(Ptr<const Packet> packet);
     void OnTcpCongestionWindowChanged(uint32_t oldval, uint32_t newval);
-    void OnTcpRTOChanged(uint32_t oldval, uint32_t newval);
+    void OnTcpRTOChanged(Time oldval, Time newval);
 
 
     void OnTcpRetransmission(Address to);

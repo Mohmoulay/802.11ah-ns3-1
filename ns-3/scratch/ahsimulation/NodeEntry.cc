@@ -306,7 +306,7 @@ void NodeEntry::OnTcpCongestionWindowChanged(uint32_t oldval, uint32_t newval) {
 	stats->get(this->id).TCPCongestionWindow = newval;
 }
 
-void NodeEntry::OnTcpRTOChanged(uint32_t oldval, uint32_t newval) {
+void NodeEntry::OnTcpRTOChanged(Time oldval, Time newval) {
 	stats->get(this->id).TCPRTOValue = newval;
 }
 

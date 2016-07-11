@@ -27,6 +27,7 @@
 #include "wifi-remote-station-manager.h"
 #include "ssid.h"
 #include "qos-utils.h"
+#include "drop-reason.h"
 
 namespace ns3 {
 

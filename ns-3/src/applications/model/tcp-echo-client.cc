@@ -79,7 +79,7 @@ TcpEchoClient::GetTypeId (void)
 	.AddTraceSource ("RTO",
 					 "The TCP connection's RTO",
 					 MakeTraceSourceAccessor (&TcpEchoClient::m_rtoChanged),
-					 "ns3::TracedValue::Uint32Callback")
+					 "ns3::Time::TracedValueCallback")
 
 	.AddTraceSource ("Retransmission",
 						  "Occurs when a packet has to be scheduled for retransmission",
@@ -161,7 +161,7 @@ void TcpEchoClient::OnCongestionWindowChanged(uint32_t oldval, uint32_t newval) 
 	m_cWnd(oldval,newval/m_socket->GetObject<TcpSocketBase>()->GetSegSize());
 }
 
-void TcpEchoClient::OnRTOChanged(uint32_t oldval, uint32_t newval) {
+void TcpEchoClient::OnRTOChanged(Time oldval, Time newval) {
 	m_rtoChanged(oldval, newval);
 }
 
