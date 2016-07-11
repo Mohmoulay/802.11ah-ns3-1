@@ -2,6 +2,7 @@
 #define NODESTATISTICS_H
 
 #include "ns3/core-module.h"
+#include "ns3/drop-reason.h"
 
 using namespace std;
 using namespace ns3;
@@ -18,8 +19,15 @@ public:
     long NumberOfTransmissionsDropped = 0;
     long NumberOfReceives = 0;
     long NumberOfReceivesDropped = 0;
+    // the number of Rx that is dropped while STA was the destination
     long NumberOfReceiveDroppedByDestination = 0;
     
+    // number of drops for any packets for between STA and AP by reason
+    map<DropReason, long> NumberOfDropsByReason;
+    // number of drops for any packets for between STA and AP by reason that occurred at AP
+    map<DropReason, long> NumberOfDropsByReasonAtAP;
+
+
     long NumberOfSuccessfulPackets = 0;
     long NumberOfSentPackets = 0;
     

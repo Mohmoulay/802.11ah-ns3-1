@@ -748,11 +748,11 @@ void S1gApWifiMac::Receive(Ptr<Packet> packet, const WifiMacHeader *hdr) {
 		} else if (hdr->IsFromDs() && hdr->IsToDs()) {
 			//this is an AP-to-AP frame
 			//we ignore for now.
-			NotifyRxDrop(packet);
+			NotifyRxDrop(packet, DropReason::MacAPToAPFrame);
 		} else {
 			//we can ignore these frames since
 			//they are not targeted at the AP
-			NotifyRxDrop(packet);
+			NotifyRxDrop(packet, DropReason::MacNotForAP);
 		}
 		return;
 	} else if (hdr->IsMgt()) {

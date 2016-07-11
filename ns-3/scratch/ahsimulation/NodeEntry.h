@@ -13,6 +13,7 @@
 #include "ns3/extension-headers.h"
 #include <functional>
 #include "Statistics.h"
+#include "ns3/drop-reason.h"
 
 using namespace ns3;
 
@@ -61,11 +62,11 @@ public:
     
     void OnPhyTxBegin(std::string context, Ptr<const Packet> packet);
     void OnPhyTxEnd(std::string context,Ptr<const Packet> packet);
-    void OnPhyTxDrop(std::string context,Ptr<const Packet> packet);
+    void OnPhyTxDrop(std::string context,Ptr<const Packet> packet, DropReason reason);
     
     void OnPhyRxBegin(std::string context,Ptr<const Packet> packet);
     void OnPhyRxEnd(std::string context,Ptr<const Packet> packet);
-    void OnPhyRxDrop(std::string context,Ptr<const Packet> packet);
+    void OnPhyRxDrop(std::string context,Ptr<const Packet> packet, DropReason reason);
 
 
     void OnMacTxRtsFailed(std::string context,Mac48Address address);

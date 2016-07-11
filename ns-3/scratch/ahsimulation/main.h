@@ -73,6 +73,9 @@ void onSTADeassociated(int i);
     
 void updateNodesQueueLength();
 
+
+int getSTAIdFromAddress(Ipv4Address from);
+
 int main(int argc, char** argv);
 
 void printStatistics();

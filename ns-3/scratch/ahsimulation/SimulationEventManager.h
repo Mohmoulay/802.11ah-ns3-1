@@ -11,6 +11,7 @@
 #include "NodeEntry.h"
 #include "Statistics.h"
 #include "Configuration.h"
+#include "ns3/drop-reason.h"
 
 class SimulationEventManager {
 
@@ -36,6 +37,8 @@ public:
 
 	void onNodeAssociated(NodeEntry& node);
 	void onNodeDeassociated(NodeEntry& node);
+
+	string SerializeDropReason(map<DropReason, long>& map);
 
 	void onUpdateStatistics(Statistics& stats);
 

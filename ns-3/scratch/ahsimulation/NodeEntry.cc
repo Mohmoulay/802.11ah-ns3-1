@@ -66,7 +66,7 @@ void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
 				<< " without a begin tx" << endl;
 }
 
-void NodeEntry::OnPhyTxDrop(std::string context, Ptr<const Packet> packet) {
+void NodeEntry::OnPhyTxDrop(std::string context, Ptr<const Packet> packet, DropReason reason) {
 	cout << "[" << this->aId << "] " << "Tx Dropped " << packet->GetUid() << endl;
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
@@ -78,6 +78,8 @@ void NodeEntry::OnPhyTxDrop(std::string context, Ptr<const Packet> packet) {
 				<< " End tx for packet " << packet->GetUid()
 				<< " without a begin tx" << endl;
 	stats->get(this->id).NumberOfTransmissionsDropped++;
+
+	stats->get(this->id).NumberOfDropsByReason[reason]++;
 }
 
 void NodeEntry::OnPhyRxBegin(std::string context, Ptr<const Packet> packet) {
@@ -154,27 +156,6 @@ void NodeEntry::OnEndOfReceive(Ptr<const Packet> packet) {
 			//cout << "RAW Group uint32: " << std::to_string(raw.GetRawGroup()) << endl;
 		}
 
-		// based on the last beacon AID range the station is dozing or not
-		// if the AID assigned to the station falls within the AID range it's
-		// the same as having the radio active during the RAW duration for potential
-		// Rx.
-		// The STA will only become awake if the DTIM data specified that there is data pending
-
-		/*	if(this->id==48) {
-		 cout << "Receive on node 48 " << endl;
-		 cout << "TIM group was flagged in last DTIM?: " << rawTIMGroupFlaggedAsDataAvailableInDTIM << endl;
-		 cout << "Last beacon range: " << lastBeaconAIDStart << " - " << lastBeaconAIDEnd << endl;
-		 }
-		 */
-		/*if (rawTIMGroupFlaggedAsDataAvailableInDTIM && aId >= lastBeaconAIDStart
-				&& aId <= lastBeaconAIDEnd) {
-			// the last beacon received was a beacon for a RAW slot for the current station
-			stats->get(this->id).TotalReceiveActiveTime += (Simulator::Now()
-					- oldTime);
-		} else {
-			stats->get(this->id).TotalReceiveDozeTime += (Simulator::Now()
-					- oldTime);
-		}*/
 
 		//s1gBeaconHeader.Print(cout);
 	} else {
@@ -186,10 +167,11 @@ void NodeEntry::OnEndOfReceive(Ptr<const Packet> packet) {
 	}
 }
 
-void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet) {
+void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet, DropReason reason) {
 
 
 	this->OnEndOfReceive(packet);
+
 
 
 	// THIS REQUIRES PACKET METADATA ENABLE!
@@ -205,24 +187,15 @@ void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet) {
 		chunk->Deserialize (item.current);
 
 		if(dynamic_cast<WifiMacHeader*>(chunk)) {
-
-			/*auto targetAID = ((WifiMacHeader*)chunk)->GetAID();
-			if(targetAID == this->aId) {
-				// it was an packet for this STA
-
-				cout << " Packet meant for this station was dropped " << endl;
-			}*/
-
 			WifiMacHeader* hdr = (WifiMacHeader*)chunk;
 
 			if(hdr->GetAddr1() == node->GetDevice(0)->GetAddress()) {
 
 				stats->get(this->id).NumberOfReceiveDroppedByDestination++;
-				//cout << "Dropped packet that was sent to this station" << endl;
+				stats->get(this->id).NumberOfDropsByReason[reason]++;
 
 			//	cout  << Simulator::Now().GetMicroSeconds() << "[" << this->aId << "] "
 			//		<< " Drop Rx for STA " << packet->GetUid() << endl;
-
 			}
 			//hdr->Print(cout);
 			delete chunk;
@@ -230,7 +203,6 @@ void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet) {
 		}
 		else
 			delete chunk;
-
 	}
 
 	stats->get(this->id).NumberOfReceivesDropped++;

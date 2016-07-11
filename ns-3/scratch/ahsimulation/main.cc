@@ -134,11 +134,43 @@ void OnAPPhyRxBegin(std::string context, Ptr<const Packet> packet) {
 	//cout << " AP RX Begin " << endl;
 }
 
-void OnAPPhyRxDrop(std::string context, Ptr<const Packet> packet) {
-
-
+void OnAPPhyRxDrop(std::string context, Ptr<const Packet> packet, DropReason reason) {
 	//cout << " AP RX Drop " << endl;
 	//packet->Print(cout);
+
+	// THIS REQUIRES PACKET METADATA ENABLE!
+	auto pCopy = packet->Copy();
+	auto it = pCopy->BeginItem();
+	while(it.HasNext()) {
+
+		auto item = it.Next();
+		Callback<ObjectBase *> constructor = item.tid.GetConstructor ();
+
+		ObjectBase *instance = constructor ();
+		Chunk *chunk = dynamic_cast<Chunk *> (instance);
+		chunk->Deserialize (item.current);
+
+		if(dynamic_cast<WifiMacHeader*>(chunk)) {
+			WifiMacHeader* hdr = (WifiMacHeader*)chunk;
+
+			int staId = -1;
+			for(int i = 0; i < staNodeInterfaces.GetN(); i++) {
+				if(staNodes.Get(i)->GetDevice(0)->GetAddress() == hdr->GetAddr2()) {
+					staId = i;
+					break;
+				}
+			}
+
+			if(staId != -1) {
+				stats.get(staId).NumberOfDropsByReasonAtAP[reason]++;
+			}
+			delete chunk;
+			break;
+		}
+		else
+			delete chunk;
+	}
+
 
 }
 
@@ -194,7 +226,7 @@ void configureAPNode(Ssid& ssid) {
     mobilityAp.Install(apNodes);
 
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeCallback(&OnAPPhyRxBegin));
-	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeCallback(&OnAPPhyRxDrop));
+	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDropWithReason", MakeCallback(&OnAPPhyRxDrop));
 
 
 	phy.EnablePcap("apfile", apNodes, 0);
@@ -230,12 +262,12 @@ void configureNodes() {
         // hook up TX
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxBegin", MakeCallback(&NodeEntry::OnPhyTxBegin, n));
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxEnd", MakeCallback(&NodeEntry::OnPhyTxEnd, n));
-        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxDrop", MakeCallback(&NodeEntry::OnPhyTxDrop, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyTxDropWithReason", MakeCallback(&NodeEntry::OnPhyTxDrop, n));
 
         // hook up RX
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeCallback(&NodeEntry::OnPhyRxBegin, n));
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxEnd", MakeCallback(&NodeEntry::OnPhyRxEnd, n));
-        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDrop", MakeCallback(&NodeEntry::OnPhyRxDrop, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDropWithReason", MakeCallback(&NodeEntry::OnPhyRxDrop, n));
 
 
         // hook up MAC traces

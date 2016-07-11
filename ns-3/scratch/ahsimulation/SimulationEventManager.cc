@@ -54,6 +54,16 @@ void SimulationEventManager::onNodeDeassociated(NodeEntry& node) {
 	send({"stanodedeassoc", std::to_string(node.id)});
 }
 
+string SimulationEventManager::SerializeDropReason(map<DropReason, long>& map) {
+
+	int lastItem = DropReason::MacAPToAPFrame;
+	std::stringstream s;
+	for(int i = 0; i <= lastItem;i++) {
+		s << map[(DropReason)i] << ((i == lastItem) ? "": ",");
+	}
+	return s.str();
+}
+
 void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 	for(int i = 0; i < stats.getNumberOfNodes(); i++) {
 		send({"nodestats", std::to_string(i),
@@ -78,7 +88,9 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 			std::to_string(stats.get(i).NumberOfTCPRetransmissionsFromAP),
 			std::to_string(stats.get(i).NumberOfReceiveDroppedByDestination),
 			std::to_string(stats.get(i).NumberOfMACTxRTSFailed),
-			std::to_string(stats.get(i).NumberOfMACTxDataFailed)
+			std::to_string(stats.get(i).NumberOfMACTxDataFailed),
+			this->SerializeDropReason(stats.get(i).NumberOfDropsByReason),
+			this->SerializeDropReason(stats.get(i).NumberOfDropsByReasonAtAP)
 		});
 	}
 }

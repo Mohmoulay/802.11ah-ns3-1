@@ -557,7 +557,7 @@ switchChannel:
         switch (m_state->GetState()) {
             case YansWifiPhy::SWITCHING:
                 NS_LOG_DEBUG("drop packet because of channel switching");
-                NotifyRxDrop(packet);
+                NotifyRxDrop(packet, DropReason::PhyRxDuringChannelSwitching);
                 m_plcpSuccess = false;
                 /*
                  * Packets received on the upcoming channel are added to the event list
@@ -576,7 +576,7 @@ switchChannel:
             case YansWifiPhy::RX:
                 NS_LOG_DEBUG("drop packet because already in Rx (power=" <<
                         rxPowerW << "W)");
-                NotifyRxDrop(packet);
+                NotifyRxDrop(packet, DropReason::PhyAlreadyReceiving);
                 if (endRx > Simulator::Now() + m_state->GetDelayUntilIdle()) {
                     //that packet will be noise _after_ the reception of the
                     //currently-received packet.
@@ -586,7 +586,7 @@ switchChannel:
             case YansWifiPhy::TX:
                 NS_LOG_DEBUG("drop packet because already in Tx (power=" <<
                         rxPowerW << "W)");
-                NotifyRxDrop(packet);
+                NotifyRxDrop(packet, DropReason::PhyAlreadyTransmitting);
                 if (endRx > Simulator::Now() + m_state->GetDelayUntilIdle()) {
                     //that packet will be noise _after_ the transmission of the
                     //currently-transmitted packet.
@@ -602,12 +602,12 @@ switchChannel:
                 {
                     if (preamble == WIFI_PREAMBLE_NONE && m_mpdusNum == 0) {
                         NS_LOG_DEBUG("drop packet because no preamble has been received");
-                        NotifyRxDrop(packet);
+                        NotifyRxDrop(packet, DropReason::PhyPreampleHeaderReceptionFailed);
                         goto maybeCcaBusy;
                     } else if (preamble == WIFI_PREAMBLE_NONE && m_plcpSuccess == false) //A-MPDU reception fails
                     {
                         NS_LOG_DEBUG("Drop MPDU because no plcp has been received");
-                        NotifyRxDrop(packet);
+                        NotifyRxDrop(packet, DropReason::PhyPlcpReceptionFailed);
                         goto maybeCcaBusy;
                     } else if (preamble != WIFI_PREAMBLE_NONE && packet->PeekPacketTag(ampduTag) && m_mpdusNum == 0) {
                         //received the first MPDU in an MPDU
@@ -646,14 +646,14 @@ switchChannel:
                             rxPowerW << "<" << m_edThresholdW << ")");
                     //NS_LOG_UNCOND ("drop packet because signal power too Small (" <<
                     //              rxPowerW << "<" << m_edThresholdW << ")");
-                    NotifyRxDrop(packet);
+                    NotifyRxDrop(packet, DropReason::PhyNotEnoughSignalPower);
                     m_plcpSuccess = false;
                     goto maybeCcaBusy;
                 }
                 break;
             case YansWifiPhy::SLEEP:
                 NS_LOG_DEBUG("drop packet because in sleep mode");
-                NotifyRxDrop(packet);
+                NotifyRxDrop(packet, DropReason::PhyInSleepMode);
                 m_plcpSuccess = false;
                 break;
         }
@@ -698,13 +698,13 @@ maybeCcaBusy:
             {
                 NS_LOG_DEBUG("drop packet because it was sent using an unsupported mode (" << txMode << ")");
                 //NS_LOG_UNCOND ("drop packet because it was sent using an unsupported mode (" << txMode << ")");
-                NotifyRxDrop(packet);
+                NotifyRxDrop(packet, DropReason::PhyUnsupportedMode);
                 m_plcpSuccess = false;
             }
         } else //plcp reception failed
         {
             NS_LOG_DEBUG("drop packet because plcp preamble/header reception failed");
-            NotifyRxDrop(packet);
+            NotifyRxDrop(packet, DropReason::PhyPreampleHeaderReceptionFailed);
             m_plcpSuccess = false;
         }
     }
@@ -722,7 +722,7 @@ maybeCcaBusy:
 
         if (m_state->IsStateSleep()) {
             NS_LOG_DEBUG("Dropping packet because in sleep mode");
-            NotifyTxDrop(packet);
+            NotifyTxDrop(packet, DropReason::PhyInSleepMode);
             return;
         }
 
@@ -1067,7 +1067,7 @@ maybeCcaBusy:
             } else {
                 /* failure. */
                 //NS_LOG_UNCOND ("YansWifiPhy::EndReceive-reason1");
-                NotifyRxDrop(packet);
+                NotifyRxDrop(packet, DropReason::PhyNotEnoughSignalPower);
                 m_state->SwitchFromRxEndError(packet, snrPer.snr);
             }
         } else {

@@ -274,7 +274,7 @@ public:
    *
    * Public method used to fire a MacRxDrop trace. Implemented for encapsulation purposes.
    */
-  void NotifyRxDrop (Ptr<const Packet> packet);
+  void NotifyRxDrop (Ptr<const Packet> packet, DropReason reason = DropReason::Unknown);
 
   /**
    * \param standard the wifi standard to be configured

@@ -29,6 +29,7 @@
 #include "dca-txop.h"
 #include "dcf-manager.h"
 #include "dcf.h"
+#include "drop-reason.h"
 #include "dsss-error-rate-model.h"
 #include "edca-txop-n.h"
 #include "error-rate-model.h"
