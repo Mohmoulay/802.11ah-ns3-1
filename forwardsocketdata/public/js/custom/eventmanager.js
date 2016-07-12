@@ -54,7 +54,7 @@ var EventManager = (function () {
         var ev = new SimulationEvent(entry.stream, time, parts);
         this.events.push(ev);
     };
-    EventManager.prototype.onStart = function (stream, aidRAWRange, numberOfRAWGroups, RAWSlotFormat, RAWSlotDuration, numberOfRAWSlots, dataMode, dataRate, bandwidth, trafficInterval, trafficPacketsize, beaconInterval, name) {
+    EventManager.prototype.onStart = function (stream, aidRAWRange, numberOfRAWGroups, RAWSlotFormat, RAWSlotDuration, numberOfRAWSlots, dataMode, dataRate, bandwidth, trafficInterval, trafficPacketsize, beaconInterval, name, propagationLossExponent, propagationLossReferenceLoss, apAlwaysSchedulesForNextSlot, minRTO, simulationTime) {
         var simulation = this.sim.simulationContainer.getSimulation(stream);
         if (typeof simulation == "undefined") {
             simulation = new Simulation();
@@ -74,6 +74,11 @@ var EventManager = (function () {
         config.trafficPacketsize = trafficPacketsize;
         config.beaconInterval = beaconInterval;
         config.name = name;
+        config.propagationLossExponent = propagationLossExponent;
+        config.propagationLossReferenceLoss = propagationLossReferenceLoss;
+        config.apAlwaysSchedulesForNextSlot = apAlwaysSchedulesForNextSlot;
+        config.minRTO = minRTO;
+        config.simulationTime = simulationTime;
     };
     EventManager.prototype.onNodeAdded = function (stream, isSTA, id, x, y, aId) {
         var n = isSTA ? new STANode() : new APNode();

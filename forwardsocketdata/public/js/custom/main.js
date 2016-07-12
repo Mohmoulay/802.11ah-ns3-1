@@ -208,7 +208,7 @@ var EventManager = (function () {
         var ev = new SimulationEvent(entry.stream, time, parts);
         this.events.push(ev);
     };
-    EventManager.prototype.onStart = function (stream, aidRAWRange, numberOfRAWGroups, RAWSlotFormat, RAWSlotDuration, numberOfRAWSlots, dataMode, dataRate, bandwidth, trafficInterval, trafficPacketsize, beaconInterval, name) {
+    EventManager.prototype.onStart = function (stream, aidRAWRange, numberOfRAWGroups, RAWSlotFormat, RAWSlotDuration, numberOfRAWSlots, dataMode, dataRate, bandwidth, trafficInterval, trafficPacketsize, beaconInterval, name, propagationLossExponent, propagationLossReferenceLoss, apAlwaysSchedulesForNextSlot, minRTO, simulationTime) {
         var simulation = this.sim.simulationContainer.getSimulation(stream);
         if (typeof simulation == "undefined") {
             simulation = new Simulation();
@@ -228,6 +228,11 @@ var EventManager = (function () {
         config.trafficPacketsize = trafficPacketsize;
         config.beaconInterval = beaconInterval;
         config.name = name;
+        config.propagationLossExponent = propagationLossExponent;
+        config.propagationLossReferenceLoss = propagationLossReferenceLoss;
+        config.apAlwaysSchedulesForNextSlot = apAlwaysSchedulesForNextSlot;
+        config.minRTO = minRTO;
+        config.simulationTime = simulationTime;
     };
     EventManager.prototype.onNodeAdded = function (stream, isSTA, id, x, y, aId) {
         var n = isSTA ? new STANode() : new APNode();
@@ -257,75 +262,78 @@ var EventManager = (function () {
         n.isAssociated = false;
         this.sim.onNodeAssociated(stream, id);
     };
-    EventManager.prototype.hasIncreased = function (values) {
-        if (values.length >= 2) {
-            var oldVal = values[values.length - 2].value;
-            var newVal = values[values.length - 1].value;
-            return oldVal < newVal;
+    EventManager.prototype.hasIncreased = function (n, prop) {
+        if (n.values.length >= 2) {
+            var oldVal = n.values[n.values.length - 2];
+            var newVal = n.values[n.values.length - 1];
+            return oldVal[prop] < newVal[prop];
         }
         else
             return false;
     };
-    EventManager.prototype.onStatsUpdated = function (stream, timestamp, id, totalTransmitTime, totalReceiveTime, totalReceiveDozeTime, totalReceiveActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTime, tcpCongestionWindow, numberOfTCPRetransmissions, numberOfTCPRetransmissionsFromAP, nrOfReceivesDroppedByDestination, numberOfMACTxRTSFailed, numberOfMACTxDataFailed, numberOfDropsByReason, numberOfDropsByReasonAtAP, tcpRtoValue) {
+    EventManager.prototype.onStatsUpdated = function (stream, timestamp, id, totalTransmitTime, totalReceiveTime, totalDozeTime, totalActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTime, tcpCongestionWindow, numberOfTCPRetransmissions, numberOfTCPRetransmissionsFromAP, nrOfReceivesDroppedByDestination, numberOfMACTxRTSFailed, numberOfMACTxDataFailed, numberOfDropsByReason, numberOfDropsByReasonAtAP, tcpRtoValue) {
         var simulation = this.sim.simulationContainer.getSimulation(stream);
         if (id < 0 || id >= simulation.nodes.length)
             return;
         // keep track of statistics
         var n = simulation.nodes[id];
-        n.totalTransmitTime.push(new Value(timestamp, totalTransmitTime));
-        n.totalReceiveTime.push(new Value(timestamp, totalReceiveTime));
-        n.totalReceiveDozeTime.push(new Value(timestamp, totalReceiveDozeTime));
-        n.totalReceiveActiveTime.push(new Value(timestamp, totalReceiveActiveTime));
-        n.nrOfTransmissions.push(new Value(timestamp, nrOfTransmissions));
-        n.nrOfTransmissionsDropped.push(new Value(timestamp, nrOfTransmissionsDropped));
-        n.nrOfReceives.push(new Value(timestamp, nrOfReceives));
-        n.nrOfReceivesDropped.push(new Value(timestamp, nrOfReceivesDropped));
-        n.nrOfReceivesDroppedByDestination.push(new Value(timestamp, nrOfReceivesDroppedByDestination));
-        n.nrOfSentPackets.push(new Value(timestamp, nrOfSentPackets));
-        n.nrOfSuccessfulPackets.push(new Value(timestamp, nrOfSuccessfulPackets));
-        n.nrOfDroppedPackets.push(new Value(timestamp, nrOfDroppedPackets));
-        n.avgSentReceiveTime.push(new Value(timestamp, avgPacketTimeOfFlight));
-        n.goodputKbit.push(new Value(timestamp, goodputKbit));
-        n.edcaQueueLength.push(new Value(timestamp, edcaQueueLength));
-        n.nrOfSuccessfulRoundtripPackets.push(new Value(timestamp, nrOfSuccessfulRoundtripPackets));
-        n.avgRoundtripTime.push(new Value(timestamp, avgRoundTripTime));
-        n.tcpCongestionWindow.push(new Value(timestamp, tcpCongestionWindow));
-        n.numberOfTCPRetransmissions.push(new Value(timestamp, numberOfTCPRetransmissions));
-        n.numberOfTCPRetransmissionsFromAP.push(new Value(timestamp, numberOfTCPRetransmissionsFromAP));
-        n.tcpRTO.push(new Value(timestamp, tcpRtoValue));
-        n.numberOfMACTxRTSFailed.push(new Value(timestamp, numberOfMACTxRTSFailed));
-        n.numberOfMACTxDataFailed.push(new Value(timestamp, numberOfMACTxDataFailed));
+        var nodeVal = new NodeValue();
+        n.values.push(nodeVal);
+        nodeVal.timestamp = timestamp;
+        nodeVal.totalTransmitTime = totalTransmitTime;
+        nodeVal.totalReceiveTime = totalReceiveTime;
+        nodeVal.totalDozeTime = totalDozeTime;
+        nodeVal.totalActiveTime = totalActiveTime;
+        nodeVal.nrOfTransmissions = nrOfTransmissions;
+        nodeVal.nrOfTransmissionsDropped = nrOfTransmissionsDropped;
+        nodeVal.nrOfReceives = nrOfReceives;
+        nodeVal.nrOfReceivesDropped = nrOfReceivesDropped;
+        nodeVal.nrOfReceivesDroppedByDestination = nrOfReceivesDroppedByDestination;
+        nodeVal.nrOfSentPackets = nrOfSentPackets;
+        nodeVal.nrOfSuccessfulPackets = nrOfSuccessfulPackets;
+        nodeVal.nrOfDroppedPackets = nrOfDroppedPackets;
+        nodeVal.avgSentReceiveTime = avgPacketTimeOfFlight;
+        nodeVal.goodputKbit = goodputKbit;
+        nodeVal.edcaQueueLength = edcaQueueLength;
+        nodeVal.nrOfSuccessfulRoundtripPackets = nrOfSuccessfulRoundtripPackets;
+        nodeVal.avgRoundtripTime = avgRoundTripTime;
+        nodeVal.tcpCongestionWindow = tcpCongestionWindow;
+        nodeVal.numberOfTCPRetransmissions = numberOfTCPRetransmissions;
+        nodeVal.numberOfTCPRetransmissionsFromAP = numberOfTCPRetransmissionsFromAP;
+        nodeVal.tcpRTO = tcpRtoValue;
+        nodeVal.numberOfMACTxRTSFailed = numberOfMACTxRTSFailed;
+        nodeVal.numberOfMACTxDataFailed = numberOfMACTxDataFailed;
         if (typeof numberOfDropsByReason != "undefined") {
             var dropParts = numberOfDropsByReason.split(',');
-            n.numberOfDropsByReasonUnknown.push(new Value(timestamp, parseInt(dropParts[0])));
-            n.numberOfDropsByReasonPhyInSleepMode.push(new Value(timestamp, parseInt(dropParts[1])));
-            n.numberOfDropsByReasonPhyNotEnoughSignalPower.push(new Value(timestamp, parseInt(dropParts[2])));
-            n.numberOfDropsByReasonPhyUnsupportedMode.push(new Value(timestamp, parseInt(dropParts[3])));
-            n.numberOfDropsByReasonPhyPreambleHeaderReceptionFailed.push(new Value(timestamp, parseInt(dropParts[4])));
-            n.numberOfDropsByReasonPhyRxDuringChannelSwitching.push(new Value(timestamp, parseInt(dropParts[5])));
-            n.numberOfDropsByReasonPhyAlreadyReceiving.push(new Value(timestamp, parseInt(dropParts[6])));
-            n.numberOfDropsByReasonPhyAlreadyTransmitting.push(new Value(timestamp, parseInt(dropParts[7])));
-            n.numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed.push(new Value(timestamp, parseInt(dropParts[8])));
-            n.numberOfDropsByReasonMacNotForAP.push(new Value(timestamp, parseInt(dropParts[9])));
-            n.numberOfDropsByReasonMacAPToAPFrame.push(new Value(timestamp, parseInt(dropParts[10])));
+            nodeVal.numberOfDropsByReasonUnknown = parseInt(dropParts[0]);
+            nodeVal.numberOfDropsByReasonPhyInSleepMode = parseInt(dropParts[1]);
+            nodeVal.numberOfDropsByReasonPhyNotEnoughSignalPower = parseInt(dropParts[2]);
+            nodeVal.numberOfDropsByReasonPhyUnsupportedMode = parseInt(dropParts[3]);
+            nodeVal.numberOfDropsByReasonPhyPreambleHeaderReceptionFailed = parseInt(dropParts[4]);
+            nodeVal.numberOfDropsByReasonPhyRxDuringChannelSwitching = parseInt(dropParts[5]);
+            nodeVal.numberOfDropsByReasonPhyAlreadyReceiving = parseInt(dropParts[6]);
+            nodeVal.numberOfDropsByReasonPhyAlreadyTransmitting = parseInt(dropParts[7]);
+            nodeVal.numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed = parseInt(dropParts[8]);
+            nodeVal.numberOfDropsByReasonMacNotForAP = parseInt(dropParts[9]);
+            nodeVal.numberOfDropsByReasonMacAPToAPFrame = parseInt(dropParts[10]);
         }
         if (typeof numberOfDropsByReason != "undefined") {
             var dropParts = numberOfDropsByReasonAtAP.split(',');
-            n.numberOfDropsFromAPByReasonUnknown.push(new Value(timestamp, parseInt(dropParts[0])));
-            n.numberOfDropsFromAPByReasonPhyInSleepMode.push(new Value(timestamp, parseInt(dropParts[1])));
-            n.numberOfDropsFromAPByReasonPhyNotEnoughSignalPower.push(new Value(timestamp, parseInt(dropParts[2])));
-            n.numberOfDropsFromAPByReasonPhyUnsupportedMode.push(new Value(timestamp, parseInt(dropParts[3])));
-            n.numberOfDropsFromAPByReasonPhyPreambleHeaderReceptionFailed.push(new Value(timestamp, parseInt(dropParts[4])));
-            n.numberOfDropsFromAPByReasonPhyRxDuringChannelSwitching.push(new Value(timestamp, parseInt(dropParts[5])));
-            n.numberOfDropsFromAPByReasonPhyAlreadyReceiving.push(new Value(timestamp, parseInt(dropParts[6])));
-            n.numberOfDropsFromAPByReasonPhyAlreadyTransmitting.push(new Value(timestamp, parseInt(dropParts[7])));
-            n.numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed.push(new Value(timestamp, parseInt(dropParts[8])));
-            n.numberOfDropsFromAPByReasonMacNotForAP.push(new Value(timestamp, parseInt(dropParts[9])));
-            n.numberOfDropsFromAPByReasonMacAPToAPFrame.push(new Value(timestamp, parseInt(dropParts[10])));
+            nodeVal.numberOfDropsFromAPByReasonUnknown = parseInt(dropParts[0]);
+            nodeVal.numberOfDropsFromAPByReasonPhyInSleepMode = parseInt(dropParts[1]);
+            nodeVal.numberOfDropsFromAPByReasonPhyNotEnoughSignalPower = parseInt(dropParts[2]);
+            nodeVal.numberOfDropsFromAPByReasonPhyUnsupportedMode = parseInt(dropParts[3]);
+            nodeVal.numberOfDropsFromAPByReasonPhyPreambleHeaderReceptionFailed = parseInt(dropParts[4]);
+            nodeVal.numberOfDropsFromAPByReasonPhyRxDuringChannelSwitching = parseInt(dropParts[5]);
+            nodeVal.numberOfDropsFromAPByReasonPhyAlreadyReceiving = parseInt(dropParts[6]);
+            nodeVal.numberOfDropsFromAPByReasonPhyAlreadyTransmitting = parseInt(dropParts[7]);
+            nodeVal.numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed = parseInt(dropParts[8]);
+            nodeVal.numberOfDropsFromAPByReasonMacNotForAP = parseInt(dropParts[9]);
+            nodeVal.numberOfDropsFromAPByReasonMacAPToAPFrame = parseInt(dropParts[10]);
         }
-        n.tcpRTO.push(new Value(timestamp, tcpRtoValue));
+        nodeVal.tcpRTO = tcpRtoValue;
         if (this.updateGUI && stream == this.sim.selectedStream) {
-            if (this.hasIncreased(n.totalTransmitTime)) {
+            if (this.hasIncreased(n, "totalTransmitTime")) {
                 this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));
             }
         }
@@ -441,10 +449,10 @@ var SimulationGUI = (function () {
             var selectedSimulation = this.simulationContainer.getSimulation(stream);
             for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
                 var n = _a[_i];
-                var values = n[this.selectedPropertyForChart];
+                var values = n.values;
                 if (deltas && values.length > 1) {
-                    var curVal = values[values.length - 1].value;
-                    var beforeVal = values[values.length - 2].value;
+                    var curVal = values[values.length - 1][prop];
+                    var beforeVal = values[values.length - 2][prop];
                     var value = curVal - beforeVal;
                     if (curMax < value)
                         curMax = value;
@@ -452,7 +460,7 @@ var SimulationGUI = (function () {
                         curMin = value;
                 }
                 else if (values.length > 0) {
-                    var value = values[values.length - 1].value;
+                    var value = values[values.length - 1][prop];
                     if (curMax < value)
                         curMax = value;
                     if (curMin > value)
@@ -479,10 +487,10 @@ var SimulationGUI = (function () {
                     max = curMax;
                 else
                     max = parseInt(el.attr("data-max"));
-                var values = n[this.selectedPropertyForChart];
+                var values = n.values;
                 if (values.length > 0) {
-                    var value = values[values.length - 1];
-                    var alpha = (value.value - min) / (max - min);
+                    var value = values[values.length - 1][this.selectedPropertyForChart];
+                    var alpha = (value - min) / (max - min);
                     if (type == "LOWER_IS_BETTER")
                         return this.heatMapPalette.getColorAt(1 - alpha).toString();
                     else
@@ -600,7 +608,7 @@ var SimulationGUI = (function () {
         var propertyElements = $(".nodeProperty");
         for (var i = 0; i < propertyElements.length; i++) {
             var prop = $(propertyElements[i]).attr("data-property");
-            var values = node[prop];
+            var values = node.values;
             if (typeof values != "undefined") {
                 var el = "";
                 if (values.length > 0) {
@@ -610,23 +618,23 @@ var SimulationGUI = (function () {
                         var nrVals = 0;
                         for (var j = 0; j < simulations.length; j++) {
                             if (simulations[j] != selectedSimulation && this.selectedNode < simulations[j].nodes.length) {
-                                var vals = simulations[j].nodes[this.selectedNode][prop];
+                                var vals = simulations[j].nodes[this.selectedNode].values;
                                 if (vals.length > 0) {
-                                    sumVal += vals[vals.length - 1].value;
+                                    sumVal += vals[vals.length - 1][prop];
                                     nrVals++;
                                 }
                             }
                         }
                         var avg = sumVal / nrVals;
-                        if (values[values.length - 1].value > avg)
-                            el = "<div class='valueup' title='Value has increased compared to average (" + avg.toFixed(2) + ") of other simulations'>" + values[values.length - 1].value + "</div>";
-                        else if (values[values.length - 1].value < avg)
-                            el = "<div class='valuedown' title='Value has decreased compared to average (" + avg.toFixed(2) + ") of other simulations'>" + values[values.length - 1].value + "</div>";
+                        if (values[values.length - 1][prop] > avg)
+                            el = "<div class='valueup' title='Value has increased compared to average (" + avg.toFixed(2) + ") of other simulations'>" + values[values.length - 1][prop] + "</div>";
+                        else if (values[values.length - 1][prop] < avg)
+                            el = "<div class='valuedown' title='Value has decreased compared to average (" + avg.toFixed(2) + ") of other simulations'>" + values[values.length - 1][prop] + "</div>";
                         else
-                            el = values[values.length - 1].value + "";
+                            el = values[values.length - 1][prop] + "";
                     }
                     else {
-                        el = values[values.length - 1].value + "";
+                        el = values[values.length - 1][prop] + "";
                     }
                     $($(propertyElements[i]).find("td").get(1)).empty().append(el);
                 }
@@ -641,9 +649,9 @@ var SimulationGUI = (function () {
         var count = 0;
         for (var i = 0; i < simulation.nodes.length; i++) {
             var node = simulation.nodes[i];
-            var values = node[prop];
+            var values = node.values;
             if (values.length > 0) {
-                sum += values[values.length - 1].value;
+                sum += values[values.length - 1][prop];
                 count++;
             }
         }
@@ -653,9 +661,9 @@ var SimulationGUI = (function () {
         var sumSquares = 0;
         for (var i = 0; i < simulation.nodes.length; i++) {
             var node = simulation.nodes[i];
-            var values = node[prop];
+            var values = node.values;
             if (values.length > 0) {
-                var val = (values[values.length - 1].value - avg) * (values[values.length - 1].value - avg);
+                var val = (values[values.length - 1][prop] - avg) * (values[values.length - 1][prop] - avg);
                 sumSquares += val;
             }
         }
@@ -730,110 +738,103 @@ var SimulationGUI = (function () {
     };
     SimulationGUI.prototype.updateChartsForNode = function (selectedSimulation, simulations, full, showDeltas) {
         var firstNode = selectedSimulation.nodes[this.selectedNode];
-        if (firstNode[this.selectedPropertyForChart].length > 0) {
-            if (this.currentChart == null || full) {
-                var series = [];
-                for (var i = 0; i < simulations.length; i++) {
-                    var values = simulations[i].nodes[this.selectedNode][this.selectedPropertyForChart];
-                    var selectedData = [];
-                    if (!showDeltas) {
-                        for (var i_1 = 0; i_1 < values.length; i_1++)
-                            selectedData.push({ x: values[i_1].timestamp, y: values[i_1].value });
-                    }
-                    else {
-                        selectedData.push({ x: values[0].timestamp, y: values[0].value });
-                        for (var i_2 = 1; i_2 < values.length; i_2++)
-                            selectedData.push({ x: values[i_2].timestamp, y: values[i_2].value - values[i_2 - 1].value });
-                    }
-                    series.push({
-                        name: this.simulationContainer.getStream(i),
-                        data: selectedData
-                    });
+        if (firstNode.values.length <= 0)
+            return;
+        if (this.currentChart == null || full) {
+            var series = [];
+            for (var i = 0; i < simulations.length; i++) {
+                var values = simulations[i].nodes[this.selectedNode].values;
+                var selectedData = [];
+                if (!showDeltas) {
+                    for (var i_1 = 0; i_1 < values.length; i_1++)
+                        selectedData.push({ x: values[i_1].timestamp, y: values[i_1][this.selectedPropertyForChart] });
                 }
-                var self_1 = this;
-                var title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
-                $('#nodeChart').empty().highcharts({
-                    chart: {
-                        type: 'spline',
-                        animation: "Highcharts.svg",
-                        marginRight: 10,
-                        events: {
-                            load: function () {
-                                self_1.currentChart = this;
-                            }
-                        },
-                        zoomType: "x"
-                    },
-                    plotOptions: {
-                        series: {
-                            animation: false,
-                            marker: { enabled: false }
-                        }
-                    },
-                    title: { text: title },
-                    xAxis: {
-                        type: 'linear',
-                        tickPixelInterval: 100
-                    },
-                    yAxis: {
-                        title: { text: 'Value' },
-                        plotLines: [{
-                                value: 0,
-                                width: 1,
-                                color: '#808080'
-                            }]
-                    },
-                    legend: { enabled: false },
-                    series: series,
-                    credits: false
+                else {
+                    selectedData.push({ x: values[0].timestamp, y: values[0][this.selectedPropertyForChart] });
+                    for (var i_2 = 1; i_2 < values.length; i_2++)
+                        selectedData.push({ x: values[i_2].timestamp, y: values[i_2][this.selectedPropertyForChart] - values[i_2 - 1][this.selectedPropertyForChart] });
+                }
+                series.push({
+                    name: this.simulationContainer.getStream(i),
+                    data: selectedData
                 });
             }
-            else {
-                for (var s = 0; s < simulations.length; s++) {
-                    var values = simulations[s].nodes[this.selectedNode][this.selectedPropertyForChart];
-                    if (!showDeltas || values.length < 2) {
-                        for (var i = this.currentChart.series[s].data.length; i < values.length; i++) {
-                            var val = values[i];
-                            this.currentChart.series[s].addPoint([val.timestamp, val.value], false, false);
+            var self_1 = this;
+            var title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
+            $('#nodeChart').empty().highcharts({
+                chart: {
+                    type: 'spline',
+                    animation: "Highcharts.svg",
+                    marginRight: 10,
+                    events: {
+                        load: function () {
+                            self_1.currentChart = this;
                         }
+                    },
+                    zoomType: "x"
+                },
+                plotOptions: {
+                    series: {
+                        animation: false,
+                        marker: { enabled: false }
                     }
-                    else {
-                        for (var i = this.currentChart.series[s].data.length; i < values.length; i++) {
-                            var beforeVal = values[i - 1];
-                            var val = values[i];
-                            this.currentChart.series[s].addPoint([val.timestamp, val.value - beforeVal.value], false, false);
-                        }
+                },
+                title: { text: title },
+                xAxis: {
+                    type: 'linear',
+                    tickPixelInterval: 100
+                },
+                yAxis: {
+                    title: { text: 'Value' },
+                    plotLines: [{
+                            value: 0,
+                            width: 1,
+                            color: '#808080'
+                        }]
+                },
+                legend: { enabled: false },
+                series: series,
+                credits: false
+            });
+        }
+        else {
+            for (var s = 0; s < simulations.length; s++) {
+                var values = simulations[s].nodes[this.selectedNode].values;
+                if (!showDeltas || values.length < 2) {
+                    for (var i = this.currentChart.series[s].data.length; i < values.length; i++) {
+                        var val = values[i];
+                        this.currentChart.series[s].addPoint([val.timestamp, val[this.selectedPropertyForChart]], false, false);
                     }
                 }
-                this.currentChart.redraw(false);
+                else {
+                    for (var i = this.currentChart.series[s].data.length; i < values.length; i++) {
+                        var beforeVal = values[i - 1];
+                        var val = values[i];
+                        this.currentChart.series[s].addPoint([val.timestamp, val[this.selectedPropertyForChart] - beforeVal[this.selectedPropertyForChart]], false, false);
+                    }
+                }
             }
+            this.currentChart.redraw(false);
         }
-        if (firstNode.totalReceiveActiveTime.length > 0 && firstNode.totalReceiveDozeTime.length > 0) {
-            var activeDozePieData = [{ name: "Active", y: firstNode.totalReceiveActiveTime[firstNode.totalReceiveActiveTime.length - 1].value },
-                { name: "Doze", y: firstNode.totalReceiveDozeTime[firstNode.totalReceiveDozeTime.length - 1].value }];
-            this.createPieChart("#nodeChartActiveDoze", 'Active/doze time', activeDozePieData);
-        }
-        if (firstNode.nrOfTransmissions.length > 0 && firstNode.nrOfTransmissionsDropped.length > 0) {
-            var activeTransmissionsSuccessDroppedData = [{ name: "OK", y: firstNode.nrOfTransmissions[firstNode.nrOfTransmissions.length - 1].value - firstNode.nrOfTransmissionsDropped[firstNode.nrOfTransmissionsDropped.length - 1].value },
-                { name: "Dropped", y: firstNode.nrOfTransmissionsDropped[firstNode.nrOfTransmissionsDropped.length - 1].value }];
-            this.createPieChart("#nodeChartTxSuccessDropped", 'TX OK/dropped', activeTransmissionsSuccessDroppedData);
-        }
-        if (firstNode.nrOfReceives.length > 0 && firstNode.nrOfReceivesDropped.length > 0) {
-            var activeReceivesSuccessDroppedData = [{ name: "OK", y: firstNode.nrOfReceives[firstNode.nrOfReceives.length - 1].value - firstNode.nrOfReceivesDropped[firstNode.nrOfReceivesDropped.length - 1].value },
-                { name: "Dropped", y: firstNode.nrOfReceivesDropped[firstNode.nrOfReceivesDropped.length - 1].value }];
-            this.createPieChart("#nodeChartRxSuccessDropped", 'RX OK/dropped', activeReceivesSuccessDroppedData);
-        }
-        if (firstNode.nrOfSuccessfulPackets.length > 0 && firstNode.nrOfDroppedPackets.length > 0) {
-            var activePacketsSuccessDroppedData = [{ name: "OK", y: firstNode.nrOfSuccessfulPackets[firstNode.nrOfSuccessfulPackets.length - 1].value },
-                { name: "Dropped", y: firstNode.nrOfDroppedPackets[firstNode.nrOfDroppedPackets.length - 1].value }];
-            this.createPieChart("#nodeChartPacketSuccessDropped", 'Packets OK/dropped', activePacketsSuccessDroppedData);
-        }
+        var lastValue = firstNode.values[firstNode.values.length - 1];
+        var activeDozePieData = [{ name: "Active", y: lastValue.totalActiveTime },
+            { name: "Doze", y: lastValue.totalDozeTime }];
+        this.createPieChart("#nodeChartActiveDoze", 'Active/doze time', activeDozePieData);
+        var activeTransmissionsSuccessDroppedData = [{ name: "OK", y: lastValue.nrOfTransmissions - lastValue.nrOfTransmissionsDropped },
+            { name: "Dropped", y: lastValue.nrOfTransmissionsDropped }];
+        this.createPieChart("#nodeChartTxSuccessDropped", 'TX OK/dropped', activeTransmissionsSuccessDroppedData);
+        var activeReceivesSuccessDroppedData = [{ name: "OK", y: lastValue.nrOfReceives - lastValue.nrOfReceivesDropped },
+            { name: "Dropped", y: lastValue.nrOfReceivesDropped }];
+        this.createPieChart("#nodeChartRxSuccessDropped", 'RX OK/dropped', activeReceivesSuccessDroppedData);
+        var activePacketsSuccessDroppedData = [{ name: "OK", y: lastValue.nrOfSuccessfulPackets },
+            { name: "Dropped", y: lastValue.nrOfDroppedPackets }];
+        this.createPieChart("#nodeChartPacketSuccessDropped", 'Packets OK/dropped', activePacketsSuccessDroppedData);
     };
     SimulationGUI.prototype.updateChartsForAll = function (selectedSimulation, simulations, full, showDeltas) {
         this.updateDistributionChart(selectedSimulation, showDeltas);
         //this.updateAverageChart(selectedSimulation, showDeltas);
-        var totalReceiveActiveTime = this.getAverageAndStdDevValue(selectedSimulation, "totalReceiveActiveTime");
-        var totalReceiveDozeTime = this.getAverageAndStdDevValue(selectedSimulation, "totalReceiveDozeTime");
+        var totalReceiveActiveTime = this.getAverageAndStdDevValue(selectedSimulation, "totalActiveTime");
+        var totalReceiveDozeTime = this.getAverageAndStdDevValue(selectedSimulation, "totalDozeTime");
         if (totalReceiveActiveTime.length > 0 && totalReceiveDozeTime.length > 0) {
             var activeDozePieData = [{ name: "Active", y: totalReceiveActiveTime[0] },
                 { name: "Doze", y: totalReceiveDozeTime[0] }];
@@ -885,16 +886,16 @@ var SimulationGUI = (function () {
         for (var i_3 = 0; i_3 <= nrOfClasses; i_3++)
             seriesValues[i_3] = 0;
         for (var i = 0; i < selectedSimulation.nodes.length; i++) {
-            var values = selectedSimulation.nodes[i][this.selectedPropertyForChart];
+            var values = selectedSimulation.nodes[i].values;
             if (showDeltas && values.length > 1) {
-                var curVal = values[values.length - 1].value;
-                var beforeVal = values[values.length - 2].value;
+                var curVal = values[values.length - 1][this.selectedPropertyForChart];
+                var beforeVal = values[values.length - 2][this.selectedPropertyForChart];
                 var val = curVal - beforeVal;
                 var alpha = (val - minMax[0]) / (minMax[1] - minMax[0]);
                 seriesValues[Math.round(alpha * nrOfClasses)]++;
             }
             else if (values.length > 0) {
-                var val = values[values.length - 1].value;
+                var val = values[values.length - 1][this.selectedPropertyForChart];
                 var alpha = (val - minMax[0]) / (minMax[1] - minMax[0]);
                 seriesValues[Math.round(alpha * nrOfClasses)]++;
             }
@@ -950,18 +951,18 @@ var SimulationGUI = (function () {
         var title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
         var averages = [];
         var ranges = [];
-        var nrOfValues = selectedSimulation.nodes[0][this.selectedPropertyForChart].length;
+        var nrOfValues = selectedSimulation.nodes[0].values.length;
         for (var i = 0; i < nrOfValues; i++) {
             var minVal = Number.MAX_VALUE;
             var maxVal = Number.MIN_VALUE;
             var sum = 0;
             var count = 0;
-            var timestamp = selectedSimulation.nodes[0][this.selectedPropertyForChart][i].timestamp;
+            var timestamp = selectedSimulation.nodes[0].values[i].timestamp;
             for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
                 var n = _a[_i];
-                var values = n[this.selectedPropertyForChart];
+                var values = n.values;
                 if (i < values.length) {
-                    var value = values[i].value;
+                    var value = values[i][this.selectedPropertyForChart];
                     sum += value;
                     count++;
                     if (minVal > value)
@@ -1201,60 +1202,59 @@ var SimulationNode = (function () {
         this.groupNumber = 0;
         this.rawSlotIndex = 0;
         this.type = "";
-        this.totalTransmitTime = [];
-        this.totalReceiveTime = [];
-        this.totalReceiveDozeTime = [];
-        this.totalReceiveActiveTime = [];
-        this.nrOfTransmissions = [];
-        this.nrOfTransmissionsDropped = [];
-        this.nrOfReceives = [];
-        this.nrOfReceivesDropped = [];
-        this.nrOfSentPackets = [];
-        this.nrOfSuccessfulPackets = [];
-        this.nrOfDroppedPackets = [];
-        this.avgSentReceiveTime = [];
-        this.goodputKbit = [];
-        this.edcaQueueLength = [];
-        this.nrOfSuccessfulRoundtripPackets = [];
-        this.avgRoundtripTime = [];
-        this.tcpCongestionWindow = [];
-        this.numberOfTCPRetransmissions = [];
-        this.nrOfReceivesDroppedByDestination = [];
-        this.numberOfTCPRetransmissionsFromAP = [];
-        this.numberOfMACTxRTSFailed = [];
-        this.numberOfMACTxDataFailed = [];
-        this.numberOfDropsByReasonUnknown = [];
-        this.numberOfDropsByReasonPhyInSleepMode = [];
-        this.numberOfDropsByReasonPhyNotEnoughSignalPower = [];
-        this.numberOfDropsByReasonPhyUnsupportedMode = [];
-        this.numberOfDropsByReasonPhyPreambleHeaderReceptionFailed = [];
-        this.numberOfDropsByReasonPhyRxDuringChannelSwitching = [];
-        this.numberOfDropsByReasonPhyAlreadyReceiving = [];
-        this.numberOfDropsByReasonPhyAlreadyTransmitting = [];
-        this.numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed = [];
-        this.numberOfDropsByReasonMacNotForAP = [];
-        this.numberOfDropsByReasonMacAPToAPFrame = [];
-        this.numberOfDropsFromAPByReasonUnknown = [];
-        this.numberOfDropsFromAPByReasonPhyInSleepMode = [];
-        this.numberOfDropsFromAPByReasonPhyNotEnoughSignalPower = [];
-        this.numberOfDropsFromAPByReasonPhyUnsupportedMode = [];
-        this.numberOfDropsFromAPByReasonPhyPreambleHeaderReceptionFailed = [];
-        this.numberOfDropsFromAPByReasonPhyRxDuringChannelSwitching = [];
-        this.numberOfDropsFromAPByReasonPhyAlreadyReceiving = [];
-        this.numberOfDropsFromAPByReasonPhyAlreadyTransmitting = [];
-        this.numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed = [];
-        this.numberOfDropsFromAPByReasonMacNotForAP = [];
-        this.numberOfDropsFromAPByReasonMacAPToAPFrame = [];
-        this.tcpRTO = [];
+        this.values = [];
     }
     return SimulationNode;
 })();
-var Value = (function () {
-    function Value(timestamp, value) {
-        this.timestamp = timestamp;
-        this.value = value;
+var NodeValue = (function () {
+    function NodeValue() {
+        this.totalTransmitTime = 0;
+        this.totalReceiveTime = 0;
+        this.totalDozeTime = 0;
+        this.totalActiveTime = 0;
+        this.nrOfTransmissions = 0;
+        this.nrOfTransmissionsDropped = 0;
+        this.nrOfReceives = 0;
+        this.nrOfReceivesDropped = 0;
+        this.nrOfSentPackets = 0;
+        this.nrOfSuccessfulPackets = 0;
+        this.nrOfDroppedPackets = 0;
+        this.avgSentReceiveTime = 0;
+        this.goodputKbit = 0;
+        this.edcaQueueLength = 0;
+        this.nrOfSuccessfulRoundtripPackets = 0;
+        this.avgRoundtripTime = 0;
+        this.tcpCongestionWindow = 0;
+        this.numberOfTCPRetransmissions = 0;
+        this.nrOfReceivesDroppedByDestination = 0;
+        this.numberOfTCPRetransmissionsFromAP = 0;
+        this.numberOfMACTxRTSFailed = 0;
+        this.numberOfMACTxDataFailed = 0;
+        this.numberOfDropsByReasonUnknown = 0;
+        this.numberOfDropsByReasonPhyInSleepMode = 0;
+        this.numberOfDropsByReasonPhyNotEnoughSignalPower = 0;
+        this.numberOfDropsByReasonPhyUnsupportedMode = 0;
+        this.numberOfDropsByReasonPhyPreambleHeaderReceptionFailed = 0;
+        this.numberOfDropsByReasonPhyRxDuringChannelSwitching = 0;
+        this.numberOfDropsByReasonPhyAlreadyReceiving = 0;
+        this.numberOfDropsByReasonPhyAlreadyTransmitting = 0;
+        this.numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed = 0;
+        this.numberOfDropsByReasonMacNotForAP = 0;
+        this.numberOfDropsByReasonMacAPToAPFrame = 0;
+        this.numberOfDropsFromAPByReasonUnknown = 0;
+        this.numberOfDropsFromAPByReasonPhyInSleepMode = 0;
+        this.numberOfDropsFromAPByReasonPhyNotEnoughSignalPower = 0;
+        this.numberOfDropsFromAPByReasonPhyUnsupportedMode = 0;
+        this.numberOfDropsFromAPByReasonPhyPreambleHeaderReceptionFailed = 0;
+        this.numberOfDropsFromAPByReasonPhyRxDuringChannelSwitching = 0;
+        this.numberOfDropsFromAPByReasonPhyAlreadyReceiving = 0;
+        this.numberOfDropsFromAPByReasonPhyAlreadyTransmitting = 0;
+        this.numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed = 0;
+        this.numberOfDropsFromAPByReasonMacNotForAP = 0;
+        this.numberOfDropsFromAPByReasonMacAPToAPFrame = 0;
+        this.tcpRTO = 0;
     }
-    return Value;
+    return NodeValue;
 })();
 var APNode = (function (_super) {
     __extends(APNode, _super);

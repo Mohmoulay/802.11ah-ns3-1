@@ -86,7 +86,7 @@ class EventManager {
 
     onStart(stream: string, aidRAWRange: number, numberOfRAWGroups: number, RAWSlotFormat: string, RAWSlotDuration: number, numberOfRAWSlots: number,
         dataMode: string, dataRate: number, bandwidth: number, trafficInterval: number, trafficPacketsize: number, beaconInterval: number,
-        name: string) {
+        name: string, propagationLossExponent:number, propagationLossReferenceLoss:number, apAlwaysSchedulesForNextSlot:string, minRTO:number, simulationTime:number) {
 
         let simulation = this.sim.simulationContainer.getSimulation(stream);
         if (typeof simulation == "undefined") {
@@ -108,6 +108,13 @@ class EventManager {
         config.trafficPacketsize = trafficPacketsize;
         config.beaconInterval = beaconInterval;
         config.name = name;
+
+        config.propagationLossExponent = propagationLossExponent;
+        config.propagationLossReferenceLoss = propagationLossReferenceLoss;
+        config.apAlwaysSchedulesForNextSlot = apAlwaysSchedulesForNextSlot;
+        config.minRTO = minRTO;
+        config.simulationTime = simulationTime;
+
     }
 
     onNodeAdded(stream: string, isSTA: boolean, id: number, x: number, y: number, aId: number) {
@@ -146,19 +153,19 @@ class EventManager {
         this.sim.onNodeAssociated(stream, id);
     }
 
-    hasIncreased(values: Value[]): boolean {
-        if (values.length >= 2) {
-            let oldVal = values[values.length - 2].value;
-            let newVal = values[values.length - 1].value;
+    hasIncreased(n:SimulationNode, prop:string): boolean {
+        if (n.values.length >= 2) {
+            let oldVal = n.values[n.values.length - 2];
+            let newVal = n.values[n.values.length - 1];
 
-            return oldVal < newVal;
+            return oldVal[prop] < newVal[prop];
         }
         else
             return false;
     }
 
     onStatsUpdated(stream: string, timestamp: number, id: number,
-        totalTransmitTime: number, totalReceiveTime: number, totalReceiveDozeTime: number, totalReceiveActiveTime: number,
+        totalTransmitTime: number, totalReceiveTime: number, totalDozeTime: number, totalActiveTime: number,
         nrOfTransmissions: number, nrOfTransmissionsDropped: number, nrOfReceives: number, nrOfReceivesDropped: number,
         nrOfSentPackets: number, nrOfSuccessfulPackets: number, nrOfDroppedPackets: number,
         avgPacketTimeOfFlight: number, goodputKbit: number,
@@ -173,74 +180,77 @@ class EventManager {
         // keep track of statistics
 
         let n = simulation.nodes[id];
-        n.totalTransmitTime.push(new Value(timestamp, totalTransmitTime));
 
-        n.totalReceiveTime.push(new Value(timestamp, totalReceiveTime));
-        n.totalReceiveDozeTime.push(new Value(timestamp, totalReceiveDozeTime));
-        n.totalReceiveActiveTime.push(new Value(timestamp, totalReceiveActiveTime));
+        let nodeVal:NodeValue = new NodeValue();
+        n.values.push(nodeVal);
 
-        n.nrOfTransmissions.push(new Value(timestamp, nrOfTransmissions));
-        n.nrOfTransmissionsDropped.push(new Value(timestamp, nrOfTransmissionsDropped));
-        n.nrOfReceives.push(new Value(timestamp, nrOfReceives));
-        n.nrOfReceivesDropped.push(new Value(timestamp, nrOfReceivesDropped));
-        n.nrOfReceivesDroppedByDestination.push(new Value(timestamp, nrOfReceivesDroppedByDestination));
+        nodeVal.timestamp = timestamp;
+        nodeVal.totalTransmitTime = totalTransmitTime;
 
-        n.nrOfSentPackets.push(new Value(timestamp, nrOfSentPackets));
-        n.nrOfSuccessfulPackets.push(new Value(timestamp, nrOfSuccessfulPackets));
-        n.nrOfDroppedPackets.push(new Value(timestamp, nrOfDroppedPackets));
+        nodeVal.totalReceiveTime = totalReceiveTime
+        nodeVal.totalDozeTime = totalDozeTime;
+        nodeVal.totalActiveTime =  totalActiveTime;
 
-        n.avgSentReceiveTime.push(new Value(timestamp, avgPacketTimeOfFlight));
-        n.goodputKbit.push(new Value(timestamp, goodputKbit));
+        nodeVal.nrOfTransmissions =  nrOfTransmissions;
+        nodeVal.nrOfTransmissionsDropped = nrOfTransmissionsDropped;
+        nodeVal.nrOfReceives = nrOfReceives;
+        nodeVal.nrOfReceivesDropped = nrOfReceivesDropped;
+        nodeVal.nrOfReceivesDroppedByDestination = nrOfReceivesDroppedByDestination;
 
-        n.edcaQueueLength.push(new Value(timestamp, edcaQueueLength));
-        n.nrOfSuccessfulRoundtripPackets.push(new Value(timestamp, nrOfSuccessfulRoundtripPackets));
-        n.avgRoundtripTime.push(new Value(timestamp, avgRoundTripTime));
+        nodeVal.nrOfSentPackets = nrOfSentPackets;
+        nodeVal.nrOfSuccessfulPackets = nrOfSuccessfulPackets;
+        nodeVal.nrOfDroppedPackets = nrOfDroppedPackets;
 
-        n.tcpCongestionWindow.push(new Value(timestamp, tcpCongestionWindow));
-        n.numberOfTCPRetransmissions.push(new Value(timestamp, numberOfTCPRetransmissions));
-        n.numberOfTCPRetransmissionsFromAP.push(new Value(timestamp, numberOfTCPRetransmissionsFromAP));
-        n.tcpRTO.push(new Value(timestamp, tcpRtoValue));
+        nodeVal.avgSentReceiveTime = avgPacketTimeOfFlight;
+        nodeVal.goodputKbit = goodputKbit;
 
-        n.numberOfMACTxRTSFailed.push(new Value(timestamp, numberOfMACTxRTSFailed));
-        n.numberOfMACTxDataFailed.push(new Value(timestamp, numberOfMACTxDataFailed));
+        nodeVal.edcaQueueLength = edcaQueueLength;
+        nodeVal.nrOfSuccessfulRoundtripPackets = nrOfSuccessfulRoundtripPackets;
+        nodeVal.avgRoundtripTime = avgRoundTripTime;
+
+        nodeVal.tcpCongestionWindow = tcpCongestionWindow;
+        nodeVal.numberOfTCPRetransmissions = numberOfTCPRetransmissions;
+        nodeVal.numberOfTCPRetransmissionsFromAP = numberOfTCPRetransmissionsFromAP;
+        nodeVal.tcpRTO = tcpRtoValue;
+
+        nodeVal.numberOfMACTxRTSFailed = numberOfMACTxRTSFailed;
+        nodeVal.numberOfMACTxDataFailed = numberOfMACTxDataFailed;
 
         if (typeof numberOfDropsByReason != "undefined") {
             let dropParts = numberOfDropsByReason.split(',');
-            n.numberOfDropsByReasonUnknown.push(new Value(timestamp, parseInt(dropParts[0])));
-            n.numberOfDropsByReasonPhyInSleepMode.push(new Value(timestamp, parseInt(dropParts[1])));
-            n.numberOfDropsByReasonPhyNotEnoughSignalPower.push(new Value(timestamp, parseInt(dropParts[2])));
-            n.numberOfDropsByReasonPhyUnsupportedMode.push(new Value(timestamp, parseInt(dropParts[3])));
-            n.numberOfDropsByReasonPhyPreambleHeaderReceptionFailed.push(new Value(timestamp, parseInt(dropParts[4])));
-            n.numberOfDropsByReasonPhyRxDuringChannelSwitching.push(new Value(timestamp, parseInt(dropParts[5])));
-            n.numberOfDropsByReasonPhyAlreadyReceiving.push(new Value(timestamp, parseInt(dropParts[6])));
-            n.numberOfDropsByReasonPhyAlreadyTransmitting.push(new Value(timestamp, parseInt(dropParts[7])));
-            n.numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed.push(new Value(timestamp, parseInt(dropParts[8])));
-            n.numberOfDropsByReasonMacNotForAP.push(new Value(timestamp, parseInt(dropParts[9])));
-            n.numberOfDropsByReasonMacAPToAPFrame.push(new Value(timestamp, parseInt(dropParts[10])));
+            nodeVal.numberOfDropsByReasonUnknown = parseInt(dropParts[0]);
+            nodeVal.numberOfDropsByReasonPhyInSleepMode = parseInt(dropParts[1]);
+            nodeVal.numberOfDropsByReasonPhyNotEnoughSignalPower = parseInt(dropParts[2]);
+            nodeVal.numberOfDropsByReasonPhyUnsupportedMode = parseInt(dropParts[3]);
+            nodeVal.numberOfDropsByReasonPhyPreambleHeaderReceptionFailed = parseInt(dropParts[4]);
+            nodeVal.numberOfDropsByReasonPhyRxDuringChannelSwitching = parseInt(dropParts[5]);
+            nodeVal.numberOfDropsByReasonPhyAlreadyReceiving = parseInt(dropParts[6]);
+            nodeVal.numberOfDropsByReasonPhyAlreadyTransmitting = parseInt(dropParts[7]);
+            nodeVal.numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed = parseInt(dropParts[8]);
+            nodeVal.numberOfDropsByReasonMacNotForAP = parseInt(dropParts[9]);
+            nodeVal.numberOfDropsByReasonMacAPToAPFrame = parseInt(dropParts[10]);
         }
 
         if (typeof numberOfDropsByReason != "undefined") {
             let dropParts = numberOfDropsByReasonAtAP.split(',');
 
-            n.numberOfDropsFromAPByReasonUnknown.push(new Value(timestamp, parseInt(dropParts[0])));
-            n.numberOfDropsFromAPByReasonPhyInSleepMode.push(new Value(timestamp, parseInt(dropParts[1])));
-            n.numberOfDropsFromAPByReasonPhyNotEnoughSignalPower.push(new Value(timestamp, parseInt(dropParts[2])));
-            n.numberOfDropsFromAPByReasonPhyUnsupportedMode.push(new Value(timestamp, parseInt(dropParts[3])));
-            n.numberOfDropsFromAPByReasonPhyPreambleHeaderReceptionFailed.push(new Value(timestamp, parseInt(dropParts[4])));
-            n.numberOfDropsFromAPByReasonPhyRxDuringChannelSwitching.push(new Value(timestamp, parseInt(dropParts[5])));
-            n.numberOfDropsFromAPByReasonPhyAlreadyReceiving.push(new Value(timestamp, parseInt(dropParts[6])));
-            n.numberOfDropsFromAPByReasonPhyAlreadyTransmitting.push(new Value(timestamp, parseInt(dropParts[7])));
-            n.numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed.push(new Value(timestamp, parseInt(dropParts[8])));
-            n.numberOfDropsFromAPByReasonMacNotForAP.push(new Value(timestamp, parseInt(dropParts[9])));
-            n.numberOfDropsFromAPByReasonMacAPToAPFrame.push(new Value(timestamp, parseInt(dropParts[10])));
+            nodeVal.numberOfDropsFromAPByReasonUnknown = parseInt(dropParts[0]);
+            nodeVal.numberOfDropsFromAPByReasonPhyInSleepMode = parseInt(dropParts[1]);
+            nodeVal.numberOfDropsFromAPByReasonPhyNotEnoughSignalPower = parseInt(dropParts[2]);
+            nodeVal.numberOfDropsFromAPByReasonPhyUnsupportedMode = parseInt(dropParts[3]);
+            nodeVal.numberOfDropsFromAPByReasonPhyPreambleHeaderReceptionFailed = parseInt(dropParts[4]);
+            nodeVal.numberOfDropsFromAPByReasonPhyRxDuringChannelSwitching = parseInt(dropParts[5]);
+            nodeVal.numberOfDropsFromAPByReasonPhyAlreadyReceiving = parseInt(dropParts[6]);
+            nodeVal.numberOfDropsFromAPByReasonPhyAlreadyTransmitting = parseInt(dropParts[7]);
+            nodeVal.numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed = parseInt(dropParts[8]);
+            nodeVal.numberOfDropsFromAPByReasonMacNotForAP = parseInt(dropParts[9]);
+            nodeVal.numberOfDropsFromAPByReasonMacAPToAPFrame = parseInt(dropParts[10]);
         }
 
-
-
-        n.tcpRTO.push(new Value(timestamp, tcpRtoValue));
+        nodeVal.tcpRTO = tcpRtoValue;
 
         if (this.updateGUI && stream == this.sim.selectedStream) {
-            if (this.hasIncreased(n.totalTransmitTime)) {
+            if (this.hasIncreased(n, "totalTransmitTime")) {
                 this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));
             }
         }

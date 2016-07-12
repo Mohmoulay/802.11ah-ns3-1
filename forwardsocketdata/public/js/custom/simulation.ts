@@ -10,66 +10,68 @@ abstract class SimulationNode {
 
     type: string = "";
 
-    totalTransmitTime: Value[] = [];
-    totalReceiveTime: Value[] = [];
-    totalReceiveDozeTime: Value[] = [];
-    totalReceiveActiveTime: Value[] = [];
-
-    nrOfTransmissions: Value[] = [];
-    nrOfTransmissionsDropped: Value[] = [];
-    nrOfReceives: Value[] = [];
-    nrOfReceivesDropped: Value[] = [];
-
-    nrOfSentPackets: Value[] = [];
-    nrOfSuccessfulPackets: Value[] = [];
-    nrOfDroppedPackets: Value[] = [];
-
-    avgSentReceiveTime: Value[] = [];
-    goodputKbit: Value[] = [];
-
-    edcaQueueLength:Value[] = [];
-    nrOfSuccessfulRoundtripPackets: Value[] = [];
-    avgRoundtripTime: Value[] = [];
-
-    tcpCongestionWindow: Value[] = [];
-    numberOfTCPRetransmissions: Value[] = [];
-
-    nrOfReceivesDroppedByDestination: Value[] = [];
-
-    numberOfTCPRetransmissionsFromAP : Value[] = [];
-    numberOfMACTxRTSFailed : Value[] = [];
-    numberOfMACTxDataFailed : Value[] = [];
-
-    numberOfDropsByReasonUnknown:Value[] = [];
-    numberOfDropsByReasonPhyInSleepMode:Value[] = [];
-    numberOfDropsByReasonPhyNotEnoughSignalPower:Value[] = [];
-    numberOfDropsByReasonPhyUnsupportedMode:Value[] = [];
-    numberOfDropsByReasonPhyPreambleHeaderReceptionFailed:Value[] = [];
-    numberOfDropsByReasonPhyRxDuringChannelSwitching:Value[] = [];
-    numberOfDropsByReasonPhyAlreadyReceiving:Value[] = [];
-    numberOfDropsByReasonPhyAlreadyTransmitting:Value[] = [];
-    numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed:Value[] = [];
-    numberOfDropsByReasonMacNotForAP:Value[] = [];
-    numberOfDropsByReasonMacAPToAPFrame:Value[] = [];
-
-    numberOfDropsFromAPByReasonUnknown:Value[] = [];
-    numberOfDropsFromAPByReasonPhyInSleepMode:Value[] = [];
-    numberOfDropsFromAPByReasonPhyNotEnoughSignalPower:Value[] = [];
-    numberOfDropsFromAPByReasonPhyUnsupportedMode:Value[] = [];
-    numberOfDropsFromAPByReasonPhyPreambleHeaderReceptionFailed:Value[] = [];
-    numberOfDropsFromAPByReasonPhyRxDuringChannelSwitching:Value[] = [];
-    numberOfDropsFromAPByReasonPhyAlreadyReceiving:Value[] = [];
-    numberOfDropsFromAPByReasonPhyAlreadyTransmitting:Value[] = [];
-    numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed:Value[] = [];
-    numberOfDropsFromAPByReasonMacNotForAP:Value[] = [];
-    numberOfDropsFromAPByReasonMacAPToAPFrame:Value[] = [];
-
-    tcpRTO: Value[] = [];
-
+    values:NodeValue[] = [];
 }
 
-class Value {
-    constructor(public timestamp: number, public value: number) { }
+class NodeValue {
+
+    timestamp:number;
+
+    totalTransmitTime: number = 0;
+    totalReceiveTime: number = 0;
+    totalDozeTime: number = 0;
+    totalActiveTime: number = 0;
+
+    nrOfTransmissions: number = 0;
+    nrOfTransmissionsDropped: number = 0;
+    nrOfReceives: number = 0;
+    nrOfReceivesDropped: number = 0;
+
+    nrOfSentPackets: number = 0;
+    nrOfSuccessfulPackets: number = 0;
+    nrOfDroppedPackets: number = 0;
+
+    avgSentReceiveTime: number = 0;
+    goodputKbit: number = 0;
+
+    edcaQueueLength:number = 0;
+    nrOfSuccessfulRoundtripPackets: number = 0;
+    avgRoundtripTime: number = 0;
+
+    tcpCongestionWindow: number = 0;
+    numberOfTCPRetransmissions: number = 0;
+
+    nrOfReceivesDroppedByDestination: number = 0;
+
+    numberOfTCPRetransmissionsFromAP : number = 0;
+    numberOfMACTxRTSFailed : number = 0;
+    numberOfMACTxDataFailed : number = 0;
+
+    numberOfDropsByReasonUnknown:number = 0;
+    numberOfDropsByReasonPhyInSleepMode:number = 0;
+    numberOfDropsByReasonPhyNotEnoughSignalPower:number = 0;
+    numberOfDropsByReasonPhyUnsupportedMode:number = 0;
+    numberOfDropsByReasonPhyPreambleHeaderReceptionFailed:number = 0;
+    numberOfDropsByReasonPhyRxDuringChannelSwitching:number = 0;
+    numberOfDropsByReasonPhyAlreadyReceiving:number = 0;
+    numberOfDropsByReasonPhyAlreadyTransmitting:number = 0;
+    numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed:number = 0;
+    numberOfDropsByReasonMacNotForAP:number = 0;
+    numberOfDropsByReasonMacAPToAPFrame:number = 0;
+
+    numberOfDropsFromAPByReasonUnknown:number = 0;
+    numberOfDropsFromAPByReasonPhyInSleepMode:number = 0;
+    numberOfDropsFromAPByReasonPhyNotEnoughSignalPower:number = 0;
+    numberOfDropsFromAPByReasonPhyUnsupportedMode:number = 0;
+    numberOfDropsFromAPByReasonPhyPreambleHeaderReceptionFailed:number = 0;
+    numberOfDropsFromAPByReasonPhyRxDuringChannelSwitching:number = 0;
+    numberOfDropsFromAPByReasonPhyAlreadyReceiving:number = 0;
+    numberOfDropsFromAPByReasonPhyAlreadyTransmitting:number = 0;
+    numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed:number = 0;
+    numberOfDropsFromAPByReasonMacNotForAP:number = 0;
+    numberOfDropsFromAPByReasonMacAPToAPFrame:number = 0;
+
+    tcpRTO: number = 0;
 }
 
 class APNode extends SimulationNode {

@@ -122,16 +122,16 @@ class SimulationGUI {
         if (prop != "") {
             let selectedSimulation = this.simulationContainer.getSimulation(stream);
             for (let n of selectedSimulation.nodes) {
-                let values = (<Value[]>n[this.selectedPropertyForChart]);
+                let values = n.values;
                 if (deltas && values.length > 1) {
-                    let curVal = values[values.length - 1].value;
-                    let beforeVal = values[values.length - 2].value;
+                    let curVal = values[values.length - 1][prop];
+                    let beforeVal = values[values.length - 2][prop];
                     let value = curVal - beforeVal;
                     if (curMax < value) curMax = value;
                     if (curMin > value) curMin = value;
                 }
                 else if (values.length > 0) {
-                    let value = values[values.length - 1].value;
+                    let value = values[values.length - 1][prop];
                     if (curMax < value) curMax = value;
                     if (curMin > value) curMin = value;
                 }
@@ -158,12 +158,11 @@ class SimulationGUI {
                 else
                     max = parseInt(el.attr("data-max"));
 
-
-                let values = (<Value[]>n[this.selectedPropertyForChart]);
+                let values = n.values;
                 if (values.length > 0) {
-                    let value = values[values.length - 1];
+                    let value = values[values.length - 1][this.selectedPropertyForChart];
 
-                    let alpha = (value.value - min) / (max - min);
+                    let alpha = (value - min) / (max - min);
                     if (type == "LOWER_IS_BETTER")
                         return this.heatMapPalette.getColorAt(1 - alpha).toString();
                     else
@@ -267,9 +266,9 @@ class SimulationGUI {
         let simulations = this.simulationContainer.getSimulations();
         let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
 
-        if(typeof selectedSimulation == "undefined")
+        if (typeof selectedSimulation == "undefined")
             return;
-            
+
         this.updateConfigGUI(selectedSimulation);
 
         if (this.selectedNode < 0 || this.selectedNode >= selectedSimulation.nodes.length)
@@ -309,7 +308,7 @@ class SimulationGUI {
         for (let i = 0; i < propertyElements.length; i++) {
             let prop = $(propertyElements[i]).attr("data-property");
 
-            let values = <Value[]>node[prop];
+            let values = node.values;
 
             if (typeof values != "undefined") {
 
@@ -322,26 +321,25 @@ class SimulationGUI {
                         let nrVals = 0;
                         for (let j = 0; j < simulations.length; j++) {
                             if (simulations[j] != selectedSimulation && this.selectedNode < simulations[j].nodes.length) {
-                                let vals = (<Value[]>simulations[j].nodes[this.selectedNode][prop]);
+                                let vals = simulations[j].nodes[this.selectedNode].values;
                                 if (vals.length > 0) {
-                                    sumVal += vals[vals.length - 1].value;
+                                    sumVal += vals[vals.length - 1][prop];
                                     nrVals++;
                                 }
                             }
                         }
 
                         let avg = sumVal / nrVals;
-                        if (values[values.length - 1].value > avg)
-                            el = `<div class='valueup' title='Value has increased compared to average (${avg.toFixed(2)}) of other simulations'>${values[values.length - 1].value}</div>`;
-                        else if (values[values.length - 1].value < avg)
-                            el = `<div class='valuedown' title='Value has decreased compared to average (${avg.toFixed(2)}) of other simulations'>${values[values.length - 1].value}</div>`;
+                        if (values[values.length - 1][prop] > avg)
+                            el = `<div class='valueup' title='Value has increased compared to average (${avg.toFixed(2)}) of other simulations'>${values[values.length - 1][prop]}</div>`;
+                        else if (values[values.length - 1][prop] < avg)
+                            el = `<div class='valuedown' title='Value has decreased compared to average (${avg.toFixed(2)}) of other simulations'>${values[values.length - 1][prop]}</div>`;
                         else
-                            el = values[values.length - 1].value + "";
+                            el = values[values.length - 1][prop] + "";
                     }
                     else {
-                        el = values[values.length - 1].value + "";
+                        el = values[values.length - 1][prop] + "";
                     }
-
 
                     $($(propertyElements[i]).find("td").get(1)).empty().append(el);
                 }
@@ -360,9 +358,9 @@ class SimulationGUI {
         let count = 0;
         for (var i = 0; i < simulation.nodes.length; i++) {
             var node = simulation.nodes[i];
-            let values = (<Value[]>node[prop]);
+            let values = node.values;
             if (values.length > 0) {
-                sum += values[values.length - 1].value;
+                sum += values[values.length - 1][prop];
                 count++;
             }
         }
@@ -373,9 +371,9 @@ class SimulationGUI {
         let sumSquares = 0;
         for (var i = 0; i < simulation.nodes.length; i++) {
             var node = simulation.nodes[i];
-            let values = (<Value[]>node[prop]);
+            let values = node.values;
             if (values.length > 0) {
-                let val = (values[values.length - 1].value - avg) * (values[values.length - 1].value - avg);
+                let val = (values[values.length - 1][prop] - avg) * (values[values.length - 1][prop] - avg);
                 sumSquares += val;
             }
         }
@@ -472,128 +470,131 @@ class SimulationGUI {
     private updateChartsForNode(selectedSimulation: Simulation, simulations: Simulation[], full: boolean, showDeltas: boolean) {
         let firstNode = selectedSimulation.nodes[this.selectedNode];
 
-        if ((<Value[]>firstNode[this.selectedPropertyForChart]).length > 0) {
-            if (this.currentChart == null || full) {
+        if (firstNode.values.length <= 0)
+            return;
 
-                let series = [];
-                for (let i = 0; i < simulations.length; i++) {
-                    let values = <Value[]>simulations[i].nodes[this.selectedNode][this.selectedPropertyForChart];
+        if (this.currentChart == null || full) {
 
-                    var selectedData = [];
+            let series = [];
+            for (let i = 0; i < simulations.length; i++) {
+                let values = simulations[i].nodes[this.selectedNode].values;
 
-                    if (!showDeltas) {
-                        for (let i = 0; i < values.length; i++)
-                            selectedData.push({ x: values[i].timestamp, y: values[i].value });
-                    }
-                    else {
-                        selectedData.push({ x: values[0].timestamp, y: values[0].value });
-                        for (let i = 1; i < values.length; i++)
-                            selectedData.push({ x: values[i].timestamp, y: values[i].value - values[i - 1].value });
-                    }
+                var selectedData = [];
 
-                    series.push({
-                        name: this.simulationContainer.getStream(i),
-                        data: selectedData
-                    });
+                if (!showDeltas) {
+                    for (let i = 0; i < values.length; i++)
+                        selectedData.push({ x: values[i].timestamp, y: values[i][this.selectedPropertyForChart] });
+                }
+                else {
+                    selectedData.push({ x: values[0].timestamp, y: values[0][this.selectedPropertyForChart] });
+                    for (let i = 1; i < values.length; i++)
+                        selectedData.push({ x: values[i].timestamp, y: values[i][this.selectedPropertyForChart] - values[i - 1][this.selectedPropertyForChart] });
                 }
 
-
-
-                let self = this;
-                let title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
-
-
-                $('#nodeChart').empty().highcharts({
-                    chart: {
-                        type: 'spline',
-                        animation: "Highcharts.svg", // don't animate in old IE
-                        marginRight: 10,
-                        events: {
-                            load: function () {
-                                self.currentChart = (<HighchartsChartObject>this);
-                            }
-                        },
-                        zoomType: "x"
-                    },
-                    plotOptions: {
-                        series: {
-                            animation: false,
-                            marker: { enabled: false }
-                        }
-                    },
-                    title: { text: title },
-                    xAxis: {
-                        type: 'linear',
-                        tickPixelInterval: 100,
-                    },
-                    yAxis: {
-                        title: { text: 'Value' },
-                        plotLines: [{
-                            value: 0,
-                            width: 1,
-                            color: '#808080'
-                        }]
-                    },
-                    legend: { enabled: false },
-                    series: series,
-                    credits: false
+                series.push({
+                    name: this.simulationContainer.getStream(i),
+                    data: selectedData
                 });
-
             }
-            else {
-                for (let s = 0; s < simulations.length; s++) {
-                    let values = <Value[]>simulations[s].nodes[this.selectedNode][this.selectedPropertyForChart];
-                    if (!showDeltas || values.length < 2) {
-                        for (let i = this.currentChart.series[s].data.length; i < values.length; i++) {
-                            let val = values[i];
-                            this.currentChart.series[s].addPoint([val.timestamp, val.value], false, false);
+
+
+
+            let self = this;
+            let title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
+
+
+            $('#nodeChart').empty().highcharts({
+                chart: {
+                    type: 'spline',
+                    animation: "Highcharts.svg", // don't animate in old IE
+                    marginRight: 10,
+                    events: {
+                        load: function () {
+                            self.currentChart = (<HighchartsChartObject>this);
                         }
+                    },
+                    zoomType: "x"
+                },
+                plotOptions: {
+                    series: {
+                        animation: false,
+                        marker: { enabled: false }
                     }
-                    else {
-                        for (let i = this.currentChart.series[s].data.length; i < values.length; i++) {
-                            let beforeVal = values[i - 1];
-                            let val = values[i];
-                            this.currentChart.series[s].addPoint([val.timestamp, val.value - beforeVal.value], false, false);
-                        }
+                },
+                title: { text: title },
+                xAxis: {
+                    type: 'linear',
+                    tickPixelInterval: 100,
+                },
+                yAxis: {
+                    title: { text: 'Value' },
+                    plotLines: [{
+                        value: 0,
+                        width: 1,
+                        color: '#808080'
+                    }]
+                },
+                legend: { enabled: false },
+                series: series,
+                credits: false
+            });
+
+        }
+        else {
+            for (let s = 0; s < simulations.length; s++) {
+                let values = simulations[s].nodes[this.selectedNode].values;
+                if (!showDeltas || values.length < 2) {
+                    for (let i = this.currentChart.series[s].data.length; i < values.length; i++) {
+                        let val = values[i];
+                        this.currentChart.series[s].addPoint([val.timestamp, val[this.selectedPropertyForChart]], false, false);
                     }
                 }
-
-                this.currentChart.redraw(false);
+                else {
+                    for (let i = this.currentChart.series[s].data.length; i < values.length; i++) {
+                        let beforeVal = values[i - 1];
+                        let val = values[i];
+                        this.currentChart.series[s].addPoint([val.timestamp, val[this.selectedPropertyForChart] - beforeVal[this.selectedPropertyForChart]], false, false);
+                    }
+                }
             }
+
+            this.currentChart.redraw(false);
         }
 
 
-        if (firstNode.totalReceiveActiveTime.length > 0 && firstNode.totalReceiveDozeTime.length > 0) {
-            let activeDozePieData = [{ name: "Active", y: firstNode.totalReceiveActiveTime[firstNode.totalReceiveActiveTime.length - 1].value },
-                { name: "Doze", y: firstNode.totalReceiveDozeTime[firstNode.totalReceiveDozeTime.length - 1].value }]
-            this.createPieChart("#nodeChartActiveDoze", 'Active/doze time', activeDozePieData);
-        }
 
-        if (firstNode.nrOfTransmissions.length > 0 && firstNode.nrOfTransmissionsDropped.length > 0) {
-            let activeTransmissionsSuccessDroppedData = [{ name: "OK", y: firstNode.nrOfTransmissions[firstNode.nrOfTransmissions.length - 1].value - firstNode.nrOfTransmissionsDropped[firstNode.nrOfTransmissionsDropped.length - 1].value },
-                { name: "Dropped", y: firstNode.nrOfTransmissionsDropped[firstNode.nrOfTransmissionsDropped.length - 1].value }]
-            this.createPieChart("#nodeChartTxSuccessDropped", 'TX OK/dropped', activeTransmissionsSuccessDroppedData);
-        }
+        let lastValue = firstNode.values[firstNode.values.length - 1];
 
-        if (firstNode.nrOfReceives.length > 0 && firstNode.nrOfReceivesDropped.length > 0) {
-            let activeReceivesSuccessDroppedData = [{ name: "OK", y: firstNode.nrOfReceives[firstNode.nrOfReceives.length - 1].value - firstNode.nrOfReceivesDropped[firstNode.nrOfReceivesDropped.length - 1].value },
-                { name: "Dropped", y: firstNode.nrOfReceivesDropped[firstNode.nrOfReceivesDropped.length - 1].value }]
-            this.createPieChart("#nodeChartRxSuccessDropped", 'RX OK/dropped', activeReceivesSuccessDroppedData);
-        }
+        let activeDozePieData = [{ name: "Active", y: lastValue.totalActiveTime },
+                                  { name: "Doze", y: lastValue.totalDozeTime }]
+        this.createPieChart("#nodeChartActiveDoze", 'Active/doze time', activeDozePieData);
 
-        if (firstNode.nrOfSuccessfulPackets.length > 0 && firstNode.nrOfDroppedPackets.length > 0) {
-            let activePacketsSuccessDroppedData = [{ name: "OK", y: firstNode.nrOfSuccessfulPackets[firstNode.nrOfSuccessfulPackets.length - 1].value },
-                { name: "Dropped", y: firstNode.nrOfDroppedPackets[firstNode.nrOfDroppedPackets.length - 1].value }]
-            this.createPieChart("#nodeChartPacketSuccessDropped", 'Packets OK/dropped', activePacketsSuccessDroppedData);
-        }
+
+
+        let activeTransmissionsSuccessDroppedData = [{ name: "OK", y: lastValue.nrOfTransmissions - lastValue.nrOfTransmissionsDropped },
+            { name: "Dropped", y: lastValue.nrOfTransmissionsDropped }]
+        this.createPieChart("#nodeChartTxSuccessDropped", 'TX OK/dropped', activeTransmissionsSuccessDroppedData);
+
+
+
+        let activeReceivesSuccessDroppedData = [{ name: "OK", y: lastValue.nrOfReceives - lastValue.nrOfReceivesDropped },
+            { name: "Dropped", y: lastValue.nrOfReceivesDropped }]
+        this.createPieChart("#nodeChartRxSuccessDropped", 'RX OK/dropped', activeReceivesSuccessDroppedData);
+
+
+
+        let activePacketsSuccessDroppedData = [{ name: "OK", y: lastValue.nrOfSuccessfulPackets },
+            { name: "Dropped", y: lastValue.nrOfDroppedPackets }]
+        this.createPieChart("#nodeChartPacketSuccessDropped", 'Packets OK/dropped', activePacketsSuccessDroppedData);
+
     }
 
     private updateChartsForAll(selectedSimulation: Simulation, simulations: Simulation[], full: boolean, showDeltas: boolean) {
         this.updateDistributionChart(selectedSimulation, showDeltas);
         //this.updateAverageChart(selectedSimulation, showDeltas);
 
-        let totalReceiveActiveTime = this.getAverageAndStdDevValue(selectedSimulation, "totalReceiveActiveTime");
-        let totalReceiveDozeTime = this.getAverageAndStdDevValue(selectedSimulation, "totalReceiveDozeTime");
+        let totalReceiveActiveTime = this.getAverageAndStdDevValue(selectedSimulation, "totalActiveTime");
+        let totalReceiveDozeTime = this.getAverageAndStdDevValue(selectedSimulation, "totalDozeTime");
 
         if (totalReceiveActiveTime.length > 0 && totalReceiveDozeTime.length > 0) {
             let activeDozePieData = [{ name: "Active", y: totalReceiveActiveTime[0] },
@@ -655,16 +656,16 @@ class SimulationGUI {
             seriesValues[i] = 0;
 
         for (var i = 0; i < selectedSimulation.nodes.length; i++) {
-            let values = <Value[]>selectedSimulation.nodes[i][this.selectedPropertyForChart];
+            let values = selectedSimulation.nodes[i].values;
             if (showDeltas && values.length > 1) {
-                let curVal = values[values.length - 1].value;
-                let beforeVal = values[values.length - 2].value;
+                let curVal = values[values.length - 1][this.selectedPropertyForChart];
+                let beforeVal = values[values.length - 2][this.selectedPropertyForChart];
                 let val = curVal - beforeVal;
                 let alpha = (val - minMax[0]) / (minMax[1] - minMax[0]);
                 seriesValues[Math.round(alpha * nrOfClasses)]++;
             }
             else if (values.length > 0) {
-                let val = values[values.length - 1].value;
+                let val = values[values.length - 1][this.selectedPropertyForChart];
                 let alpha = (val - minMax[0]) / (minMax[1] - minMax[0]);
                 seriesValues[Math.round(alpha * nrOfClasses)]++;
             }
@@ -728,7 +729,7 @@ class SimulationGUI {
 
         let averages = [];
         let ranges = [];
-        let nrOfValues = (<Value[]>selectedSimulation.nodes[0][this.selectedPropertyForChart]).length;
+        let nrOfValues = selectedSimulation.nodes[0].values.length;
 
         for (var i = 0; i < nrOfValues; i++) {
 
@@ -737,11 +738,11 @@ class SimulationGUI {
             let sum = 0;
             let count = 0;
 
-            let timestamp = (<Value[]>selectedSimulation.nodes[0][this.selectedPropertyForChart])[i].timestamp;
+            let timestamp = selectedSimulation.nodes[0].values[i].timestamp;
             for (let n of selectedSimulation.nodes) {
-                let values = (<Value[]>n[this.selectedPropertyForChart]);
+                let values = n.values
                 if (i < values.length) {
-                    let value = values[i].value;
+                    let value = values[i][this.selectedPropertyForChart];
                     sum += value;
                     count++;
                     if (minVal > value) minVal = value;
@@ -929,13 +930,13 @@ $(document).ready(function () {
         if (ev.keyCode == 37) {
             // left
             if (sim.selectedNode - 1 >= 0)
-                sim.changeNodeSelection(sim.selectedNode-1);
+                sim.changeNodeSelection(sim.selectedNode - 1);
 
         }
         else if (ev.keyCode == 39) {
             // right
             if (sim.selectedNode + 1 < sim.simulationContainer.getSimulation(sim.selectedStream).nodes.length) {
-                sim.changeNodeSelection(sim.selectedNode+1);
+                sim.changeNodeSelection(sim.selectedNode + 1);
             }
         }
     });
