@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
 
     // setup wifi channel
     YansWifiChannelHelper channelBuilder = YansWifiChannelHelper();
-    channelBuilder.AddPropagationLoss("ns3::LogDistancePropagationLossModel", "Exponent", DoubleValue(3.76), "ReferenceLoss", DoubleValue(8.0), "ReferenceDistance", DoubleValue(1.0));
+    channelBuilder.AddPropagationLoss("ns3::LogDistancePropagationLossModel", "Exponent", DoubleValue(config.propagationLossExponent), "ReferenceLoss", DoubleValue(config.propagationLossReferenceLoss), "ReferenceDistance", DoubleValue(1.0));
     channelBuilder.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
     channel = channelBuilder.Create();
 

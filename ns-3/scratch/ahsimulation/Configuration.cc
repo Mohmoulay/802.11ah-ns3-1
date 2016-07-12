@@ -31,6 +31,9 @@ Configuration::Configuration(int argc, char** argv) {
 
     cmd.AddValue("Rho", "maximal distance between AP and stations", rho);
 
+    cmd.AddValue("PropagationLossExponent", "exponent gamma of the log propagation model, default values are outdoors", propagationLossExponent);
+    cmd.AddValue("PropagationLossReferenceLoss", "reference loss of the log propagation model", propagationLossReferenceLoss);
+
     cmd.AddValue("VisualizerIP", "IP or hostname for the visualizer server, leave empty to not send data", visualizerIP);
     cmd.AddValue("VisualizerPort", "Port for the visualizer server", visualizerPort);
 

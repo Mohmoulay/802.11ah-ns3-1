@@ -33,6 +33,9 @@ struct Configuration {
 
 	uint32_t MinRTO = 200000;
 
+	double propagationLossExponent = 3.76;
+	double propagationLossReferenceLoss = 23.3;
+
 
 	bool APAlwaysSchedulesForNextSlot = false;
 	string DataMode = "OfdmRate650KbpsBW2MHz";

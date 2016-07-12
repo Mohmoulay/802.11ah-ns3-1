@@ -33,7 +33,13 @@ void SimulationEventManager::onStart(Configuration& config) {
 
 		  std::to_string(config.BeaconInterval),
 
-		  config.name
+		  config.name,
+
+		  std::to_string(config.propagationLossExponent),
+		  std::to_string(config.propagationLossReferenceLoss),
+		  std::to_string(config.APAlwaysSchedulesForNextSlot),
+		  std::to_string(config.MinRTO),
+		  std::to_string(config.simulationTime)
 	});
 }
 
