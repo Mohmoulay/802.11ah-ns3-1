@@ -9,8 +9,9 @@
 " --Rho=\"500\""\
 " --SimulationTime=100"\
 " --TrafficPacketSize=100"\
-" --TrafficInterval=987"\
+" --TrafficInterval=9876"\
 " --BeaconInterval=102400"\
+" --MinRTO=819200"\
 " --NRawSta=96"\
 " --Nsta=96"\
 " --VisualizerIP=\"192.168.0.247\""\

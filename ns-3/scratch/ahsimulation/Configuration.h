@@ -50,7 +50,7 @@ struct Configuration {
 
 	string name = "";
 
-	uint32_t trafficInterval = 987;
+	uint32_t trafficInterval = 9876;
 	uint16_t trafficPacketSize = 100;
 	string trafficType = "tcpecho";
 
