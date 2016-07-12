@@ -63,6 +63,14 @@
                                                     <td>Bandwidth (in MHz)</td>
                                                     <td>---</td>
                                                 </tr>
+                                                <tr class="configProperty" data-property="propagationLossExponent">
+                                                    <td>Propagation exponent</td>
+                                                    <td>---</td>
+                                                </tr>
+                                                <tr class="configProperty" data-property="propagationLossReferenceLoss">
+                                                    <td>Propagation ref. loss</td>
+                                                    <td>---</td>
+                                                </tr>
                                             </table>
                                         </div>
                                     </div>
@@ -72,6 +80,10 @@
                                             <table class="table">
                                                 <tr class="configProperty" data-property="beaconInterval">
                                                     <td>Beacon interval (in µs)</td>
+                                                    <td>---</td>
+                                                </tr>
+                                                <tr class="configProperty" data-property="apAlwaysSchedulesForNextSlot">
+                                                    <td>AP always schedules for next slot</td>
                                                     <td>---</td>
                                                 </tr>
                                                 <tr class="configProperty" data-property="AIDRAWRange">
@@ -92,6 +104,10 @@
                                                 </tr>
                                                 <tr class="configProperty" data-property="RAWSlotDuration">
                                                     <td>RAW Slot duration (in µs)</td>
+                                                    <td>---</td>
+                                                </tr>
+                                                <tr class="configProperty" data-property="minRTO">
+                                                    <td>Minimum TCP retransmission timeout (RTO)</td>
                                                     <td>---</td>
                                                 </tr>
                                             </table>
@@ -217,11 +233,11 @@
                                                 <tr class="header">
                                                     <th colspan="2"><span>-</span> TCP</th>
                                                 </tr>
-                                                <tr class="nodeProperty" data-property="tcpCongestionWindow"  data-max="*" data-min="0" data-type="HIGHER_IS_BETTER">
+                                                <tr class="nodeProperty" data-property="tcpCongestionWindow" data-max="*" data-min="0" data-type="HIGHER_IS_BETTER">
                                                     <td>TCP Congestion window (segments)</td>
                                                     <td>---</td>
                                                 </tr>
-                                                <tr class="nodeProperty" data-property="tcpRTO"  data-max="*" data-min="0" data-type="HIGHER_IS_BETTER">
+                                                <tr class="nodeProperty" data-property="tcpRTO" data-max="*" data-min="0" data-type="HIGHER_IS_BETTER">
                                                     <td>TCP RTO (µs)</td>
                                                     <td>---</td>
                                                 </tr>
