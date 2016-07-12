@@ -476,6 +476,20 @@ private:
      * to this pointer.
      */
     uint8_t *m_data;
+
+public:
+
+    uint32_t GetStart() const {
+       	return this->m_dataStart;
+       }
+
+       uint32_t GetEnd() const {
+       	return this->m_dataEnd;
+       }
+
+       uint32_t GetCurrent() const {
+       	return this->m_current;
+       }
   };
 
   /**

@@ -9,7 +9,7 @@
 " --Rho=\"500\""\
 " --SimulationTime=100"\
 " --TrafficPacketSize=100"\
-" --TrafficInterval=9876"\
+" --TrafficInterval=987"\
 " --BeaconInterval=102400"\
 " --NRawSta=96"\
 " --Nsta=96"\

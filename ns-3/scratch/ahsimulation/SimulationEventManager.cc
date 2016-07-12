@@ -108,7 +108,7 @@ void SimulationEventManager::send(vector<string> str) {
 
 		//int sockfd ;
 		if(socketDescriptor == -1) {
-
+			std::cout << "Connecting to visualizer" << std::endl;
 			socketDescriptor = stat_connect(this->hostname.c_str(), std::to_string(this->port).c_str());
 			if(socketDescriptor == -1)
 				return;

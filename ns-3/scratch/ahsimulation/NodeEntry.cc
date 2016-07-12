@@ -14,10 +14,9 @@ void NodeEntry::SetAssociation(std::string context, Mac48Address address) {
 	this->isAssociated = true;
 
 	// determine AID
-	auto matches =
-			Config::LookupMatches(
-					"/NodeList/" + std::to_string(this->id)
-							+ "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::StaWifiMac/");
+	auto matches = Config::LookupMatches(
+			"/NodeList/" + std::to_string(this->id)
+					+ "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::StaWifiMac/");
 	auto obj = matches.Get(0)->GetObject<StaWifiMac>();
 	this->aId = obj->GetAID();
 
@@ -29,8 +28,8 @@ void NodeEntry::SetAssociation(std::string context, Mac48Address address) {
 void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 	this->isAssociated = false;
 
-	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
-				<< " " << "Node is deassociated" << endl;
+	cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << " "
+			<< "Node is deassociated" << endl;
 
 	this->deAssociatedCallback();
 }
@@ -66,8 +65,10 @@ void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
 				<< " without a begin tx" << endl;
 }
 
-void NodeEntry::OnPhyTxDrop(std::string context, Ptr<const Packet> packet, DropReason reason) {
-	cout << "[" << this->aId << "] " << "Tx Dropped " << packet->GetUid() << endl;
+void NodeEntry::OnPhyTxDrop(std::string context, Ptr<const Packet> packet,
+		DropReason reason) {
+	cout << "[" << this->aId << "] " << "Tx Dropped " << packet->GetUid()
+			<< endl;
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
 		Time oldTime = txMap[packet->GetUid()];
@@ -156,7 +157,6 @@ void NodeEntry::OnEndOfReceive(Ptr<const Packet> packet) {
 			//cout << "RAW Group uint32: " << std::to_string(raw.GetRawGroup()) << endl;
 		}
 
-
 		//s1gBeaconHeader.Print(cout);
 	} else {
 		// this can happen when the state is SWITCHING, TX, RX when receiving the message preamble.
@@ -167,41 +167,38 @@ void NodeEntry::OnEndOfReceive(Ptr<const Packet> packet) {
 	}
 }
 
-void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet, DropReason reason) {
-
+void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet,
+		DropReason reason) {
 
 	this->OnEndOfReceive(packet);
-
-
 
 	// THIS REQUIRES PACKET METADATA ENABLE!
 	auto pCopy = packet->Copy();
 	auto it = pCopy->BeginItem();
-	while(it.HasNext()) {
+	while (it.HasNext()) {
 
 		auto item = it.Next();
-		Callback<ObjectBase *> constructor = item.tid.GetConstructor ();
+		Callback<ObjectBase *> constructor = item.tid.GetConstructor();
 
-		ObjectBase *instance = constructor ();
-		Chunk *chunk = dynamic_cast<Chunk *> (instance);
-		chunk->Deserialize (item.current);
+		ObjectBase *instance = constructor();
+		Chunk *chunk = dynamic_cast<Chunk *>(instance);
+		chunk->Deserialize(item.current);
 
-		if(dynamic_cast<WifiMacHeader*>(chunk)) {
-			WifiMacHeader* hdr = (WifiMacHeader*)chunk;
+		if (dynamic_cast<WifiMacHeader*>(chunk)) {
+			WifiMacHeader* hdr = (WifiMacHeader*) chunk;
 
-			if(hdr->GetAddr1() == node->GetDevice(0)->GetAddress()) {
+			if (hdr->GetAddr1() == node->GetDevice(0)->GetAddress()) {
 
 				stats->get(this->id).NumberOfReceiveDroppedByDestination++;
 				stats->get(this->id).NumberOfDropsByReason[reason]++;
 
-			//	cout  << Simulator::Now().GetMicroSeconds() << "[" << this->aId << "] "
-			//		<< " Drop Rx for STA " << packet->GetUid() << endl;
+				//	cout  << Simulator::Now().GetMicroSeconds() << "[" << this->aId << "] "
+				//		<< " Drop Rx for STA " << packet->GetUid() << endl;
 			}
 			//hdr->Print(cout);
 			delete chunk;
 			break;
-		}
-		else
+		} else
 			delete chunk;
 	}
 
@@ -213,22 +210,21 @@ void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 
 	switch (state) {
 
-		case WifiPhy::State::SLEEP:
-			stats->get(this->id).TotalDozeTime += duration;
-			break;
+	case WifiPhy::State::SLEEP:
+		stats->get(this->id).TotalDozeTime += duration;
+		break;
 
-		case WifiPhy::State::IDLE:
-		case WifiPhy::State::TX:
-		case WifiPhy::State::RX:
-		case WifiPhy::State::SWITCHING:
-			stats->get(this->id).TotalActiveTime += duration;
-			break;
+	case WifiPhy::State::IDLE:
+	case WifiPhy::State::TX:
+	case WifiPhy::State::RX:
+	case WifiPhy::State::SWITCHING:
+		stats->get(this->id).TotalActiveTime += duration;
+		break;
 
-
-		case WifiPhy::State::CCA_BUSY:
-			// not sure why this is counted as the same as sleep
-			// so state change is fired with the same duration for both SLEEP and CCA_BUSY
-			break;
+	case WifiPhy::State::CCA_BUSY:
+		// not sure why this is counted as the same as sleep
+		// so state change is fired with the same duration for both SLEEP and CCA_BUSY
+		break;
 	}
 
 	/*cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << "State change, new state is ";
@@ -257,7 +253,7 @@ void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 
 	 cout << ", duration is " << duration.GetMicroSeconds() << "µs" << ", start is " << start.GetMicroSeconds() << "µs";
 	 cout << endl;
-*/
+	 */
 
 }
 
@@ -272,33 +268,47 @@ void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
 		Address from) {
 
 	auto pCopy = packet->Copy();
-	SeqTsHeader seqTs;
-	pCopy->RemoveHeader(seqTs);
-	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
+	try {
+		SeqTsHeader seqTs;
+		pCopy->RemoveHeader(seqTs);
 
-	/*cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
-			<< " Echo packet received back from AP ("
-			<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ") after "
-			<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
-	 */
-	stats->get(this->id).NumberOfSuccessfulRoundtripPackets++;
-	stats->get(this->id).TotalPacketRoundtripTime += timeDiff;
+		auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
+		/*cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
+		 << " Echo packet received back from AP ("
+		 << InetSocketAddress::ConvertFrom(from).GetIpv4() << ") after "
+		 << std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
+		 */
+		stats->get(this->id).NumberOfSuccessfulRoundtripPackets++;
+		stats->get(this->id).TotalPacketRoundtripTime += timeDiff;
+
+	} catch (std::runtime_error e) {
+
+		// this occurs when packet is fragmented
+		cout << "Error: " << string(e.what()) << endl;
+		//packet->Print(cout);
+		//exit(1);
+	}
 }
 
 void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 	auto pCopy = packet->Copy();
-	SeqTsHeader seqTs;
-	pCopy->RemoveHeader(seqTs);
-	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
+	try {
+		SeqTsHeader seqTs;
+		pCopy->RemoveHeader(seqTs);
+		auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
-	/*cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "] "
-			<< "TCP packet received at AP after "
-			<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
-	 */
-	stats->get(this->id).NumberOfSuccessfulPackets++;
-	stats->get(this->id).TotalPacketSentReceiveTime += timeDiff;
-	stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
+		/*cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "] "
+		 << "TCP packet received at AP after "
+		 << std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
+		 */
+		stats->get(this->id).NumberOfSuccessfulPackets++;
+		stats->get(this->id).TotalPacketSentReceiveTime += timeDiff;
+		stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
+	}
+	catch(std::runtime_error e) {
+		// packet fragmentation
+	}
 }
 
 void NodeEntry::OnTcpCongestionWindowChanged(uint32_t oldval, uint32_t newval) {
@@ -318,7 +328,6 @@ void NodeEntry::OnTcpRetransmissionAtAP() {
 	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << " RETRANSMISSION SCHEDULED FROM AP " << std::endl;
 	stats->get(this->id).NumberOfTCPRetransmissionsFromAP++;
 }
-
 
 void NodeEntry::OnUdpPacketSent(Ptr<const Packet> packet) {
 //cout << "[" << this->id << "] " << "UDP packet sent " << endl;
@@ -342,62 +351,71 @@ void NodeEntry::OnUdpEchoPacketReceived(Ptr<const Packet> packet,
 	//	<< InetSocketAddress::ConvertFrom(from).GetIpv4() << ")" << endl;
 
 	auto pCopy = packet->Copy();
-	SeqTsHeader seqTs;
-	pCopy->RemoveHeader(seqTs);
-	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
+	try {
+		SeqTsHeader seqTs;
+		pCopy->RemoveHeader(seqTs);
+		auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
-	stats->get(this->id).NumberOfSuccessfulRoundtripPackets++;
-	stats->get(this->id).TotalPacketRoundtripTime += timeDiff;
+		stats->get(this->id).NumberOfSuccessfulRoundtripPackets++;
+		stats->get(this->id).TotalPacketRoundtripTime += timeDiff;
+	} catch (std::runtime_error e) {
+		// packet fragmentation, unable to get the header from fragements
+	}
 
 }
 
 void NodeEntry::OnUdpPacketReceivedAtAP(Ptr<const Packet> packet) {
 	auto pCopy = packet->Copy();
-	SeqTsHeader seqTs;
-	pCopy->RemoveHeader(seqTs);
-	auto timeDiff = (Simulator::Now() - seqTs.GetTs());
+	try {
+		SeqTsHeader seqTs;
+		pCopy->RemoveHeader(seqTs);
+		auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
 //cout << "[" << this->id << "] " << "UDP packet received at AP after "
-	//	<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
+		//	<< std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
 
-	stats->get(this->id).NumberOfSuccessfulPackets++;
-	stats->get(this->id).TotalPacketSentReceiveTime += timeDiff;
+		stats->get(this->id).NumberOfSuccessfulPackets++;
+		stats->get(this->id).TotalPacketSentReceiveTime += timeDiff;
 
-	/*cout << this->node->GetDevice(0)->GetAddress() << " ";
-	 cout << "[" << this->id << "] "  << Simulator::Now().GetMicroSeconds() << " Packet received in " << timeDiff.GetMicroSeconds() << "µs" << endl;
-	 */
+		/*cout << this->node->GetDevice(0)->GetAddress() << " ";
+		 cout << "[" << this->id << "] "  << Simulator::Now().GetMicroSeconds() << " Packet received in " << timeDiff.GetMicroSeconds() << "µs" << endl;
+		 */
 
-	stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
+		stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
+	} catch (std::runtime_error e) {
+		// packet fragmentation, unable to get header
+	}
 }
 
-void NodeEntry::OnMacTxRtsFailed(std::string context,Mac48Address address) {
+void NodeEntry::OnMacTxRtsFailed(std::string context, Mac48Address address) {
 	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
 	//	<< " MAC Tx Rts Failed" << endl;
 
 	stats->get(this->id).NumberOfMACTxRTSFailed++;
 }
 
-void NodeEntry::OnMacTxDataFailed(std::string context,Mac48Address address) {
+void NodeEntry::OnMacTxDataFailed(std::string context, Mac48Address address) {
 	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
 	//		<< " MAC Tx Data Failed" << endl;
 
 	stats->get(this->id).NumberOfMACTxDataFailed++;
 }
 
-void NodeEntry::OnMacTxFinalRtsFailed(std::string context,Mac48Address address) {
+void NodeEntry::OnMacTxFinalRtsFailed(std::string context,
+		Mac48Address address) {
 	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
 	//		<< " MAC Tx Rts Failed" << endl;
 
 	stats->get(this->id).NumberOfMACTxRTSFailed++;
 }
 
-void NodeEntry::OnMacTxFinalDataFailed(std::string context,Mac48Address address) {
+void NodeEntry::OnMacTxFinalDataFailed(std::string context,
+		Mac48Address address) {
 	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
 	//		<< " MAC Tx Final data Failed" << endl;
 
 	stats->get(this->id).NumberOfMACTxDataFailed++;
 }
-
 
 void NodeEntry::SetAssociatedCallback(std::function<void()> assocCallback) {
 	this->associatedCallback = assocCallback;

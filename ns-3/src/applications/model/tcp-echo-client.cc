@@ -322,9 +322,11 @@ TcpEchoClient::Send (void)
       m_bytesSent += m_size;
     }
 
+
   // add sequence header to the packet
     SeqTsHeader seqTs;
     seqTs.SetSeq (m_sent);
+
     p->AddHeader (seqTs);
 
 
