@@ -14,6 +14,8 @@
 " --MinRTO=819200"\
 " --NRawSta=96"\
 " --Nsta=96"\
+" --NRawSta=400"\
+" --Nsta=400"\
 " --VisualizerIP=\"192.168.0.247\""\
 " --VisualizerPort=7707"\
 " --VisualizerSamplingInterval=1"\

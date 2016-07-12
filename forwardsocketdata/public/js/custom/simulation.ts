@@ -102,6 +102,13 @@ class SimulationConfiguration {
     beaconInterval: number;
 
     name:string = "";
+
+
+    propagationLossExponent:number;
+    propagationLossReferenceLoss:number;
+    apAlwaysSchedulesForNextSlot:string;
+    minRTO:number;
+    simulationTime:number;
 }
  
  

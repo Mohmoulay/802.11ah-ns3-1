@@ -756,7 +756,7 @@ $(document).ready(function () {
     }).on("error", function () {
         console.log("Unable to connect to server websocket endpoint");
     });
-    sock.on("error", function (data) {
+    sock.on("fileerror", function (data) {
         alert("Error: " + data);
     });
     sock.on("entry", function (data) {

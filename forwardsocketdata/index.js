@@ -125,7 +125,7 @@ var Program = (function () {
     Program.prototype.sendSimulationToSocket = function (stream, sock) {
         var filename = stream + ".nss";
         if (!fs.existsSync(this.getPathForSimulationName(filename))) {
-            sock.emit("error", "Simulation file " + stream + " not found");
+            sock.emit("fileerror", "Simulation file " + stream + " not found");
             return;
         }
         var instream = fs.createReadStream(this.getPathForSimulationName(filename));
@@ -178,7 +178,7 @@ var Program = (function () {
         var parts = line.split(';');
         if (parts[1] == "start") {
             this.liveSimulationInitializationLines = [];
-            this.liveSimulationName = parts[parts.length - 1] + ".nss";
+            this.liveSimulationName = parts[11] + ".nss";
             try {
                 if (this.liveSimulationName != "") {
                     fs.unlinkSync(this.getPathForSimulationName(this.liveSimulationName));
