@@ -34,7 +34,7 @@ struct Configuration {
 	uint32_t MinRTO = 200000;
 
 	double propagationLossExponent = 3.76;
-	double propagationLossReferenceLoss = 23.3;
+	double propagationLossReferenceLoss = 8;
 
 
 	bool APAlwaysSchedulesForNextSlot = false;
@@ -50,7 +50,7 @@ struct Configuration {
 
 	string name = "";
 
-	uint32_t trafficInterval = 987;
+	uint32_t trafficInterval = 9876;
 	uint16_t trafficPacketSize = 100;
 	string trafficType = "tcpecho";
 

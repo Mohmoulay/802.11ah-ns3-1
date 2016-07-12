@@ -106,15 +106,13 @@ void SimulationEventManager::send(vector<string> str) {
 	if(this->hostname != "") {
 
 
-		int sockfd ;
-		//if(socketDescriptor == -1) {
-
-			sockfd = stat_connect(this->hostname.c_str(), std::to_string(this->port).c_str());
-			if(sockfd == -1)
+		//int sockfd ;
+		if(socketDescriptor == -1) {
+			std::cout << "Connecting to visualizer" << std::endl;
+			socketDescriptor = stat_connect(this->hostname.c_str(), std::to_string(this->port).c_str());
+			if(socketDescriptor == -1)
 				return;
-
-			socketDescriptor = sockfd;
-		//}
+		}
 
 
 		std::stringstream s;
@@ -123,12 +121,13 @@ void SimulationEventManager::send(vector<string> str) {
 			s << str[i] << ((i != str.size()-1) ? ";" : "");
 		}
 		s << "\n";
-		bool success = stat_send(sockfd, string(s.str()).c_str());
+		bool success = stat_send(socketDescriptor, string(s.str()).c_str());
 
-		//if(!success) {
-			stat_close(sockfd);
+		if(!success) {
+			std::cout << "Sending failed" << std::endl;
+			stat_close(socketDescriptor);
 			socketDescriptor = -1;
-		//}
+		}
 	}
 }
 

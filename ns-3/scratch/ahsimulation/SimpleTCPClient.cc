@@ -60,7 +60,7 @@ int stat_connect(const char* hostname, const char* port) {
 	}
 
 	if (p == NULL) {
-		fprintf(stderr, "client: failed to connect\n");
+		fprintf(stderr, "client: failed to connect: \n");
 		return -1;
 	}
 
@@ -76,6 +76,7 @@ bool stat_send(int sockfd, const char* buf) {
 	int length = strlen(buf);
 	if(length < MAXDATASIZE) {
 		int bytesSent = send(sockfd, buf, length, 0);
+		if(bytesSent < 0) fprintf(stderr, "socket send failed: %m\n");
 		return bytesSent != -1;
 	}
 	else {
