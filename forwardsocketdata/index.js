@@ -6,6 +6,7 @@ var socket = require("socket.io");
 var readline = require("readline");
 var HTTP_PORT = 8080;
 var LISTENER_PORT = 7707;
+var BIND_ADDRESS = "";
 var SocketManager = (function () {
     function SocketManager() {
         this.activeSockets = {};
@@ -59,6 +60,7 @@ var Program = (function () {
         this.liveSimulationName = "";
         LISTENER_PORT = parseInt((typeof args[0] === 'undefined') ? "7707" : args[0]);
         HTTP_PORT = parseInt((typeof args[1] === 'undefined') ? "8080" : args[1]);
+        BIND_ADDRESS = (typeof args[2] === 'undefined') ? "" : args[2];
         this.initialize();
     }
     /**
@@ -83,7 +85,11 @@ var Program = (function () {
         console.log("Initializing express on port " + HTTP_PORT);
         var app = express();
         app.use("/", express.static(path.join(__dirname, 'public')));
-        var server = app.listen(HTTP_PORT);
+        var server;
+        if (BIND_ADDRESS == "")
+            server = app.listen(HTTP_PORT);
+        else
+            server = app.listen(HTTP_PORT, BIND_ADDRESS);
         return server;
     };
     /**

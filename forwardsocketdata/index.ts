@@ -15,6 +15,7 @@ import events = require('events');
 
 let HTTP_PORT:number = 8080;
 let LISTENER_PORT:number = 7707;
+let BIND_ADDRESS:string = "";
 
 class SocketManager {
 
@@ -70,7 +71,7 @@ export class Program {
         
         LISTENER_PORT =   parseInt((typeof args[0] === 'undefined') ? "7707" : args[0]);
         HTTP_PORT = parseInt((typeof args[1] === 'undefined') ? "8080" : args[1]);
-
+        BIND_ADDRESS = (typeof args[2] === 'undefined') ? "" : args[2];
         this.initialize();
     }
 
@@ -99,7 +100,11 @@ export class Program {
         var app = express();
         app.use("/", express.static(path.join(__dirname, 'public')));
 
-        let server = app.listen(HTTP_PORT);
+        let server;
+        if(BIND_ADDRESS == "")
+            server = app.listen(HTTP_PORT);
+        else
+            server = app.listen(HTTP_PORT, BIND_ADDRESS);
         return server;
     }
 
