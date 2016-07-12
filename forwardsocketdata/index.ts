@@ -13,14 +13,8 @@ import * as readline from "readline";
 
 import events = require('events');
 
-var ss = require('socket.io-stream');
-
-
-const HTTP_PORT = 8080;
-const LISTENER_PORT = 7707;
-
-const PATH = "testfile.txt";
-
+let HTTP_PORT:number = 8080;
+let LISTENER_PORT:number = 7707;
 
 class SocketManager {
 
@@ -63,12 +57,20 @@ class Entry {
     public constructor(public stream:string, public line:string) {}
 }
 
+class Entries {
+    public constructor(public stream:string, public lines:string[]) {}
+}
+
 export class Program {
 
     // a list of active connections from the website
     private activeSocketManager:SocketManager = new SocketManager();
 
-    constructor() {
+    constructor(args:string[]) {
+        
+        LISTENER_PORT =   parseInt((typeof args[0] === 'undefined') ? "7707" : args[0]);
+        HTTP_PORT = parseInt((typeof args[1] === 'undefined') ? "8080" : args[1]);
+
         this.initialize();
     }
 
@@ -82,6 +84,7 @@ export class Program {
     }
 
     setupSimulatorListener() {
+        console.log("Listening for incoming simulation data on " + LISTENER_PORT);
         let self = this;
         net.createServer(sock => {
             sock.on("data", (data) => self.onDataReceived(data));
@@ -92,7 +95,7 @@ export class Program {
      */
     setupExpress(): http.Server {
 
-        console.log("Initializing express");
+        console.log("Initializing express on port " + HTTP_PORT);
         var app = express();
         app.use("/", express.static(path.join(__dirname, 'public')));
 
@@ -142,13 +145,23 @@ export class Program {
         var instream = fs.createReadStream(this.getPathForSimulationName(filename));
         var outstream = new (require('stream'))();
         var rl = readline.createInterface(instream,outstream);
+
+        var lines=[];
         rl.on('line', function(line) {
             //console.log("Writing entry for " + stream + ": " + line);
-            sock.emit("entry",new Entry(stream, line));
+
+            lines.push(line);
+            if(lines.length > 1000) {
+                sock.compress(true).emit("bulkentry", new Entries(stream, lines));
+                lines = [];
+            }
+            //sock.emit("entry",new Entry(stream, line));
         });
 
         rl.on('close', function() {
-
+            // send remainder
+            sock.emit("bulkentry", new Entries(stream, lines));
+            lines = [];
         });
     }
 
@@ -224,4 +237,5 @@ export class Program {
 }
 
 // export the main program
-export var main: Program = new Program();
+let args = process.argv.slice(2);
+export var main: Program = new Program(args);

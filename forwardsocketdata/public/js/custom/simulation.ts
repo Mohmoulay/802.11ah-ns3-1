@@ -39,6 +39,33 @@ abstract class SimulationNode {
     numberOfTCPRetransmissionsFromAP : Value[] = [];
     numberOfMACTxRTSFailed : Value[] = [];
     numberOfMACTxDataFailed : Value[] = [];
+
+    numberOfDropsByReasonUnknown:Value[] = [];
+    numberOfDropsByReasonPhyInSleepMode:Value[] = [];
+    numberOfDropsByReasonPhyNotEnoughSignalPower:Value[] = [];
+    numberOfDropsByReasonPhyUnsupportedMode:Value[] = [];
+    numberOfDropsByReasonPhyPreambleHeaderReceptionFailed:Value[] = [];
+    numberOfDropsByReasonPhyRxDuringChannelSwitching:Value[] = [];
+    numberOfDropsByReasonPhyAlreadyReceiving:Value[] = [];
+    numberOfDropsByReasonPhyAlreadyTransmitting:Value[] = [];
+    numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed:Value[] = [];
+    numberOfDropsByReasonMacNotForAP:Value[] = [];
+    numberOfDropsByReasonMacAPToAPFrame:Value[] = [];
+
+    numberOfDropsFromAPByReasonUnknown:Value[] = [];
+    numberOfDropsFromAPByReasonPhyInSleepMode:Value[] = [];
+    numberOfDropsFromAPByReasonPhyNotEnoughSignalPower:Value[] = [];
+    numberOfDropsFromAPByReasonPhyUnsupportedMode:Value[] = [];
+    numberOfDropsFromAPByReasonPhyPreambleHeaderReceptionFailed:Value[] = [];
+    numberOfDropsFromAPByReasonPhyRxDuringChannelSwitching:Value[] = [];
+    numberOfDropsFromAPByReasonPhyAlreadyReceiving:Value[] = [];
+    numberOfDropsFromAPByReasonPhyAlreadyTransmitting:Value[] = [];
+    numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed:Value[] = [];
+    numberOfDropsFromAPByReasonMacNotForAP:Value[] = [];
+    numberOfDropsFromAPByReasonMacAPToAPFrame:Value[] = [];
+
+    tcpRTO: Value[] = [];
+
 }
 
 class Value {

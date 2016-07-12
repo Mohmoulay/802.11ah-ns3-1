@@ -1,14 +1,11 @@
-"use strict";
 var fs = require("fs");
 var path = require("path");
 var net = require("net");
 var express = require("express");
 var socket = require("socket.io");
 var readline = require("readline");
-var ss = require('socket.io-stream');
 var HTTP_PORT = 8080;
 var LISTENER_PORT = 7707;
-var PATH = "testfile.txt";
 var SocketManager = (function () {
     function SocketManager() {
         this.activeSockets = {};
@@ -38,21 +35,30 @@ var SocketManager = (function () {
         }
     };
     return SocketManager;
-}());
+})();
 var Entry = (function () {
     function Entry(stream, line) {
         this.stream = stream;
         this.line = line;
     }
     return Entry;
-}());
+})();
+var Entries = (function () {
+    function Entries(stream, lines) {
+        this.stream = stream;
+        this.lines = lines;
+    }
+    return Entries;
+})();
 var Program = (function () {
-    function Program() {
+    function Program(args) {
         // a list of active connections from the website
         this.activeSocketManager = new SocketManager();
         this.liveBuffer = "";
         this.liveSimulationInitializationLines = [];
         this.liveSimulationName = "";
+        LISTENER_PORT = parseInt((typeof args[0] === 'undefined') ? "7707" : args[0]);
+        HTTP_PORT = parseInt((typeof args[1] === 'undefined') ? "8080" : args[1]);
         this.initialize();
     }
     /**
@@ -64,6 +70,7 @@ var Program = (function () {
         this.setupSimulatorListener();
     };
     Program.prototype.setupSimulatorListener = function () {
+        console.log("Listening for incoming simulation data on " + LISTENER_PORT);
         var self = this;
         net.createServer(function (sock) {
             sock.on("data", function (data) { return self.onDataReceived(data); });
@@ -73,7 +80,7 @@ var Program = (function () {
      * Sets up the express stack, returns the http server that it creates
      */
     Program.prototype.setupExpress = function () {
-        console.log("Initializing express");
+        console.log("Initializing express on port " + HTTP_PORT);
         var app = express();
         app.use("/", express.static(path.join(__dirname, 'public')));
         var server = app.listen(HTTP_PORT);
@@ -118,11 +125,20 @@ var Program = (function () {
         var instream = fs.createReadStream(this.getPathForSimulationName(filename));
         var outstream = new (require('stream'))();
         var rl = readline.createInterface(instream, outstream);
+        var lines = [];
         rl.on('line', function (line) {
             //console.log("Writing entry for " + stream + ": " + line);
-            sock.emit("entry", new Entry(stream, line));
+            lines.push(line);
+            if (lines.length > 1000) {
+                sock.compress(true).emit("bulkentry", new Entries(stream, lines));
+                lines = [];
+            }
+            //sock.emit("entry",new Entry(stream, line));
         });
         rl.on('close', function () {
+            // send remainder
+            sock.emit("bulkentry", new Entries(stream, lines));
+            lines = [];
         });
     };
     /**
@@ -182,8 +198,9 @@ var Program = (function () {
         }
     };
     return Program;
-}());
+})();
 exports.Program = Program;
 // export the main program
-exports.main = new Program();
+var args = process.argv.slice(2);
+exports.main = new Program(args);
 //# sourceMappingURL=index.js.map

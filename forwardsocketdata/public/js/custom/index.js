@@ -1,348 +1,3 @@
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-var Animation = (function () {
-    function Animation() {
-        this.time = 0;
-        this.color = new Color(0, 0, 0, 1, 0);
-    }
-    Animation.prototype.update = function (dt) {
-        this.time += dt;
-    };
-    return Animation;
-})();
-var BroadcastAnimation = (function (_super) {
-    __extends(BroadcastAnimation, _super);
-    function BroadcastAnimation(x, y) {
-        _super.call(this);
-        this.x = x;
-        this.y = y;
-        this.max_radius = 50;
-        this.max_time = 1000;
-        this.color = new Color(255, 0, 0);
-    }
-    BroadcastAnimation.prototype.draw = function (canvas, ctx, area) {
-        var radius = this.time / this.max_time * this.max_radius;
-        this.color.alpha = 1 - this.time / this.max_time;
-        ctx.strokeStyle = this.color.toString();
-        ctx.beginPath();
-        ctx.arc(this.x * (canvas.width / area), this.y * (canvas.width / area), radius, 0, Math.PI * 2, false);
-        ctx.stroke();
-    };
-    BroadcastAnimation.prototype.isFinished = function () {
-        return this.time >= this.max_time;
-    };
-    return BroadcastAnimation;
-})(Animation);
-var ReceivedAnimation = (function (_super) {
-    __extends(ReceivedAnimation, _super);
-    function ReceivedAnimation(x, y) {
-        _super.call(this);
-        this.x = x;
-        this.y = y;
-        this.max_radius = 10;
-        this.max_time = 1000;
-        this.color = new Color(0, 255, 0);
-    }
-    ReceivedAnimation.prototype.draw = function (canvas, ctx, area) {
-        var radius = (1 - this.time / this.max_time) * this.max_radius;
-        this.color.alpha = 1 - this.time / this.max_time;
-        ctx.strokeStyle = this.color.toString();
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(this.x * (canvas.width / area), this.y * (canvas.width / area), radius, 0, Math.PI * 2, false);
-        ctx.stroke();
-    };
-    ReceivedAnimation.prototype.isFinished = function () {
-        return this.time >= this.max_time;
-    };
-    return ReceivedAnimation;
-})(Animation);
-var AssociatedAnimation = (function (_super) {
-    __extends(AssociatedAnimation, _super);
-    function AssociatedAnimation(x, y) {
-        _super.call(this);
-        this.x = x;
-        this.y = y;
-        this.max_time = 3000;
-    }
-    AssociatedAnimation.prototype.draw = function (canvas, ctx, area) {
-        var offset = this.time / this.max_time * Math.PI * 2;
-        this.color.alpha = 1 - this.time / this.max_time;
-        ctx.strokeStyle = this.color.toString();
-        ctx.beginPath();
-        ctx.setLineDash(([10, 2]));
-        ctx.lineWidth = 3;
-        ctx.arc(this.x * (canvas.width / area), this.y * (canvas.width / area), 10, offset, offset + Math.PI * 2, false);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.lineWidth = 1;
-    };
-    AssociatedAnimation.prototype.isFinished = function () {
-        return this.time >= this.max_time;
-    };
-    return AssociatedAnimation;
-})(Animation);
-var Color = (function () {
-    function Color(red, green, blue, alpha, position) {
-        if (alpha === void 0) { alpha = 1; }
-        if (position === void 0) { position = 0; }
-        this.red = Math.floor(red);
-        this.green = Math.floor(green);
-        this.blue = Math.floor(blue);
-        this.alpha = alpha;
-        this.position = Math.round(position * 100) / 100;
-    }
-    Color.prototype.toString = function () {
-        return "rgba(" + this.red + ", " + this.green + "," + this.blue + ", " + this.alpha + ")";
-    };
-    return Color;
-})();
-var Palette = (function () {
-    function Palette() {
-        this.colors = [];
-        this.lookup = [];
-    }
-    Palette.prototype.buildLookup = function () {
-        this.lookup = [];
-        for (var i = 0; i < 1000; i++)
-            this.lookup.push(this.getColorAt(i / 1000));
-    };
-    ;
-    Palette.prototype.getColorFromLookupAt = function (position) {
-        var idx;
-        if (isNaN(position))
-            idx = 0;
-        else
-            idx = Math.floor(position * this.lookup.length);
-        if (idx < 0)
-            idx = 0;
-        if (idx >= this.lookup.length)
-            idx = this.lookup.length - 1;
-        return this.lookup[idx];
-    };
-    ;
-    Palette.prototype.getColorAt = function (position) {
-        if (position < this.colors[0].position)
-            return this.colors[0];
-        if (position >= this.colors[this.colors.length - 1].position)
-            return this.colors[this.colors.length - 1];
-        for (var i = 0; i < this.colors.length; i++) {
-            if (position >= this.colors[i].position && position < this.colors[i + 1].position) {
-                var relColorAlpha = (position - this.colors[i].position) / (this.colors[i + 1].position - this.colors[i].position);
-                var red = this.colors[i].red * (1 - relColorAlpha) + this.colors[i + 1].red * (relColorAlpha);
-                var green = this.colors[i].green * (1 - relColorAlpha) + this.colors[i + 1].green * (relColorAlpha);
-                var blue = this.colors[i].blue * (1 - relColorAlpha) + this.colors[i + 1].blue * (relColorAlpha);
-                return new Color(red, green, blue, 1, position);
-            }
-        }
-    };
-    Palette.prototype.addColor = function (c) {
-        this.colors.push(c);
-    };
-    Palette.prototype.drawTo = function (ctx, width, height) {
-        for (var i = 0; i < width; i++) {
-            var pos = i / width;
-            var c = this.getColorFromLookupAt(pos);
-            ctx.fillStyle = "rgb(" + c.red + "," + c.green + "," + c.blue + ")";
-            ctx.fillRect(i, 0, 1, height);
-        }
-    };
-    return Palette;
-})();
-var EventManager = (function () {
-    function EventManager(sim) {
-        this.sim = sim;
-        this.events = [];
-    }
-    EventManager.prototype.processEvents = function () {
-        var eventsProcessed = this.events.length > 0;
-        if (this.events.length > 1000)
-            this.updateGUI = false;
-        else
-            this.updateGUI = true;
-        var lastTime;
-        while (this.events.length > 0) {
-            var ev = this.events[0];
-            switch (ev.parts[1]) {
-                case 'start':
-                    this.onStart(ev.stream, parseInt(ev.parts[2]), parseInt(ev.parts[3]), ev.parts[4], parseInt(ev.parts[5]), parseInt(ev.parts[6]), ev.parts[7], parseFloat(ev.parts[8]), parseFloat(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), ev.parts[13]);
-                    break;
-                case 'stanodeadd':
-                    this.onNodeAdded(ev.stream, true, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseInt(ev.parts[5]));
-                    break;
-                case 'stanodeassoc':
-                    this.onNodeAssociated(ev.stream, parseInt(ev.parts[2]), parseInt(ev.parts[3]), parseInt(ev.parts[4]), parseInt(ev.parts[5]));
-                    break;
-                case 'stanodedeassoc':
-                    this.onNodeDeassociated(ev.stream, parseInt(ev.parts[2]));
-                    break;
-                case 'apnodeadd':
-                    this.onNodeAdded(ev.stream, false, -1, parseFloat(ev.parts[2]), parseFloat(ev.parts[3]), -1);
-                    break;
-                case 'nodestats':
-                    this.onStatsUpdated(ev.stream, ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]), parseInt(ev.parts[20]), parseInt(ev.parts[21]), parseInt(ev.parts[22]), parseInt(ev.parts[23]), parseInt(ev.parts[24]), ev.parts[25], ev.parts[26], parseInt(ev.parts[27]));
-                    break;
-                default:
-            }
-            lastTime = ev.time;
-            this.events.shift();
-        }
-        if (eventsProcessed) {
-            this.sim.onSimulationTimeUpdated(lastTime);
-            this.sim.updateGUI(false);
-        }
-    };
-    EventManager.prototype.onReceiveBulk = function (entry) {
-        for (var _i = 0, _a = entry.lines; _i < _a.length; _i++) {
-            var l = _a[_i];
-            this.onReceive({ stream: entry.stream, line: l });
-        }
-    };
-    EventManager.prototype.onReceive = function (entry) {
-        var parts = entry.line.split(';');
-        var time = parseInt(parts[0]);
-        time = time / (1000 * 1000); // ns -> ms
-        var ev = new SimulationEvent(entry.stream, time, parts);
-        this.events.push(ev);
-    };
-    EventManager.prototype.onStart = function (stream, aidRAWRange, numberOfRAWGroups, RAWSlotFormat, RAWSlotDuration, numberOfRAWSlots, dataMode, dataRate, bandwidth, trafficInterval, trafficPacketsize, beaconInterval, name) {
-        var simulation = this.sim.simulationContainer.getSimulation(stream);
-        if (typeof simulation == "undefined") {
-            simulation = new Simulation();
-            this.sim.simulationContainer.setSimulation(stream, simulation);
-        }
-        simulation.nodes = [];
-        var config = simulation.config;
-        config.AIDRAWRange = aidRAWRange;
-        config.numberOfRAWGroups = numberOfRAWGroups;
-        config.RAWSlotFormat = RAWSlotFormat;
-        config.numberOfRAWSlots = numberOfRAWSlots;
-        config.RAWSlotDuration = RAWSlotDuration;
-        config.dataMode = dataMode;
-        config.dataRate = dataRate;
-        config.bandwidth = bandwidth;
-        config.trafficInterval = trafficInterval;
-        config.trafficPacketsize = trafficPacketsize;
-        config.beaconInterval = beaconInterval;
-        config.name = name;
-    };
-    EventManager.prototype.onNodeAdded = function (stream, isSTA, id, x, y, aId) {
-        var n = isSTA ? new STANode() : new APNode();
-        n.id = id;
-        n.x = x;
-        n.y = y;
-        n.aId = aId;
-        this.sim.simulationContainer.getSimulation(stream).nodes.push(n);
-        // this.sim.onNodeAdded(stream, id);
-    };
-    EventManager.prototype.onNodeAssociated = function (stream, id, aId, groupNumber, rawSlotIndex) {
-        var simulation = this.sim.simulationContainer.getSimulation(stream);
-        if (id < 0 || id >= simulation.nodes.length)
-            return;
-        var n = simulation.nodes[id];
-        n.aId = aId;
-        n.groupNumber = groupNumber;
-        n.rawSlotIndex = rawSlotIndex;
-        n.isAssociated = true;
-        this.sim.onNodeAssociated(stream, id);
-    };
-    EventManager.prototype.onNodeDeassociated = function (stream, id) {
-        var simulation = this.sim.simulationContainer.getSimulation(stream);
-        if (id < 0 || id >= simulation.nodes.length)
-            return;
-        var n = simulation.nodes[id];
-        n.isAssociated = false;
-        this.sim.onNodeAssociated(stream, id);
-    };
-    EventManager.prototype.hasIncreased = function (values) {
-        if (values.length >= 2) {
-            var oldVal = values[values.length - 2].value;
-            var newVal = values[values.length - 1].value;
-            return oldVal < newVal;
-        }
-        else
-            return false;
-    };
-    EventManager.prototype.onStatsUpdated = function (stream, timestamp, id, totalTransmitTime, totalReceiveTime, totalReceiveDozeTime, totalReceiveActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTime, tcpCongestionWindow, numberOfTCPRetransmissions, numberOfTCPRetransmissionsFromAP, nrOfReceivesDroppedByDestination, numberOfMACTxRTSFailed, numberOfMACTxDataFailed, numberOfDropsByReason, numberOfDropsByReasonAtAP, tcpRtoValue) {
-        var simulation = this.sim.simulationContainer.getSimulation(stream);
-        if (id < 0 || id >= simulation.nodes.length)
-            return;
-        // keep track of statistics
-        var n = simulation.nodes[id];
-        n.totalTransmitTime.push(new Value(timestamp, totalTransmitTime));
-        n.totalReceiveTime.push(new Value(timestamp, totalReceiveTime));
-        n.totalReceiveDozeTime.push(new Value(timestamp, totalReceiveDozeTime));
-        n.totalReceiveActiveTime.push(new Value(timestamp, totalReceiveActiveTime));
-        n.nrOfTransmissions.push(new Value(timestamp, nrOfTransmissions));
-        n.nrOfTransmissionsDropped.push(new Value(timestamp, nrOfTransmissionsDropped));
-        n.nrOfReceives.push(new Value(timestamp, nrOfReceives));
-        n.nrOfReceivesDropped.push(new Value(timestamp, nrOfReceivesDropped));
-        n.nrOfReceivesDroppedByDestination.push(new Value(timestamp, nrOfReceivesDroppedByDestination));
-        n.nrOfSentPackets.push(new Value(timestamp, nrOfSentPackets));
-        n.nrOfSuccessfulPackets.push(new Value(timestamp, nrOfSuccessfulPackets));
-        n.nrOfDroppedPackets.push(new Value(timestamp, nrOfDroppedPackets));
-        n.avgSentReceiveTime.push(new Value(timestamp, avgPacketTimeOfFlight));
-        n.goodputKbit.push(new Value(timestamp, goodputKbit));
-        n.edcaQueueLength.push(new Value(timestamp, edcaQueueLength));
-        n.nrOfSuccessfulRoundtripPackets.push(new Value(timestamp, nrOfSuccessfulRoundtripPackets));
-        n.avgRoundtripTime.push(new Value(timestamp, avgRoundTripTime));
-        n.tcpCongestionWindow.push(new Value(timestamp, tcpCongestionWindow));
-        n.numberOfTCPRetransmissions.push(new Value(timestamp, numberOfTCPRetransmissions));
-        n.numberOfTCPRetransmissionsFromAP.push(new Value(timestamp, numberOfTCPRetransmissionsFromAP));
-        n.tcpRTO.push(new Value(timestamp, tcpRtoValue));
-        n.numberOfMACTxRTSFailed.push(new Value(timestamp, numberOfMACTxRTSFailed));
-        n.numberOfMACTxDataFailed.push(new Value(timestamp, numberOfMACTxDataFailed));
-        if (typeof numberOfDropsByReason != "undefined") {
-            var dropParts = numberOfDropsByReason.split(',');
-            n.numberOfDropsByReasonUnknown.push(new Value(timestamp, parseInt(dropParts[0])));
-            n.numberOfDropsByReasonPhyInSleepMode.push(new Value(timestamp, parseInt(dropParts[1])));
-            n.numberOfDropsByReasonPhyNotEnoughSignalPower.push(new Value(timestamp, parseInt(dropParts[2])));
-            n.numberOfDropsByReasonPhyUnsupportedMode.push(new Value(timestamp, parseInt(dropParts[3])));
-            n.numberOfDropsByReasonPhyPreambleHeaderReceptionFailed.push(new Value(timestamp, parseInt(dropParts[4])));
-            n.numberOfDropsByReasonPhyRxDuringChannelSwitching.push(new Value(timestamp, parseInt(dropParts[5])));
-            n.numberOfDropsByReasonPhyAlreadyReceiving.push(new Value(timestamp, parseInt(dropParts[6])));
-            n.numberOfDropsByReasonPhyAlreadyTransmitting.push(new Value(timestamp, parseInt(dropParts[7])));
-            n.numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed.push(new Value(timestamp, parseInt(dropParts[8])));
-            n.numberOfDropsByReasonMacNotForAP.push(new Value(timestamp, parseInt(dropParts[9])));
-            n.numberOfDropsByReasonMacAPToAPFrame.push(new Value(timestamp, parseInt(dropParts[10])));
-        }
-        if (typeof numberOfDropsByReason != "undefined") {
-            var dropParts = numberOfDropsByReasonAtAP.split(',');
-            n.numberOfDropsFromAPByReasonUnknown.push(new Value(timestamp, parseInt(dropParts[0])));
-            n.numberOfDropsFromAPByReasonPhyInSleepMode.push(new Value(timestamp, parseInt(dropParts[1])));
-            n.numberOfDropsFromAPByReasonPhyNotEnoughSignalPower.push(new Value(timestamp, parseInt(dropParts[2])));
-            n.numberOfDropsFromAPByReasonPhyUnsupportedMode.push(new Value(timestamp, parseInt(dropParts[3])));
-            n.numberOfDropsFromAPByReasonPhyPreambleHeaderReceptionFailed.push(new Value(timestamp, parseInt(dropParts[4])));
-            n.numberOfDropsFromAPByReasonPhyRxDuringChannelSwitching.push(new Value(timestamp, parseInt(dropParts[5])));
-            n.numberOfDropsFromAPByReasonPhyAlreadyReceiving.push(new Value(timestamp, parseInt(dropParts[6])));
-            n.numberOfDropsFromAPByReasonPhyAlreadyTransmitting.push(new Value(timestamp, parseInt(dropParts[7])));
-            n.numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed.push(new Value(timestamp, parseInt(dropParts[8])));
-            n.numberOfDropsFromAPByReasonMacNotForAP.push(new Value(timestamp, parseInt(dropParts[9])));
-            n.numberOfDropsFromAPByReasonMacAPToAPFrame.push(new Value(timestamp, parseInt(dropParts[10])));
-        }
-        n.tcpRTO.push(new Value(timestamp, tcpRtoValue));
-        if (this.updateGUI && stream == this.sim.selectedStream) {
-            if (this.hasIncreased(n.totalTransmitTime)) {
-                this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));
-            }
-        }
-        //if(this.hasIncreased(n.totalReceiveActiveTime))
-        //   this.sim.addAnimation(new ReceivedAnimation(n.x, n.y));
-        // this.sim.onNodeUpdated(stream, id);
-    };
-    return EventManager;
-})();
-var SimulationEvent = (function () {
-    function SimulationEvent(stream, time, parts) {
-        this.stream = stream;
-        this.time = time;
-        this.parts = parts;
-    }
-    return SimulationEvent;
-})();
 /// <reference path="../../../typings/globals/jquery/index.d.ts" />
 /// <reference path="../../../typings/globals/socket.io/index.d.ts" />
 /// <reference path="../../../typings/globals/highcharts/index.d.ts" />
@@ -771,7 +426,7 @@ var SimulationGUI = (function () {
                     title: { text: title },
                     xAxis: {
                         type: 'linear',
-                        tickPixelInterval: 100
+                        tickPixelInterval: 100,
                     },
                     yAxis: {
                         title: { text: 'Value' },
@@ -912,14 +567,14 @@ var SimulationGUI = (function () {
                     load: function () {
                         self.currentChart = this;
                     }
-                }
+                },
             },
             title: { text: "Distribution of " + title },
             plotOptions: {
                 series: {
                     animation: false,
                     marker: { enabled: false },
-                    shadow: false
+                    shadow: false,
                 },
                 column: {
                     borderWidth: 0,
@@ -992,7 +647,7 @@ var SimulationGUI = (function () {
             title: { text: title },
             xAxis: {
                 type: 'linear',
-                tickPixelInterval: 100
+                tickPixelInterval: 100,
             },
             yAxis: {
                 title: { text: 'Value' },
@@ -1007,7 +662,7 @@ var SimulationGUI = (function () {
                     name: title,
                     type: "spline",
                     data: averages,
-                    zIndex: 1
+                    zIndex: 1,
                 }, {
                     name: 'Range',
                     data: ranges,
@@ -1016,7 +671,7 @@ var SimulationGUI = (function () {
                     lineWidth: 0,
                     linkedTo: ':previous',
                     color: Highcharts.getOptions().colors[0],
-                    fillOpacity: 0.3
+                    fillOpacity: 0.3,
                 }],
             credits: false
         });
@@ -1190,98 +845,4 @@ $(document).ready(function () {
         window.setTimeout(loop, 25);
     }
 });
-var SimulationNode = (function () {
-    function SimulationNode() {
-        this.id = -1;
-        this.x = 0;
-        this.y = 0;
-        this.aId = 0;
-        this.groupNumber = 0;
-        this.rawSlotIndex = 0;
-        this.type = "";
-        this.totalTransmitTime = [];
-        this.totalReceiveTime = [];
-        this.totalReceiveDozeTime = [];
-        this.totalReceiveActiveTime = [];
-        this.nrOfTransmissions = [];
-        this.nrOfTransmissionsDropped = [];
-        this.nrOfReceives = [];
-        this.nrOfReceivesDropped = [];
-        this.nrOfSentPackets = [];
-        this.nrOfSuccessfulPackets = [];
-        this.nrOfDroppedPackets = [];
-        this.avgSentReceiveTime = [];
-        this.goodputKbit = [];
-        this.edcaQueueLength = [];
-        this.nrOfSuccessfulRoundtripPackets = [];
-        this.avgRoundtripTime = [];
-        this.tcpCongestionWindow = [];
-        this.numberOfTCPRetransmissions = [];
-        this.nrOfReceivesDroppedByDestination = [];
-        this.numberOfTCPRetransmissionsFromAP = [];
-        this.numberOfMACTxRTSFailed = [];
-        this.numberOfMACTxDataFailed = [];
-        this.numberOfDropsByReasonUnknown = [];
-        this.numberOfDropsByReasonPhyInSleepMode = [];
-        this.numberOfDropsByReasonPhyNotEnoughSignalPower = [];
-        this.numberOfDropsByReasonPhyUnsupportedMode = [];
-        this.numberOfDropsByReasonPhyPreambleHeaderReceptionFailed = [];
-        this.numberOfDropsByReasonPhyRxDuringChannelSwitching = [];
-        this.numberOfDropsByReasonPhyAlreadyReceiving = [];
-        this.numberOfDropsByReasonPhyAlreadyTransmitting = [];
-        this.numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed = [];
-        this.numberOfDropsByReasonMacNotForAP = [];
-        this.numberOfDropsByReasonMacAPToAPFrame = [];
-        this.numberOfDropsFromAPByReasonUnknown = [];
-        this.numberOfDropsFromAPByReasonPhyInSleepMode = [];
-        this.numberOfDropsFromAPByReasonPhyNotEnoughSignalPower = [];
-        this.numberOfDropsFromAPByReasonPhyUnsupportedMode = [];
-        this.numberOfDropsFromAPByReasonPhyPreambleHeaderReceptionFailed = [];
-        this.numberOfDropsFromAPByReasonPhyRxDuringChannelSwitching = [];
-        this.numberOfDropsFromAPByReasonPhyAlreadyReceiving = [];
-        this.numberOfDropsFromAPByReasonPhyAlreadyTransmitting = [];
-        this.numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed = [];
-        this.numberOfDropsFromAPByReasonMacNotForAP = [];
-        this.numberOfDropsFromAPByReasonMacAPToAPFrame = [];
-        this.tcpRTO = [];
-    }
-    return SimulationNode;
-})();
-var Value = (function () {
-    function Value(timestamp, value) {
-        this.timestamp = timestamp;
-        this.value = value;
-    }
-    return Value;
-})();
-var APNode = (function (_super) {
-    __extends(APNode, _super);
-    function APNode() {
-        _super.apply(this, arguments);
-        this.type = "AP";
-    }
-    return APNode;
-})(SimulationNode);
-var STANode = (function (_super) {
-    __extends(STANode, _super);
-    function STANode() {
-        _super.apply(this, arguments);
-        this.type = "STA";
-        this.isAssociated = false;
-    }
-    return STANode;
-})(SimulationNode);
-var SimulationConfiguration = (function () {
-    function SimulationConfiguration() {
-        this.name = "";
-    }
-    return SimulationConfiguration;
-})();
-var Simulation = (function () {
-    function Simulation() {
-        this.nodes = [];
-        this.config = new SimulationConfiguration();
-    }
-    return Simulation;
-})();
-//# sourceMappingURL=main.js.map
+//# sourceMappingURL=index.js.map
