@@ -267,6 +267,9 @@ class SimulationGUI {
         let simulations = this.simulationContainer.getSimulations();
         let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
 
+        if(typeof selectedSimulation == "undefined")
+            return;
+            
         this.updateConfigGUI(selectedSimulation);
 
         if (this.selectedNode < 0 || this.selectedNode >= selectedSimulation.nodes.length)

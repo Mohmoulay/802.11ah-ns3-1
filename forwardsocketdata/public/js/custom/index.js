@@ -224,6 +224,8 @@ var SimulationGUI = (function () {
             return;
         var simulations = this.simulationContainer.getSimulations();
         var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        if (typeof selectedSimulation == "undefined")
+            return;
         this.updateConfigGUI(selectedSimulation);
         if (this.selectedNode < 0 || this.selectedNode >= selectedSimulation.nodes.length)
             this.updateGUIForAll(simulations, selectedSimulation, full);
