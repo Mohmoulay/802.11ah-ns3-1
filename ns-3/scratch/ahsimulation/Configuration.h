@@ -23,13 +23,16 @@ using namespace std;
 struct Configuration {
 	double simulationTime = 500;
 	uint32_t seed = 1;
-	uint32_t Nsta = 2;
-	uint32_t NRawSta = 100;
+	uint32_t Nsta = 96;
+	uint32_t NRawSta = 96;
 	uint32_t SlotFormat = 0;
 	uint32_t NRawSlotCount = 126;
 	uint32_t NRawSlotNum = 5;
 	uint32_t NGroup = 4;
 	uint32_t BeaconInterval = 102400;
+
+	uint32_t MinRTO = 200000;
+
 
 	bool APAlwaysSchedulesForNextSlot = false;
 	string DataMode = "OfdmRate650KbpsBW2MHz";

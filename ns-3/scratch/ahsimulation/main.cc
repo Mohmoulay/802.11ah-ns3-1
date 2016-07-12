@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
     RngSeedManager::SetSeed(config.seed);
 
     if(config.trafficType == "tcpecho") {
-    	Config::SetDefault ("ns3::TcpSocketBase::MinRto",TimeValue(MicroSeconds(config.BeaconInterval * config.NGroup) * 2));
+    	Config::SetDefault ("ns3::TcpSocketBase::MinRto",TimeValue(MicroSeconds(config.MinRTO)));
     }
 
     // setup wifi channel
@@ -38,7 +38,9 @@ int main(int argc, char** argv) {
     configureIPStack();
 
     // prepopulate routing tables and arp cache
-    Ipv4GlobalRoutingHelper::PopulateRoutingTables();
+    cout << "Populating routing tables " << endl;
+    //Ipv4GlobalRoutingHelper::PopulateRoutingTables();
+    cout << "Populating arp cache " << endl;
     PopulateArpCache();
 
     // configure tracing for associations & other metrics
@@ -83,6 +85,7 @@ int main(int argc, char** argv) {
 }
 
 void configureSTANodes(Ssid& ssid) {
+	cout << "Configuring STA Nodes " << endl;
     // create STA nodes
     staNodes.Create(config.Nsta);
 
@@ -115,9 +118,11 @@ void configureSTANodes(Ssid& ssid) {
     StringValue dataRate = StringValue(config.DataMode);
     wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager", "DataMode", dataRate, "ControlMode", dataRate);
 
+    cout << "Installing STA Node devices" << endl;
     // install wifi device
     staDevices = wifi.Install(phy, mac, staNodes);
 
+    cout << "Configuring STA Node mobility" << endl;
     // mobility
     MobilityHelper mobility;
     mobility.SetPositionAllocator("ns3::UniformDiscPositionAllocator",
@@ -127,7 +132,7 @@ void configureSTANodes(Ssid& ssid) {
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(staNodes);
 
-    phy.EnablePcap("stafile", staNodes, 0);
+    //phy.EnablePcap("stafile", staNodes, 0);
 }
 
 void OnAPPhyRxBegin(std::string context, Ptr<const Packet> packet) {
@@ -175,6 +180,7 @@ void OnAPPhyRxDrop(std::string context, Ptr<const Packet> packet, DropReason rea
 }
 
 void configureAPNode(Ssid& ssid) {
+	cout << "Configuring AP Node " << endl;
     // create AP node
     apNodes.Create(1);
 
@@ -234,6 +240,7 @@ void configureAPNode(Ssid& ssid) {
 }
 
 void configureIPStack() {
+	cout << "Configuring IP stack " << endl;
     /* Internet stack*/
     InternetStackHelper stack;
     stack.Install(apNodes);
@@ -244,11 +251,15 @@ void configureIPStack() {
 
     staNodeInterfaces = address.Assign(staDevices);
     apNodeInterfaces = address.Assign(apDevices);
+
+    cout << "IP stack configured " << endl;
 }
 
 void configureNodes() {
+	cout << "Configuring STA Node trace sources" << endl;
     for (int i = 0; i < config.Nsta; i++) {
 
+    	cout << "Hooking up trace sources for STA " << i << endl;
 
         NodeEntry* n = new NodeEntry(i, &stats, staNodes.Get(i), staDevices.Get(i));
         n->SetAssociatedCallback([ = ]{onSTAAssociated(i);});
