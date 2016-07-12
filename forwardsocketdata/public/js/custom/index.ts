@@ -905,7 +905,7 @@ $(document).ready(function () {
         console.log("Unable to connect to server websocket endpoint");
     });
 
-    sock.on("error", function (data: string) {
+    sock.on("fileerror", function (data: string) {
         alert("Error: " + data);
     });
 

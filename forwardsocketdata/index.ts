@@ -143,7 +143,7 @@ export class Program {
     sendSimulationToSocket(stream:string, sock:SocketIO.Socket) {
         let filename = stream + ".nss";
         if(!fs.existsSync(this.getPathForSimulationName(filename))) {
-            sock.emit("error", "Simulation file " + stream + " not found");
+            sock.emit("fileerror", "Simulation file " + stream + " not found");
             return;
         }
             
@@ -210,7 +210,7 @@ export class Program {
         var parts = line.split(';');
         if (parts[1] == "start") {
             this.liveSimulationInitializationLines = [];
-            this.liveSimulationName = parts[parts.length - 1] + ".nss";
+            this.liveSimulationName = parts[11] + ".nss";
 
             try {
                 if (this.liveSimulationName != "") {
