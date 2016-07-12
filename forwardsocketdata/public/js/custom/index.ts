@@ -86,6 +86,10 @@ class SimulationGUI {
         this.ctx.fillStyle = "white";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+        let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+                if(typeof selectedSimulation == "undefined")
+                    return;
+
         this.drawRange();
         this.drawNodes();
 
@@ -103,7 +107,7 @@ class SimulationGUI {
         let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
         if(typeof selectedSimulation == "undefined")
             return;
-            
+
         for (let n of selectedSimulation.nodes) {
             if (n.type == "AP") {
                 for (let i = 1; i <= 10; i++) {

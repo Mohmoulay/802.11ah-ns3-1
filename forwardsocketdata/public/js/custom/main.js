@@ -416,6 +416,9 @@ var SimulationGUI = (function () {
     SimulationGUI.prototype.draw = function () {
         this.ctx.fillStyle = "white";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        if (typeof selectedSimulation == "undefined")
+            return;
         this.drawRange();
         this.drawNodes();
         for (var _i = 0, _a = this.animations; _i < _a.length; _i++) {
