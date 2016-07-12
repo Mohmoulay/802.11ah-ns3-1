@@ -51,4 +51,6 @@ sub run {
 	print "$exec\n";
 
 	system($exec);
+	# allow some time to finish the ./waf build json building
+	sleep 10 
 }

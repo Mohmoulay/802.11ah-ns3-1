@@ -16,7 +16,7 @@
 " --Nsta=96"\
 " --NRawSta=400"\
 " --Nsta=400"\
-" --VisualizerIP=\"192.168.0.247\""\
+" --VisualizerIP=\"localhost\""\
 " --VisualizerPort=7707"\
 " --VisualizerSamplingInterval=1"\
 " --Name=\"test\""
