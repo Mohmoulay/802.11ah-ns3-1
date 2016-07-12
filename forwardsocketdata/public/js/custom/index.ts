@@ -4,11 +4,11 @@
 
 declare namespace io {
     class Options {
-        reconnection:boolean;
-        timeout:number;
+        reconnection: boolean;
+        timeout: number;
     }
     function connect(url: string): SocketIO.Socket;
-    function socket(url:string, opts:Options): SocketIO.Socket;
+    function socket(url: string, opts: Options): SocketIO.Socket;
 }
 
 class SimulationContainer {
@@ -228,7 +228,7 @@ class SimulationGUI {
         this.animations.push(anim);
     }
 
-    onNodeUpdated(stream: string, id: number) {
+    /*onNodeUpdated(stream: string, id: number) {
         // bit of a hack to only update all overview on node stats with id = 0 because otherwise it would hammer the GUI update
         if (id == this.selectedNode || (this.selectedNode == -1 && id == 0)) {
                 this.updateGUI(false);
@@ -239,7 +239,7 @@ class SimulationGUI {
         if (id == this.selectedNode)
             this.updateGUI(true);
     }
-
+*/
     onNodeAssociated(stream: string, id: number) {
         if (stream == this.selectedStream) {
             let n = this.simulationContainer.getSimulation(stream).nodes[id];
@@ -292,7 +292,7 @@ class SimulationGUI {
 
 
         $("#nodeTitle").text("Node " + node.id);
-        $("#nodePosition").text(node.x + "," + node.y);
+        $("#nodePosition").text(node.x.toFixed(2) + "," + node.y.toFixed(2));
         if (node.type == "STA" && !(<STANode>node).isAssociated) {
             $("#nodeAID").text("Not associated");
         }
@@ -308,39 +308,43 @@ class SimulationGUI {
 
             let values = <Value[]>node[prop];
 
-            let el: string = "";
+            if (typeof values != "undefined") {
 
-            if (values.length > 0) {
-                if (simulations.length > 1) {
-                    // compare with avg of others
-                    let sumVal = 0;
-                    let nrVals = 0;
-                    for (let j = 0; j < simulations.length; j++) {
-                        if (simulations[j] != selectedSimulation && this.selectedNode < simulations[j].nodes.length) {
-                            let vals = (<Value[]>simulations[j].nodes[this.selectedNode][prop]);
-                            if (vals.length > 0) {
-                                sumVal += vals[vals.length - 1].value;
-                                nrVals++;
+                let el: string = "";
+
+                if (values.length > 0) {
+                    if (simulations.length > 1) {
+                        // compare with avg of others
+                        let sumVal = 0;
+                        let nrVals = 0;
+                        for (let j = 0; j < simulations.length; j++) {
+                            if (simulations[j] != selectedSimulation && this.selectedNode < simulations[j].nodes.length) {
+                                let vals = (<Value[]>simulations[j].nodes[this.selectedNode][prop]);
+                                if (vals.length > 0) {
+                                    sumVal += vals[vals.length - 1].value;
+                                    nrVals++;
+                                }
                             }
                         }
+
+                        let avg = sumVal / nrVals;
+                        if (values[values.length - 1].value > avg)
+                            el = `<div class='valueup' title='Value has increased compared to average (${avg.toFixed(2)}) of other simulations'>${values[values.length - 1].value}</div>`;
+                        else if (values[values.length - 1].value < avg)
+                            el = `<div class='valuedown' title='Value has decreased compared to average (${avg.toFixed(2)}) of other simulations'>${values[values.length - 1].value}</div>`;
+                        else
+                            el = values[values.length - 1].value + "";
+                    }
+                    else {
+                        el = values[values.length - 1].value + "";
                     }
 
-                    let avg = sumVal / nrVals;
-                    if (values[values.length - 1].value > avg)
-                        el = `<div class='valueup' title='Value has increased compared to average (${avg.toFixed(2)}) of other simulations'>${values[values.length - 1].value}</div>`;
-                    else if (values[values.length - 1].value < avg)
-                        el = `<div class='valuedown' title='Value has decreased compared to average (${avg.toFixed(2)}) of other simulations'>${values[values.length - 1].value}</div>`;
-                    else
-                        el = values[values.length - 1].value + "";
+
+                    $($(propertyElements[i]).find("td").get(1)).empty().append(el);
                 }
-                else {
-                    el = values[values.length - 1].value + "";
-                }
-
-
-                $($(propertyElements[i]).find("td").get(1)).empty().append(el);
-
             }
+            else
+                $($(propertyElements[i]).find("td").get(1)).empty().append("Property not found");
         }
 
         this.deferUpdateCharts(simulations, full);
@@ -539,17 +543,19 @@ class SimulationGUI {
                     if (!showDeltas || values.length < 2) {
                         for (let i = this.currentChart.series[s].data.length; i < values.length; i++) {
                             let val = values[i];
-                            this.currentChart.series[s].addPoint([val.timestamp, val.value], true, false);
+                            this.currentChart.series[s].addPoint([val.timestamp, val.value], false, false);
                         }
                     }
                     else {
                         for (let i = this.currentChart.series[s].data.length; i < values.length; i++) {
                             let beforeVal = values[i - 1];
                             let val = values[i];
-                            this.currentChart.series[s].addPoint([val.timestamp, val.value - beforeVal.value], true, false);
+                            this.currentChart.series[s].addPoint([val.timestamp, val.value - beforeVal.value], false, false);
                         }
                     }
                 }
+
+                this.currentChart.redraw(false);
             }
         }
 
@@ -713,14 +719,14 @@ class SimulationGUI {
 
 
     private updateAverageChart(selectedSimulation: Simulation, showDeltas: boolean) {
-        
+
         let self = this;
         let title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
 
         let averages = [];
         let ranges = [];
         let nrOfValues = (<Value[]>selectedSimulation.nodes[0][this.selectedPropertyForChart]).length;
-        
+
         for (var i = 0; i < nrOfValues; i++) {
 
             let minVal = Number.MAX_VALUE;
@@ -729,19 +735,19 @@ class SimulationGUI {
             let count = 0;
 
             let timestamp = (<Value[]>selectedSimulation.nodes[0][this.selectedPropertyForChart])[i].timestamp;
-            for(let n of selectedSimulation.nodes) {
-                let values =  (<Value[]>n[this.selectedPropertyForChart]);
-                if(i < values.length) {
+            for (let n of selectedSimulation.nodes) {
+                let values = (<Value[]>n[this.selectedPropertyForChart]);
+                if (i < values.length) {
                     let value = values[i].value;
                     sum += value;
                     count++;
-                    if(minVal > value) minVal = value;
-                    if(maxVal < value) maxVal = value;
+                    if (minVal > value) minVal = value;
+                    if (maxVal < value) maxVal = value;
                 }
             }
 
             let avg = sum / count;
-            averages.push([ timestamp, avg ]);
+            averages.push([timestamp, avg]);
             ranges.push([timestamp, minVal, maxVal]);
         }
 
@@ -777,21 +783,21 @@ class SimulationGUI {
                 }]
             },
             legend: { enabled: false },
-               series: [{
-                    name: title,
-                    type:"spline",
-                    data: averages,
-                    zIndex: 1,
-                }, <any>{
-                    name: 'Range',
-                    data: ranges,
-                    type: 'arearange',
-                    zIndex: 0,
-                    lineWidth: 0,
-                    linkedTo: ':previous',
-                    color: Highcharts.getOptions().colors[0],
-                    fillOpacity: 0.3,
-                }],
+            series: [{
+                name: title,
+                type: "spline",
+                data: averages,
+                zIndex: 1,
+            }, <any>{
+                name: 'Range',
+                data: ranges,
+                type: 'arearange',
+                zIndex: 0,
+                lineWidth: 0,
+                linkedTo: ':previous',
+                color: Highcharts.getOptions().colors[0],
+                fillOpacity: 0.3,
+            }],
             credits: false
         });
     }
@@ -829,6 +835,10 @@ class SimulationGUI {
 interface IEntry {
     stream: string;
     line: string;
+}
+interface IEntries {
+    stream: string;
+    lines: string[];
 }
 
 function getParameterByName(name: string, url?: string) {
@@ -868,16 +878,16 @@ $(document).ready(function () {
 
     // connect to the nodejs server with a websocket
     console.log("Connecting to websocket");
-       let opts =  {
+    let opts = {
         reconnection: false,
         timeout: 1000000
-       };
+    };
 
-    
+
     let hasConnected = false;
     var sock: SocketIO.Socket = io.connect("http://" + window.location.host + "/");
     sock.on("connect", function (data) {
-        if(hasConnected) // only connect once
+        if (hasConnected) // only connect once
             return;
 
         hasConnected = true
@@ -902,6 +912,29 @@ $(document).ready(function () {
     sock.on("entry", function (data: IEntry) {
         evManager.onReceive(data);
         //console.log("Received " + data.stream + ": " + data.line);
+    });
+
+    sock.on("bulkentry", function (data: IEntries) {
+        evManager.onReceiveBulk(data);
+        //console.log("Received " + data.stream + ": " + data.line);
+    });
+
+    $(canvas).keydown(ev => {
+        if (!sim.simulationContainer.hasSimulations())
+            return;
+
+        if (ev.keyCode == 37) {
+            // left
+            if (sim.selectedNode - 1 >= 0)
+                sim.changeNodeSelection(sim.selectedNode-1);
+
+        }
+        else if (ev.keyCode == 39) {
+            // right
+            if (sim.selectedNode + 1 < sim.simulationContainer.getSimulation(sim.selectedStream).nodes.length) {
+                sim.changeNodeSelection(sim.selectedNode+1);
+            }
+        }
     });
 
     $(canvas).click(ev => {
@@ -931,7 +964,6 @@ $(document).ready(function () {
         $(".nodeProperty").removeClass("selected");
         $(this).addClass("selected");
         sim.selectedPropertyForChart = $(this).attr("data-property");
-
         sim.updateGUI(true);
     });
 

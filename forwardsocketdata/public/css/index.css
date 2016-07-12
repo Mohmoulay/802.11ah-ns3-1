@@ -4,12 +4,13 @@ body{
 
 .canvasContainer {
     position: relative;
-    width:800px;
-    height:800px;
+    width:500px;
+    height:500px;
 }
 
 .canvasContainer > canvas {
     position: absolute;
+     outline: none !important; /*remove focus border */
 }
 
 .nodeProperty {
@@ -34,14 +35,14 @@ body{
     padding:2px !important;
 }
 
-.col-fixed-800{
-    width:800px;
+.col-fixed-500{
+    width:500px;
     position:fixed;
     height:100%;
 }
 
-.col-offset-800 {
-    padding-left:815px !important;
+.col-offset-500 {
+    padding-left:515px !important;
 }
 
 #rdbStreams > input {
