@@ -178,7 +178,7 @@ var Program = (function () {
         var parts = line.split(';');
         if (parts[1] == "start") {
             this.liveSimulationInitializationLines = [];
-            this.liveSimulationName = parts[11] + ".nss";
+            this.liveSimulationName = parts[13] + ".nss";
             try {
                 if (this.liveSimulationName != "") {
                     fs.unlinkSync(this.getPathForSimulationName(this.liveSimulationName));

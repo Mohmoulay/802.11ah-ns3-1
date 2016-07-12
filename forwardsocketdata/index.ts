@@ -210,7 +210,7 @@ export class Program {
         var parts = line.split(';');
         if (parts[1] == "start") {
             this.liveSimulationInitializationLines = [];
-            this.liveSimulationName = parts[11] + ".nss";
+            this.liveSimulationName = parts[13] + ".nss";
 
             try {
                 if (this.liveSimulationName != "") {
