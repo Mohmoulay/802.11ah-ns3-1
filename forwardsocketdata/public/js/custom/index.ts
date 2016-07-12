@@ -101,6 +101,9 @@ class SimulationGUI {
         this.ctx.strokeStyle = "#CCC";
 
         let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        if(typeof selectedSimulation == "undefined")
+            return;
+            
         for (let n of selectedSimulation.nodes) {
             if (n.type == "AP") {
                 for (let i = 1; i <= 10; i++) {
@@ -483,12 +486,12 @@ class SimulationGUI {
 
                 if (!showDeltas) {
                     for (let i = 0; i < values.length; i++)
-                        selectedData.push({ x: values[i].timestamp, y: values[i][this.selectedPropertyForChart] });
+                        selectedData.push([values[i].timestamp,values[i][this.selectedPropertyForChart] ]);
                 }
                 else {
-                    selectedData.push({ x: values[0].timestamp, y: values[0][this.selectedPropertyForChart] });
+                    selectedData.push([values[0].timestamp, values[0][this.selectedPropertyForChart] ]);
                     for (let i = 1; i < values.length; i++)
-                        selectedData.push({ x: values[i].timestamp, y: values[i][this.selectedPropertyForChart] - values[i - 1][this.selectedPropertyForChart] });
+                        selectedData.push([ values[i].timestamp, values[i][this.selectedPropertyForChart] - values[i - 1][this.selectedPropertyForChart] ]);
                 }
 
                 series.push({

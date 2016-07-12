@@ -428,6 +428,8 @@ var SimulationGUI = (function () {
             return;
         this.ctx.strokeStyle = "#CCC";
         var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        if (typeof selectedSimulation == "undefined")
+            return;
         for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
             var n = _a[_i];
             if (n.type == "AP") {
@@ -747,12 +749,12 @@ var SimulationGUI = (function () {
                 var selectedData = [];
                 if (!showDeltas) {
                     for (var i_1 = 0; i_1 < values.length; i_1++)
-                        selectedData.push({ x: values[i_1].timestamp, y: values[i_1][this.selectedPropertyForChart] });
+                        selectedData.push([values[i_1].timestamp, values[i_1][this.selectedPropertyForChart]]);
                 }
                 else {
-                    selectedData.push({ x: values[0].timestamp, y: values[0][this.selectedPropertyForChart] });
+                    selectedData.push([values[0].timestamp, values[0][this.selectedPropertyForChart]]);
                     for (var i_2 = 1; i_2 < values.length; i_2++)
-                        selectedData.push({ x: values[i_2].timestamp, y: values[i_2][this.selectedPropertyForChart] - values[i_2 - 1][this.selectedPropertyForChart] });
+                        selectedData.push([values[i_2].timestamp, values[i_2][this.selectedPropertyForChart] - values[i_2 - 1][this.selectedPropertyForChart]]);
                 }
                 series.push({
                     name: this.simulationContainer.getStream(i),
