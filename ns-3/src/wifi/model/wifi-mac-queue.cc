@@ -103,7 +103,7 @@ WifiMacQueue::Enqueue (Ptr<const Packet> packet, const WifiMacHeader &hdr)
   Cleanup ();
   if (m_size == m_maxSize)
     {
-	  m_packetdropped(packet, DropReason::MacQueueSizeExceeded);
+	  m_packetdropped(packet->Copy(), DropReason::MacQueueSizeExceeded);
       return;
     }
 
@@ -130,9 +130,8 @@ WifiMacQueue::Cleanup (void)
         }
       else
         {
+          m_packetdropped(i->packet->Copy(), DropReason::MacQueueDelayExceeded);
           i = m_queue.erase (i);
-
-          m_packetdropped(i->packet, DropReason::MacQueueDelayExceeded);
 
           n++;
         }

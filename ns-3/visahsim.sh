@@ -14,7 +14,7 @@
 " --MinRTO=3276800"\
 " --APAlwaysSchedulesForNextSlot=true"\
 " --NRawSta=96"\
-" --Nsta=1"\
+" --Nsta=96"\
 " --VisualizerIP=\"192.168.0.247\""\
 " --VisualizerPort=7707"\
 " --VisualizerSamplingInterval=1"\
