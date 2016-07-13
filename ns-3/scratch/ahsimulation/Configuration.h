@@ -38,6 +38,8 @@ struct Configuration {
 
 
 	bool APAlwaysSchedulesForNextSlot = false;
+	uint32_t APScheduleTransmissionForNextSlotIfLessThan = 2000;
+
 	string DataMode = "OfdmRate650KbpsBW2MHz";
 	double datarate = 0.65;
 	double bandWidth = 2;

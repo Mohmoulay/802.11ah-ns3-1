@@ -501,6 +501,7 @@ DcfManager::RequestAccess (DcfState *state)
   //Deny access if in sleep mode
   if (m_sleeping)
     {
+	  std::cout << "not requesting access because sleeping" << std::endl;
       return;
     }
   UpdateBackoff ();
@@ -578,6 +579,13 @@ DcfManager::DoGrantAccess (void)
     }
 }
 
+
+void
+DcfManager::RawStart(Time start, Time duration) {
+	m_rawSlotStart = start;
+	m_rawSlotDuration = duration;
+}
+
 void
 DcfManager::AccessTimeout (void)
 {
@@ -640,7 +648,28 @@ Time
 DcfManager::GetBackoffEndFor (DcfState *state)
 {
 	MY_DEBUG("Calculating backoff end, start is " << GetBackoffStartFor (state).GetMicroSeconds() << ", duration of backoff is (slots: " << state->GetBackoffSlots() << ", slot duration: " << m_slotTimeUs << "), total duration: " << state->GetBackoffSlots () * m_slotTimeUs)
-  return GetBackoffStartFor (state) + MicroSeconds (state->GetBackoffSlots () * m_slotTimeUs);
+    Time backOffEnd = GetBackoffStartFor (state) + MicroSeconds (state->GetBackoffSlots () * m_slotTimeUs);
+
+	if(m_rawSlotStart + m_rawSlotDuration == Time(0)) // if not set
+		return backOffEnd;
+
+	// don't schedule the backoff end beyond the raw slot period
+	if(backOffEnd > m_rawSlotStart + m_rawSlotDuration) {
+
+		std::cout << "Backoff end was calculated beyond the slot duration, adjusting backoff end (backoffend: " << backOffEnd.GetMicroSeconds()
+				<< ", " << "Raw slot end: " << (m_rawSlotStart + m_rawSlotDuration).GetMicroSeconds() << ")" <<  std::endl;
+		Time adjusted = backOffEnd - (m_rawSlotStart + m_rawSlotDuration);
+
+		if(adjusted <= GetBackoffStartFor (state)) {
+			// eh can't adjust it, the start of the backoff is already later
+			// nothing to be done now, let it drop
+			return backOffEnd;
+		}
+		else
+			return adjusted;
+	}
+	else
+		return backOffEnd;
 }
 
 void

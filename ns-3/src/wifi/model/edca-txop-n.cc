@@ -750,7 +750,7 @@ EdcaTxopN::NotifySleep (void)
   //std::cout << Simulator::Now().GetMicroSeconds() << " EDCA WENT TO SLEEP" << std::endl;
   if (m_currentPacket != 0)
     {
-	  std::cout << "Packet put back into queue" << std::endl;
+	  //std::cout << "Packet put back into queue" << std::endl;
       m_queue->PushFront (m_currentPacket, m_currentHdr);
       m_currentPacket = 0;
     }

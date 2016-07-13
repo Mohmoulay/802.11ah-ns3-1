@@ -179,6 +179,25 @@ void OnAPPhyRxDrop(std::string context, Ptr<const Packet> packet, DropReason rea
 
 }
 
+void OnAPPacketToTransmitReceived(string context, Mac48Address to, Ptr<const Packet> packet, bool isScheduled, bool isDuringSlotOfSTA, Time timeLeftInSlot) {
+
+	int staId = -1;
+	for(int i = 0; i < staNodeInterfaces.GetN(); i++) {
+		if(staNodes.Get(i)->GetDevice(0)->GetAddress() == to) {
+			staId = i;
+			break;
+		}
+	}
+	if(staId != -1) {
+		if(isScheduled)
+			stats.get(staId).NumberOfAPScheduledPacketForNodeInNextSlot++;
+		else {
+			stats.get(staId).NumberOfAPSentPacketForNodeImmediately++;
+			stats.get(staId).APTotalTimeRemainingWhenSendingPacketInSameSlot += timeLeftInSlot;
+		}
+	}
+}
+
 void configureAPNode(Ssid& ssid) {
 	cout << "Configuring AP Node " << endl;
     // create AP node
@@ -194,9 +213,9 @@ void configureAPNode(Ssid& ssid) {
             "NRawGroupStas", UintegerValue(NGroupStas),
             "NRawStations", UintegerValue(config.NRawSta),
             "SlotFormat", UintegerValue(config.SlotFormat),
-            "SlotCrossBoundary", UintegerValue(0),
             "SlotDurationCount", UintegerValue(config.NRawSlotCount),
             "SlotNum", UintegerValue(config.NRawSlotNum),
+			"ScheduleTransmissionForNextSlotIfLessThan", TimeValue(MicroSeconds(config.APScheduleTransmissionForNextSlotIfLessThan)),
 			"AlwaysScheduleForNextSlot", BooleanValue(config.APAlwaysSchedulesForNextSlot));
 
     // setup physical layer
@@ -233,7 +252,7 @@ void configureAPNode(Ssid& ssid) {
 
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeCallback(&OnAPPhyRxBegin));
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDropWithReason", MakeCallback(&OnAPPhyRxDrop));
-
+	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::ApWifiMac/PacketToTransmitReceivedFromUpperLayer", MakeCallback(&OnAPPacketToTransmitReceived));
 
 	phy.EnablePcap("apfile", apNodes, 0);
 

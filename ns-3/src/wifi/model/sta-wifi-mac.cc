@@ -828,11 +828,13 @@ void
 StaWifiMac::EnsureQueuesKeepDataLongEnough(S1gBeaconHeader& beacon) {
 	Time entireCycle = MicroSeconds(beacon.GetTIM().GetDTIMPeriod() * beacon.GetBeaconCompatibility().GetBeaconInterval());
 
-	m_dca->GetQueue()->SetMaxDelay(entireCycle * 2);
-	m_edca.find (AC_VO)->second->GetEdcaQueue()->SetMaxDelay(entireCycle * 2);
-	m_edca.find (AC_VI)->second->GetEdcaQueue()->SetMaxDelay(entireCycle * 2);
-	m_edca.find (AC_BE)->second->GetEdcaQueue()->SetMaxDelay(entireCycle * 2);
-	m_edca.find (AC_BK)->second->GetEdcaQueue()->SetMaxDelay(entireCycle * 2);
+	// TODO make this an attribute instead of magic number
+	Time duration = entireCycle * 10;
+	m_dca->GetQueue()->SetMaxDelay(duration);
+	m_edca.find (AC_VO)->second->GetEdcaQueue()->SetMaxDelay(duration);
+	m_edca.find (AC_VI)->second->GetEdcaQueue()->SetMaxDelay(duration);
+	m_edca.find (AC_BE)->second->GetEdcaQueue()->SetMaxDelay(duration);
+	m_edca.find (AC_BK)->second->GetEdcaQueue()->SetMaxDelay(duration);
 }
 
 void
@@ -888,6 +890,8 @@ StaWifiMac::HandleS1gSleepFromSTATIMGroupBeacon(S1gBeaconHeader& beacon) {
 
 	Simulator::Schedule(slotStartOffset, &StaWifiMac::OnRAWSlotStart, this);
 	Simulator::Schedule(endOfSlotTime, &StaWifiMac::OnRAWSlotEnd, this);
+
+	m_dcfManager->RawStart(Simulator::Now() + slotStartOffset, endOfSlotTime);
 }
 
 void
@@ -1026,6 +1030,7 @@ StaWifiMac::OnRAWSlotStart() {
 	LOG_SLEEP(Simulator::Now().GetMicroSeconds() <<  " RAW SLOT START ");
 	LOG_SLEEP("Is there pending data to be transmitted: " << this->IsTherePendingOutgoingData())
 	GrantDCAAccess();
+
 }
 
 void

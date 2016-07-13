@@ -97,7 +97,10 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 			std::to_string(stats.get(i).NumberOfMACTxDataFailed),
 			this->SerializeDropReason(stats.get(i).NumberOfDropsByReason),
 			this->SerializeDropReason(stats.get(i).NumberOfDropsByReasonAtAP),
-			std::to_string(stats.get(i).TCPRTOValue.GetMicroSeconds())
+			std::to_string(stats.get(i).TCPRTOValue.GetMicroSeconds()),
+			std::to_string(stats.get(i).NumberOfAPScheduledPacketForNodeInNextSlot),
+			std::to_string(stats.get(i).NumberOfAPSentPacketForNodeImmediately),
+			std::to_string(stats.get(i).getAverageRemainingWhenAPSendingPacketInSameSlot().GetMicroSeconds()),
 		});
 	}
 }

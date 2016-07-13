@@ -263,6 +263,9 @@ public:
   DcfManager ();
   ~DcfManager ();
 
+
+  void RawStart(Time start, Time duration);
+
   /**
    * Set up listener for Phy events.
    *
@@ -502,6 +505,8 @@ private:
 
   void DoRestartAccessTimeoutIfNeeded (void);
 
+
+
   /**
    * Called when access timeout should occur
    * (e.g. backoff procedure expired).
@@ -548,6 +553,10 @@ private:
   Time m_sifs;
   PhyListener* m_phyListener;
   LowDcfListener* m_lowListener;
+
+
+  Time m_rawSlotStart;
+  Time m_rawSlotDuration;
 };
 
 } //namespace ns3

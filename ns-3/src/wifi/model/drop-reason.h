@@ -24,7 +24,6 @@ namespace ns3 {
 		MacAPToAPFrame,
 		MacQueueDelayExceeded,
 		MacQueueSizeExceeded
-
 	};
 
 }

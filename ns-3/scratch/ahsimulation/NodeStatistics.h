@@ -56,6 +56,11 @@ public:
     long NumberOfMACTxRTSFailed = 0;
     long NumberOfMACTxDataFailed = 0;
 
+    long NumberOfAPScheduledPacketForNodeInNextSlot = 0;
+    long NumberOfAPSentPacketForNodeImmediately = 0;
+    Time APTotalTimeRemainingWhenSendingPacketInSameSlot;
+
+    Time getAverageRemainingWhenAPSendingPacketInSameSlot();
 };
 
 #endif /* NODESTATISTICS_H */

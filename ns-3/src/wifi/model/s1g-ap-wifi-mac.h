@@ -48,7 +48,8 @@ class S1gApWifiMac : public RegularWifiMac
 public:
   static TypeId GetTypeId (void);
 
- TracedCallback<S1gBeaconHeader, RPS::RawAssignment> m_transmitBeaconTrace;
+	typedef void (* PacketToTransmitReceivedFromUpperLayerCallback)
+		  (Ptr<const Packet> packet, Mac48Address to, bool isScheduled, bool isDuringSlotOfSTA, Time timeLeftInSlot);
 
  typedef void (* S1gBeaconTracedCallback)
       (S1gBeaconHeader beacon, RPS::RawAssignment raw);
@@ -242,6 +243,12 @@ private:
   virtual void DoDispose (void);
   virtual void DoInitialize (void);
 
+
+  TracedCallback<S1gBeaconHeader, RPS::RawAssignment> m_transmitBeaconTrace;
+
+  TracedCallback<Ptr<const Packet>, Mac48Address, bool, bool, Time> m_packetToTransmitReceivedFromUpperLayer;
+
+
   uint16_t  AuthenThreshold;
   uint32_t m_totalStaNum;
   uint32_t m_rawGroupInterval;
@@ -274,6 +281,8 @@ private:
   EventId m_beaconEvent;                     //!< Event to generate one beacon
   Ptr<UniformRandomVariable> m_beaconJitter; //!< UniformRandomVariable used to randomize the time of the first beacon
   bool m_enableBeaconJitter;                 //!< Flag if the first beacon should be generated at random time
+
+  Time m_scheduleTransmissionForNextSlotIfLessThan;
 };
 
 } //namespace ns3

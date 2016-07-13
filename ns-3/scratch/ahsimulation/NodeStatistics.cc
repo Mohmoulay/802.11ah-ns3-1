@@ -25,3 +25,11 @@ double NodeStatistics::getGoodputKbit() {
 	else
 		return -1;
 }
+
+
+Time NodeStatistics::getAverageRemainingWhenAPSendingPacketInSameSlot() {
+	if(NumberOfAPSentPacketForNodeImmediately == 0)
+		return Time();
+	else
+		return APTotalTimeRemainingWhenSendingPacketInSameSlot / NumberOfAPSentPacketForNodeImmediately;
+}

@@ -38,8 +38,8 @@ void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 }
 
 void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
-	cout << "[" << this->aId << "] " << Simulator::Now().GetMicroSeconds()
-			<< "µs " << "Begin Tx " << packet->GetUid() << endl;
+	//cout << "[" << this->aId << "] " << Simulator::Now().GetMicroSeconds()
+			//<< "µs " << "Begin Tx " << packet->GetUid() << endl;
 	txMap.emplace(packet->GetUid(), Simulator::Now());
 
 	if (txMap.size() > 1)
@@ -55,8 +55,8 @@ void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
-	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
-	<< "End Tx " << packet->GetUid() << endl;
+	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+	//<< "End Tx " << packet->GetUid() << endl;
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
 		Time oldTime = txMap[packet->GetUid()];

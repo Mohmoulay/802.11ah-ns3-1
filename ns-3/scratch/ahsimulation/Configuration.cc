@@ -18,6 +18,7 @@ Configuration::Configuration(int argc, char** argv) {
 
     cmd.AddValue("BeaconInterval", "Beacon interval time in us", BeaconInterval);
     cmd.AddValue("APAlwaysSchedulesForNextSlot", "AP Always schedules for next slot (true/false)", APAlwaysSchedulesForNextSlot);
+    cmd.AddValue("APScheduleTransmissionForNextSlotIfLessThan", "AP schedules transmission for next slot if slot time is less than (microseconds)", APScheduleTransmissionForNextSlotIfLessThan);
 
     cmd.AddValue("TrafficInterval", "Traffic interval time in ms", trafficInterval);
     cmd.AddValue("TrafficPacketSize", "Size of packets to send in bytes", trafficPacketSize);

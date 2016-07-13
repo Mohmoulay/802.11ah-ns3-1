@@ -39,12 +39,23 @@ TypeId S1gApWifiMac::GetTypeId(void) {
 							"to be distributed between 0 and the BeaconInterval.",
 					StringValue("ns3::UniformRandomVariable"),
 					MakePointerAccessor(&S1gApWifiMac::m_beaconJitter),
-					MakePointerChecker<UniformRandomVariable>()).AddAttribute(
+					MakePointerChecker<UniformRandomVariable>())
+
+					.AddAttribute(
 					"EnableBeaconJitter",
 					"If beacons are enabled, whether to jitter the initial send event.",
 					BooleanValue(false),
 					MakeBooleanAccessor(&S1gApWifiMac::m_enableBeaconJitter),
 					MakeBooleanChecker())
+
+					.AddAttribute(
+										"ScheduleTransmissionForNextSlotIfLessThan",
+										"If the AP is trying to send the transmission in the same slot to the STA, make sure to have at least x time remaining inside the slot",
+										TimeValue(MilliSeconds(2)),
+										MakeTimeAccessor(&S1gApWifiMac::m_scheduleTransmissionForNextSlotIfLessThan),
+										MakeTimeChecker())
+
+
 					.AddAttribute("BeaconGeneration",
 					"Whether or not beacons are generated.", BooleanValue(true),
 					MakeBooleanAccessor(&S1gApWifiMac::SetBeaconGeneration,
@@ -65,30 +76,47 @@ TypeId S1gApWifiMac::GetTypeId(void) {
 					UintegerValue(100),
 					MakeUintegerAccessor(&S1gApWifiMac::GetTotalStaNum,
 							&S1gApWifiMac::SetTotalStaNum),
-					MakeUintegerChecker<uint32_t>()).AddAttribute("SlotFormat",
+					MakeUintegerChecker<uint32_t>())
+					.AddAttribute("SlotFormat",
 					"Slot format", UintegerValue(1),
 					MakeUintegerAccessor(&S1gApWifiMac::GetSlotFormat,
 							&S1gApWifiMac::SetSlotFormat),
-					MakeUintegerChecker<uint32_t>()).AddAttribute(
+					MakeUintegerChecker<uint32_t>())
+					.AddAttribute(
 					"SlotCrossBoundary", "cross slot boundary or not",
-					UintegerValue(1),
+					UintegerValue(0),
 					MakeUintegerAccessor(&S1gApWifiMac::GetSlotCrossBoundary,
 							&S1gApWifiMac::SetSlotCrossBoundary),
-					MakeUintegerChecker<uint32_t>()).AddAttribute(
+					MakeUintegerChecker<uint32_t>())
+
+					.AddAttribute(
 					"SlotDurationCount", "slot duration count",
 					UintegerValue(1000),
 					MakeUintegerAccessor(&S1gApWifiMac::GetSlotDurationCount,
 							&S1gApWifiMac::SetSlotDurationCount),
-					MakeUintegerChecker<uint32_t>()).AddAttribute("SlotNum",
+					MakeUintegerChecker<uint32_t>())
+
+					.AddAttribute("SlotNum",
 					"Number of slot", UintegerValue(2),
 					MakeUintegerAccessor(&S1gApWifiMac::GetSlotNum,
 							&S1gApWifiMac::SetSlotNum),
-					MakeUintegerChecker<uint32_t>()).AddTraceSource(
+					MakeUintegerChecker<uint32_t>())
+
+					.AddTraceSource(
 					"S1gBeaconBroadcasted",
 					"Fired when a beacon is transmitted",
-					MakeTraceSourceAccessor(
-							&S1gApWifiMac::m_transmitBeaconTrace),
-					"ns3::S1gApWifiMac::S1gBeaconTracedCallback");
+					MakeTraceSourceAccessor(&S1gApWifiMac::m_transmitBeaconTrace),
+					"ns3::S1gApWifiMac::S1gBeaconTracedCallback")
+
+
+					.AddTraceSource(
+					"PacketToTransmitReceivedFromUpperLayer",
+					"Fired when packet is received from the upper layer",
+					MakeTraceSourceAccessor(&S1gApWifiMac::m_packetToTransmitReceivedFromUpperLayer),
+					"ns3::S1gApWifiMac::PacketToTransmitReceivedFromUpperLayerCallback")
+
+
+					;
 
 	return tid;
 }
@@ -347,7 +375,8 @@ void S1gApWifiMac::Enqueue(Ptr<const Packet> packet, Mac48Address to,
 
 
 		bool schedulePacketForNextSlot = true;
-
+		Time timeRemaining = Time(0);
+		bool inSlot = false;
 		if(!m_alwaysScheduleForNextSlot && staIsActiveDuringCurrentCycle[aId-1]) {
 			// station is active in its respective slot until at least the next DTIM beacon is sent
 			// calculate if we are still inside the appropriate slot and transmit immediately if we are
@@ -359,12 +388,21 @@ void S1gApWifiMac::Enqueue(Ptr<const Packet> packet, Mac48Address to,
 				if(currentOffsetSinceLastBeacon >= slotTimeOffset &&
 				   currentOffsetSinceLastBeacon <= slotTimeOffset + slotDuration) {
 					// still inside the slot too!, send packet immediately, if there is still enough time
-					Time timeRemaining = slotTimeOffset + slotDuration - currentOffsetSinceLastBeacon;
-					schedulePacketForNextSlot = false;
-					LOG_TRAFFIC(Simulator::Now().GetMicroSeconds() << " Data for [" << aId << "] is transmitted immediately because AP can still get it out during the STA slot, in which the STA is actively listening, there's " << timeRemaining.GetMicroSeconds() << "µs remaining until slot is over");
+					timeRemaining = slotTimeOffset + slotDuration - currentOffsetSinceLastBeacon;
+					inSlot = true;
+					if(timeRemaining > m_scheduleTransmissionForNextSlotIfLessThan) {
+						schedulePacketForNextSlot = false;
+						LOG_TRAFFIC(Simulator::Now().GetMicroSeconds() << " Data for [" << aId << "] is transmitted immediately because AP can still get it out during the STA slot, in which the STA is actively listening, there's " << timeRemaining.GetMicroSeconds() << "µs remaining until slot is over");
+					}
+					else {
+						std::cout << "AP can't send the tranmission directly, not enough time left (" << timeRemaining.GetMicroSeconds() << "µs while " << m_scheduleTransmissionForNextSlotIfLessThan.GetMicroSeconds() << " was required " << std::endl;
+					}
+
 				}
 			}
 		}
+
+		m_packetToTransmitReceivedFromUpperLayer(packet, to, schedulePacketForNextSlot, inSlot, timeRemaining);
 
 		if(schedulePacketForNextSlot) {
 			int remainingBeacons = 0;
