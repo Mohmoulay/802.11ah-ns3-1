@@ -58,6 +58,8 @@ class NodeValue {
     numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed:number = 0;
     numberOfDropsByReasonMacNotForAP:number = 0;
     numberOfDropsByReasonMacAPToAPFrame:number = 0;
+    numberOfDropsByReasonMacQueueDelayExceeded:number = 0;
+    numberOfDropsByReasonMacQeueuSizeExceeded:number = 0;
 
     numberOfDropsFromAPByReasonUnknown:number = 0;
     numberOfDropsFromAPByReasonPhyInSleepMode:number = 0;
@@ -70,6 +72,9 @@ class NodeValue {
     numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed:number = 0;
     numberOfDropsFromAPByReasonMacNotForAP:number = 0;
     numberOfDropsFromAPByReasonMacAPToAPFrame:number = 0;
+
+    //numberOfDropsFromAPByReasonMacQueueDelayExceeded:number = 0;
+    //numberOfDropsFromAPByReasonMacQeueuSizeExceeded:number = 0;
 
     tcpRTO: number = 0;
 }

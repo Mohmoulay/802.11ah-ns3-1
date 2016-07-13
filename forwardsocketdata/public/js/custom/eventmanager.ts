@@ -229,6 +229,8 @@ class EventManager {
             nodeVal.numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed = parseInt(dropParts[8]);
             nodeVal.numberOfDropsByReasonMacNotForAP = parseInt(dropParts[9]);
             nodeVal.numberOfDropsByReasonMacAPToAPFrame = parseInt(dropParts[10]);
+            nodeVal.numberOfDropsByReasonMacQueueDelayExceeded = parseInt(dropParts[11]);
+            nodeVal.numberOfDropsByReasonMacQeueuSizeExceeded = parseInt(dropParts[12]);
         }
 
         if (typeof numberOfDropsByReason != "undefined") {
@@ -245,6 +247,7 @@ class EventManager {
             nodeVal.numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed = parseInt(dropParts[8]);
             nodeVal.numberOfDropsFromAPByReasonMacNotForAP = parseInt(dropParts[9]);
             nodeVal.numberOfDropsFromAPByReasonMacAPToAPFrame = parseInt(dropParts[10]);
+
         }
 
         nodeVal.tcpRTO = tcpRtoValue;

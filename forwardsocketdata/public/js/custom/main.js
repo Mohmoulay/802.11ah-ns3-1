@@ -316,6 +316,8 @@ var EventManager = (function () {
             nodeVal.numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed = parseInt(dropParts[8]);
             nodeVal.numberOfDropsByReasonMacNotForAP = parseInt(dropParts[9]);
             nodeVal.numberOfDropsByReasonMacAPToAPFrame = parseInt(dropParts[10]);
+            nodeVal.numberOfDropsByReasonMacQueueDelayExceeded = parseInt(dropParts[11]);
+            nodeVal.numberOfDropsByReasonMacQeueuSizeExceeded = parseInt(dropParts[12]);
         }
         if (typeof numberOfDropsByReason != "undefined") {
             var dropParts = numberOfDropsByReasonAtAP.split(',');
@@ -495,7 +497,11 @@ var SimulationGUI = (function () {
                 var values = n.values;
                 if (values.length > 0) {
                     var value = values[values.length - 1][this.selectedPropertyForChart];
-                    var alpha = (value - min) / (max - min);
+                    var alpha;
+                    if (max - min != 0)
+                        alpha = (value - min) / (max - min);
+                    else
+                        alpha = 1;
                     if (type == "LOWER_IS_BETTER")
                         return this.heatMapPalette.getColorAt(1 - alpha).toString();
                     else
@@ -736,7 +742,9 @@ var SimulationGUI = (function () {
     SimulationGUI.prototype.updateCharts = function (simulations, full) {
         var showDeltas = $("#chkShowDeltas").prop("checked");
         var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
-        if (this.selectedNode == -1)
+        if (selectedSimulation.nodes.length <= 0)
+            return;
+        if (this.selectedNode == -1 || this.selectedNode >= selectedSimulation.nodes.length)
             this.updateChartsForAll(selectedSimulation, simulations, full, showDeltas);
         else
             this.updateChartsForNode(selectedSimulation, simulations, full, showDeltas);
@@ -1246,6 +1254,8 @@ var NodeValue = (function () {
         this.numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed = 0;
         this.numberOfDropsByReasonMacNotForAP = 0;
         this.numberOfDropsByReasonMacAPToAPFrame = 0;
+        this.numberOfDropsByReasonMacQueueDelayExceeded = 0;
+        this.numberOfDropsByReasonMacQeueuSizeExceeded = 0;
         this.numberOfDropsFromAPByReasonUnknown = 0;
         this.numberOfDropsFromAPByReasonPhyInSleepMode = 0;
         this.numberOfDropsFromAPByReasonPhyNotEnoughSignalPower = 0;
@@ -1257,6 +1267,8 @@ var NodeValue = (function () {
         this.numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed = 0;
         this.numberOfDropsFromAPByReasonMacNotForAP = 0;
         this.numberOfDropsFromAPByReasonMacAPToAPFrame = 0;
+        //numberOfDropsFromAPByReasonMacQueueDelayExceeded:number = 0;
+        //numberOfDropsFromAPByReasonMacQeueuSizeExceeded:number = 0;
         this.tcpRTO = 0;
     }
     return NodeValue;
