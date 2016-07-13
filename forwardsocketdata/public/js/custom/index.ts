@@ -169,7 +169,12 @@ class SimulationGUI {
                 if (values.length > 0) {
                     let value = values[values.length - 1][this.selectedPropertyForChart];
 
-                    let alpha = (value - min) / (max - min);
+                    let alpha:number;
+                    if(max - min != 0) 
+                        alpha = (value - min) / (max - min);
+                    else
+                        alpha = 1;
+                        
                     if (type == "LOWER_IS_BETTER")
                         return this.heatMapPalette.getColorAt(1 - alpha).toString();
                     else
@@ -468,7 +473,10 @@ class SimulationGUI {
         let showDeltas: boolean = $("#chkShowDeltas").prop("checked");
         let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
 
-        if (this.selectedNode == -1)
+        if(selectedSimulation.nodes.length <= 0)
+            return;
+
+        if (this.selectedNode == -1 || this.selectedNode >= selectedSimulation.nodes.length)
             this.updateChartsForAll(selectedSimulation, simulations, full, showDeltas);
         else
             this.updateChartsForNode(selectedSimulation, simulations, full, showDeltas);
