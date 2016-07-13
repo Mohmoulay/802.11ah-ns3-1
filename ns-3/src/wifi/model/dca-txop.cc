@@ -282,6 +282,7 @@ DcaTxop::Queue (Ptr<const Packet> packet, const WifiMacHeader &hdr)
   m_stationManager->PrepareForQueue (hdr.GetAddr1 (), &hdr,
                                      packet, fullPacketSize);
   m_queue->Enqueue (packet, hdr);
+  if(DEBUG_TRACK_PACKETS) std::cout << "Packet enqueued" << std::endl;
   StartAccessIfNeeded ();
 }
 
@@ -296,6 +297,7 @@ DcaTxop::AssignStreams (int64_t stream)
 void
 DcaTxop::AccessAllowedIfRaw (bool allowed)
 {
+	if(DEBUG_TRACK_PACKETS) std::cout << " Setting RAW Access for DCA " << allowed << std::endl;
   AccessIfRaw = allowed;
 }
     
@@ -303,13 +305,20 @@ void
 DcaTxop::RestartAccessIfNeeded (void)
 {
   NS_LOG_FUNCTION (this);
-  if ((m_currentPacket != 0
-       || !m_queue->IsEmpty ())
+
+  bool hasData = (m_currentPacket != 0
+	       || !m_queue->IsEmpty ());
+  if (hasData
       && !m_dcf->IsAccessRequested ()
       && AccessIfRaw)
     {
+	  if(DEBUG_TRACK_PACKETS) std::cout << Simulator::Now().GetMicroSeconds() << " DCA requesting access " << std::endl;
       m_manager->RequestAccess (m_dcf);
     }
+  else {
+	  if(DEBUG_TRACK_PACKETS) std::cout << Simulator::Now().GetMicroSeconds() <<  "Wont request access because " <<
+ 			  "hasData: " <<  hasData << ", access requested: " << m_dcf->IsAccessRequested() << ", access if raw: " << AccessIfRaw << std::endl;
+   }
 }
 
 void
@@ -341,13 +350,17 @@ void
 DcaTxop::RawStart (void)
 {
   NS_LOG_FUNCTION (this);
-  m_dcf->RawStart ();
-  m_stationManager->RawStart ();
+  //m_dcf->RawStart ();
+  //m_stationManager->RawStart ();
 
-  auto nrOfSlots = m_rng->GetNext (0, m_dcf->GetCw ());
+  //auto nrOfSlots = m_rng->GetNext (0, m_dcf->GetCw ());
 
-  m_dcf->StartBackoffNow (nrOfSlots);
-  StartAccessIfNeededRaw (); //how about remove it?
+  //m_dcf->StartBackoffNow (nrOfSlots);
+
+  // restart the access like done in notifywakeup
+  RestartAccessIfNeeded();
+  //StartAccessIfNeededRaw (); //how about remove it?
+
 }
 
 void
@@ -478,19 +491,24 @@ DcaTxop::NeedsAccess (void) const
 void
 DcaTxop::NotifyAccessGranted (void)
 {
+	if(DEBUG_TRACK_PACKETS) std::cout << "Access  granted (raw access: " << AccessIfRaw << ")" << std::endl;
   NS_LOG_FUNCTION (this);
   if (!AccessIfRaw) 
     {
+	  if(DEBUG_TRACK_PACKETS) std::cout << "Access was granted but don't have access to RAW, aborting" << std::endl;
         return;
     }
   if (m_currentPacket == 0)
     {
       if (m_queue->IsEmpty ())
         {
+    	  if(DEBUG_TRACK_PACKETS) std::cout << "Access was granted but the queue is empty and there was not packet to be sent" << std::endl;
           NS_LOG_DEBUG ("queue empty");
           return;
         }
       m_currentPacket = m_queue->Dequeue (&m_currentHdr);
+      if(DEBUG_TRACK_PACKETS) std::cout << "Packet dequeued " << std::endl;
+
       NS_ASSERT (m_currentPacket != 0);
       uint16_t sequence = m_txMiddle->GetNextSequenceNumberfor (&m_currentHdr);
       m_currentHdr.SetSequenceNumber (sequence);
@@ -506,9 +524,11 @@ DcaTxop::NotifyAccessGranted (void)
   params.DisableOverrideDurationId ();
   if (m_currentHdr.GetAddr1 ().IsGroup () || m_currentHdr.IsPsPoll ())
     {
+
       params.DisableRts ();
       params.DisableAck ();
       params.DisableNextData ();
+      if(DEBUG_TRACK_PACKETS) std::cout << "Starting Transmission" << std::endl;
       Low ()->StartTransmission (m_currentPacket,
                                  &m_currentHdr,
                                  params,
@@ -541,6 +561,7 @@ DcaTxop::NotifyAccessGranted (void)
               NS_LOG_DEBUG ("fragmenting size=" << fragment->GetSize ());
               params.EnableNextData (GetNextFragmentSize ());
             }
+          if(DEBUG_TRACK_PACKETS) std::cout << "Starting Transmission" << std::endl;
           Low ()->StartTransmission (fragment, &hdr, params,
                                      m_transmissionListener);
         }
@@ -557,6 +578,8 @@ DcaTxop::NotifyAccessGranted (void)
               NS_LOG_DEBUG ("tx unicast");
             }
           params.DisableNextData ();
+
+          if(DEBUG_TRACK_PACKETS) std::cout << "Starting Transmission" << std::endl;
           Low ()->StartTransmission (m_currentPacket, &m_currentHdr,
                                      params, m_transmissionListener);
         }
@@ -590,9 +613,12 @@ DcaTxop::NotifyChannelSwitching (void)
 void
 DcaTxop::NotifySleep (void)
 {
+
+	if(DEBUG_TRACK_PACKETS) std::cout << Simulator::Now().GetMicroSeconds() << " DCA WENT TO SLEEP" << std::endl;
   NS_LOG_FUNCTION (this);
   if (m_currentPacket != 0)
     {
+      std::cout << "Packet put back on queue" << std::endl;
       m_queue->PushFront (m_currentPacket, m_currentHdr);
       m_currentPacket = 0;
     }
@@ -601,6 +627,7 @@ DcaTxop::NotifySleep (void)
 void
 DcaTxop::NotifyWakeUp (void)
 {
+	if(DEBUG_TRACK_PACKETS) std::cout << Simulator::Now().GetMicroSeconds() << " DCA WOKEN UP, try restarting access" << std::endl;
   NS_LOG_FUNCTION (this);
   RestartAccessIfNeeded ();
 }

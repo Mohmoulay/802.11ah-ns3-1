@@ -308,11 +308,11 @@ StaWifiMac::SendPspollIfnecessary (void)
 
 
 bool StaWifiMac::IsTherePendingOutgoingData() {
-    return !m_dca->NeedsAccess() ||
-    !m_edca.find (AC_VO)->second->NeedsAccess() ||
-	!m_edca.find (AC_VI)->second->NeedsAccess() ||
-	!m_edca.find (AC_BE)->second->NeedsAccess() ||
-	!m_edca.find (AC_BK)->second->NeedsAccess();
+    return m_dca->NeedsAccess() ||
+    m_edca.find (AC_VO)->second->NeedsAccess() ||
+	m_edca.find (AC_VI)->second->NeedsAccess() ||
+	m_edca.find (AC_BE)->second->NeedsAccess() ||
+	m_edca.find (AC_BK)->second->NeedsAccess();
 }
 
 void
@@ -572,9 +572,11 @@ StaWifiMac::Enqueue (Ptr<const Packet> packet, Mac48Address to)
       //Sanity check that the TID is valid
       NS_ASSERT (tid < 8);
       m_edca[QosUtilsMapTidToAc (tid)]->Queue (packet, hdr);
+
     }
   else
     {
+	  //m_dca->DEBUG_TRACK_PACKETS = true;
       m_dca->Queue (packet, hdr);
     }
 }
@@ -731,6 +733,7 @@ StaWifiMac::Receive(Ptr<Packet> packet, const WifiMacHeader *hdr) {
 
 		}
 
+		EnsureQueuesKeepDataLongEnough(beacon);
 		HandleS1gSleepAndSlotTimingsFromBeacon(beacon);
 
 		return;
@@ -821,6 +824,16 @@ StaWifiMac::Receive(Ptr<Packet> packet, const WifiMacHeader *hdr) {
 	RegularWifiMac::Receive(packet, hdr);
 }
 
+void
+StaWifiMac::EnsureQueuesKeepDataLongEnough(S1gBeaconHeader& beacon) {
+	Time entireCycle = MicroSeconds(beacon.GetTIM().GetDTIMPeriod() * beacon.GetBeaconCompatibility().GetBeaconInterval());
+
+	m_dca->GetQueue()->SetMaxDelay(entireCycle * 2);
+	m_edca.find (AC_VO)->second->GetEdcaQueue()->SetMaxDelay(entireCycle * 2);
+	m_edca.find (AC_VI)->second->GetEdcaQueue()->SetMaxDelay(entireCycle * 2);
+	m_edca.find (AC_BE)->second->GetEdcaQueue()->SetMaxDelay(entireCycle * 2);
+	m_edca.find (AC_BK)->second->GetEdcaQueue()->SetMaxDelay(entireCycle * 2);
+}
 
 void
 StaWifiMac::HandleS1gSleepFromSTATIMGroupBeacon(S1gBeaconHeader& beacon) {

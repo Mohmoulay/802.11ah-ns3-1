@@ -1737,7 +1737,7 @@ TcpSocketBase::SendEmptyPacket (uint8_t flags)
   header.SetWindowSize (AdvertisedWindowSize ());
 
   // RFC 6298, clause 2.4
-  m_rto = Max (m_rtt->GetEstimate () + Max (m_clockGranularity, m_rtt->GetVariation ()*4), m_minRto);
+  m_rto = this->CalculateRTO();
 
   bool hasSyn = flags & TcpHeader::SYN;
   bool hasFin = flags & TcpHeader::FIN;
@@ -2274,10 +2274,15 @@ TcpSocketBase::EstimateRtt (const TcpHeader& tcpHeader)
     {
       m_rtt->Measurement (m);                // Log the measurement
       // RFC 6298, clause 2.4
-      m_rto = Max (m_rtt->GetEstimate () + Max (m_clockGranularity, m_rtt->GetVariation ()*4), m_minRto);
+      m_rto = this->CalculateRTO();
       m_lastRtt = m_rtt->GetEstimate ();
       NS_LOG_FUNCTION(this << m_lastRtt);
     }
+}
+
+
+Time TcpSocketBase::CalculateRTO() const {
+	return  Max (m_rtt->GetEstimate () + Max (m_clockGranularity, m_rtt->GetVariation ()*4), m_minRto);
 }
 
 // Called by the ReceivedAck() when new ACK received and by ProcessSynRcvd()
@@ -2295,7 +2300,7 @@ TcpSocketBase::NewAck (SequenceNumber32 const& ack)
       m_retxEvent.Cancel ();
       // On receiving a "New" ack we restart retransmission timer .. RFC 6298
       // RFC 6298, clause 2.4
-      m_rto = Max (m_rtt->GetEstimate () + Max (m_clockGranularity, m_rtt->GetVariation ()*4), m_minRto);
+      m_rto = this->CalculateRTO();
 
       NS_LOG_LOGIC (this << " Schedule ReTxTimeout at time " <<
                     Simulator::Now ().GetSeconds () << " to expire at time " <<

@@ -224,6 +224,11 @@ private:
   void GrantDCAAccess();
   void DenyDCAAccess();
 
+  /**
+   * Ensure that data to send does not expire before the slot arrives
+   */
+  void
+  EnsureQueuesKeepDataLongEnough(S1gBeaconHeader& beacon);
 
   /**
    * Handle sleeping based on the beacon information

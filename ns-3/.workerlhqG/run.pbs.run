@@ -1,3 +1,0 @@
-#!/bin/bash -l
-
-/opt/moab/torque/bin/qsub -C '#PBS' -N 'run.pbs' worker.pbs

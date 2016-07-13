@@ -54,6 +54,11 @@ WifiMacQueue::GetTypeId (void)
                    TimeValue (MilliSeconds (500.0)),
                    MakeTimeAccessor (&WifiMacQueue::m_maxDelay),
                    MakeTimeChecker ())
+	.AddTraceSource ("PacketDropped",
+					 "Trace source indicating a packet has been dropped from the queue",
+					 MakeTraceSourceAccessor (&WifiMacQueue::m_packetdropped),
+					 "ns3::WifiMacQueue::PacketDroppedCallback")
+
   ;
   return tid;
 }
@@ -98,8 +103,10 @@ WifiMacQueue::Enqueue (Ptr<const Packet> packet, const WifiMacHeader &hdr)
   Cleanup ();
   if (m_size == m_maxSize)
     {
+	  m_packetdropped(packet, DropReason::MacQueueSizeExceeded);
       return;
     }
+
   Time now = Simulator::Now ();
   m_queue.push_back (Item (packet, hdr, now));
   m_size++;
@@ -124,6 +131,9 @@ WifiMacQueue::Cleanup (void)
       else
         {
           i = m_queue.erase (i);
+
+          m_packetdropped(i->packet, DropReason::MacQueueDelayExceeded);
+
           n++;
         }
     }

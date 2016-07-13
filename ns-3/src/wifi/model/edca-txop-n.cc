@@ -481,9 +481,11 @@ EdcaTxopN::RemoveRetransmitPacket (uint8_t tid, Mac48Address recipient, uint16_t
 void
 EdcaTxopN::NotifyAccessGranted (void)
 {
+	//std::cout << "Access  granted (raw access: " << AccessIfRaw << ")" << std::endl;
   NS_LOG_FUNCTION (this);
   if (!AccessIfRaw)
     {
+	  	  //std::cout << "Access was granted but don't have access to RAW, aborting" << std::endl;
         return;
     }
     int newdata=99;
@@ -492,6 +494,7 @@ EdcaTxopN::NotifyAccessGranted (void)
     {
       if (m_queue->IsEmpty () && !m_baManager->HasPackets ())
         {
+    	  //std::cout << "Access was granted but the queue is empty and there was not packet to be sent" << std::endl;
           NS_LOG_DEBUG ("queue is empty");
           return;
         }
@@ -517,6 +520,7 @@ EdcaTxopN::NotifyAccessGranted (void)
               return;
             }
           m_currentPacket = m_queue->DequeueFirstAvailable (&m_currentHdr, m_currentPacketTimestamp, m_qosBlockedDestinations);
+          //std::cout << "Packet dequeued " << std::endl;
           NS_ASSERT (m_currentPacket != 0);
 
           uint16_t sequence = m_txMiddle->GetNextSequenceNumberfor (&m_currentHdr);
@@ -742,8 +746,11 @@ void
 EdcaTxopN::NotifySleep (void)
 {
   NS_LOG_FUNCTION (this);
+
+  //std::cout << Simulator::Now().GetMicroSeconds() << " EDCA WENT TO SLEEP" << std::endl;
   if (m_currentPacket != 0)
     {
+	  std::cout << "Packet put back into queue" << std::endl;
       m_queue->PushFront (m_currentPacket, m_currentHdr);
       m_currentPacket = 0;
     }
@@ -753,6 +760,7 @@ void
 EdcaTxopN::NotifyWakeUp (void)
 {
   NS_LOG_FUNCTION (this);
+  //std::cout << Simulator::Now().GetMicroSeconds() << " EDCA WOKEN UP, try restarting access" << std::endl;
   RestartAccessIfNeeded ();
 }
 
@@ -765,6 +773,7 @@ EdcaTxopN::Queue (Ptr<const Packet> packet, const WifiMacHeader &hdr)
   m_stationManager->PrepareForQueue (hdr.GetAddr1 (), &hdr,
                                      packet, fullPacketSize);
   m_queue->Enqueue (packet, hdr);
+  //std::cout << "Packet enqueued" << std::endl;
   StartAccessIfNeeded ();
 }
 
@@ -951,6 +960,7 @@ EdcaTxopN::GetMsduAggregator (void) const
 void
 EdcaTxopN::AccessAllowedIfRaw (bool allowed)
 {
+  //std::cout << " Setting RAW Access for EDCA " << allowed << std::endl;
   AccessIfRaw = allowed;
 }
 
@@ -958,15 +968,22 @@ void
 EdcaTxopN::RestartAccessIfNeeded (void)
 {
   NS_LOG_FUNCTION (this);
-  if ((m_currentPacket != 0
-       || !m_queue->IsEmpty () || m_baManager->HasPackets ())
+
+  bool hasData = (m_currentPacket != 0 || !m_queue->IsEmpty () || m_baManager->HasPackets ());
+
+  if (hasData
       && !m_dcf->IsAccessRequested ()
       && AccessIfRaw)
     {
+	  //std::cout << Simulator::Now().GetMicroSeconds() << " EDCA requesting access " << std::endl;
       m_manager->RequestAccess (m_dcf);
         int newdata=10;
         m_AccessQuest_record (Simulator::Now ().GetMicroSeconds (), newdata);
     }
+  else {
+	 // std::cout << Simulator::Now().GetMicroSeconds() <<  "Wont request access because " <<
+		//	  "hasData: " <<  hasData << ", access requested: " << m_dcf->IsAccessRequested() << ", access if raw: " << AccessIfRaw << std::endl;
+  }
 }
 
 void
@@ -976,7 +993,7 @@ EdcaTxopN::StartAccessIfNeeded (void)
   if (m_currentPacket == 0
       && (!m_queue->IsEmpty () || m_baManager->HasPackets ())
       && !m_dcf->IsAccessRequested ()
-      && AccessIfRaw)    // always TRUE outside RAW
+      && AccessIfRaw)
     {
       m_manager->RequestAccess (m_dcf);
         int newdata=20;
@@ -990,7 +1007,7 @@ EdcaTxopN::StartAccessIfNeededRaw (void)
     NS_LOG_FUNCTION (this);
     if ((!m_queue->IsEmpty () || m_baManager->HasPackets ())
         && !m_dcf->IsAccessRequested ()
-        && AccessIfRaw)    // always TRUE outside RAW
+        && AccessIfRaw)
     {
         m_manager->RequestAccess (m_dcf);
     }
@@ -1000,7 +1017,7 @@ void
 EdcaTxopN::RawStart (void)
 {
   NS_LOG_FUNCTION (this);
-
+/*
   int newdata=66;
   m_AccessQuest_record (Simulator::Now ().GetMicroSeconds (), newdata);
     
@@ -1013,7 +1030,8 @@ EdcaTxopN::RawStart (void)
         m_AccessQuest_record (Simulator::Now ().GetMicroSeconds (), newdata);
       }
   StartAccessIfNeededRaw (); //access could start even no packet
-  
+  */
+  RestartAccessIfNeeded();
 }
 
 void
@@ -1245,6 +1263,9 @@ EdcaTxopN::PushFront (Ptr<const Packet> packet, const WifiMacHeader &hdr)
   uint32_t fullPacketSize = hdr.GetSerializedSize () + packet->GetSize () + fcs.GetSerializedSize ();
   m_stationManager->PrepareForQueue (hdr.GetAddr1 (), &hdr,
                                      packet, fullPacketSize);
+
+  //std::cout << "Packet put in front of queue" << std::endl;
+
   m_queue->PushFront (packet, hdr);
   StartAccessIfNeeded ();
 }
@@ -1536,6 +1557,7 @@ EdcaTxopN::SendDelbaFrame (Mac48Address addr, uint8_t tid, bool byOriginator)
   packet->AddHeader (delbaHdr);
   packet->AddHeader (actionHdr);
 
+  //std::cout << "Delba frame put in front of queue" << std::endl;
   PushFront (packet, hdr);
 }
 
