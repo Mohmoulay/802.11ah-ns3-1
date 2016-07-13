@@ -7,7 +7,7 @@
 " --Datarate=0.65"\
 " --BandWidth=2"\
 " --Rho=\"500\""\
-" --SimulationTime=100"\
+" --SimulationTime=1000"\
 " --TrafficPacketSize=100"\
 " --TrafficInterval=9876"\
 " --BeaconInterval=102400"\

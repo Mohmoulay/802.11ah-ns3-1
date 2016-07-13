@@ -656,8 +656,8 @@ DcfManager::GetBackoffEndFor (DcfState *state)
 	// don't schedule the backoff end beyond the raw slot period
 	if(backOffEnd > m_rawSlotStart + m_rawSlotDuration) {
 
-		std::cout << "Backoff end was calculated beyond the slot duration, adjusting backoff end (backoffend: " << backOffEnd.GetMicroSeconds()
-				<< ", " << "Raw slot end: " << (m_rawSlotStart + m_rawSlotDuration).GetMicroSeconds() << ")" <<  std::endl;
+		//std::cout << "Backoff end was calculated beyond the slot duration, adjusting backoff end (backoffend: " << backOffEnd.GetMicroSeconds()
+		//		<< ", " << "Raw slot end: " << (m_rawSlotStart + m_rawSlotDuration).GetMicroSeconds() << ")" <<  std::endl;
 		Time adjusted = backOffEnd - (m_rawSlotStart + m_rawSlotDuration);
 
 		if(adjusted <= GetBackoffStartFor (state)) {
