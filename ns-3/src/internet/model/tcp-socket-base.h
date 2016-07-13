@@ -588,6 +588,8 @@ protected:
    */
   virtual void NewAck (SequenceNumber32 const& seq);
 
+  virtual Time CalculateRTO() const;
+
   /**
    * \brief Received dupack (duplicate ACK)
    * \param tcpHeader the packet's TCP header

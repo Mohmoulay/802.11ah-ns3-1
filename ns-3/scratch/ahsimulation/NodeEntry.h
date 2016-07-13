@@ -69,6 +69,7 @@ public:
     void OnPhyRxDrop(std::string context,Ptr<const Packet> packet, DropReason reason);
 
 
+    void OnMacPacketDropped(std::string context, Ptr<const Packet> packet, DropReason reason);
     void OnMacTxRtsFailed(std::string context,Mac48Address address);
     void OnMacTxDataFailed(std::string context,Mac48Address address);
     void OnMacTxFinalRtsFailed(std::string context,Mac48Address address);

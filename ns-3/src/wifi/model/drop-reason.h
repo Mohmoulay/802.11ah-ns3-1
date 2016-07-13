@@ -21,7 +21,9 @@ namespace ns3 {
 		PhyAlreadyTransmitting,
 		PhyPlcpReceptionFailed,
 		MacNotForAP,
-		MacAPToAPFrame
+		MacAPToAPFrame,
+		MacQueueDelayExceeded,
+		MacQueueSizeExceeded
 
 	};
 

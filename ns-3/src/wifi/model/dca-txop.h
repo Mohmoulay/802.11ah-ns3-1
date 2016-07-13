@@ -70,6 +70,9 @@ class DcaTxop : public Dcf
 public:
   static TypeId GetTypeId (void);
 
+
+  bool DEBUG_TRACK_PACKETS = false;
+
   /**
    * typedef for a callback to invoke when a
    * packet transmission was completed successfully.

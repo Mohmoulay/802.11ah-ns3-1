@@ -27,8 +27,9 @@
 #include "wifi-mac.h"
 #include "mac-low.h"
 
+	//std::cout << Simulator::Now().GetMicroSeconds() << " " << x << std::endl;
 #define MY_DEBUG(x) \
-  NS_LOG_DEBUG (Simulator::Now () << " " << this << " " << x)
+  NS_LOG_DEBUG (Simulator::Now () << " " << this << " " << x);
 
 namespace ns3 {
 
@@ -638,6 +639,7 @@ DcfManager::GetBackoffStartFor (DcfState *state)
 Time
 DcfManager::GetBackoffEndFor (DcfState *state)
 {
+	MY_DEBUG("Calculating backoff end, start is " << GetBackoffStartFor (state).GetMicroSeconds() << ", duration of backoff is (slots: " << state->GetBackoffSlots() << ", slot duration: " << m_slotTimeUs << "), total duration: " << state->GetBackoffSlots () * m_slotTimeUs)
   return GetBackoffStartFor (state) + MicroSeconds (state->GetBackoffSlots () * m_slotTimeUs);
 }
 

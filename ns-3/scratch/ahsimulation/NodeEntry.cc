@@ -25,6 +25,9 @@ void NodeEntry::SetAssociation(std::string context, Mac48Address address) {
 	this->associatedCallback();
 }
 
+
+
+
 void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 	this->isAssociated = false;
 
@@ -35,8 +38,8 @@ void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 }
 
 void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
-	//cout << "[" << this->aId << "] " << Simulator::Now().GetMicroSeconds()
-	//		<< "µs " << "Begin Tx " << packet->GetUid() << endl;
+	cout << "[" << this->aId << "] " << Simulator::Now().GetMicroSeconds()
+			<< "µs " << "Begin Tx " << packet->GetUid() << endl;
 	txMap.emplace(packet->GetUid(), Simulator::Now());
 
 	if (txMap.size() > 1)
@@ -52,8 +55,8 @@ void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
-	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
-	//<< "End Tx " << packet->GetUid() << endl;
+	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+	<< "End Tx " << packet->GetUid() << endl;
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
 		Time oldTime = txMap[packet->GetUid()];
@@ -258,8 +261,8 @@ void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 }
 
 void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
-	//cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
-	//		<< "TCP packet sent " << endl;
+	cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
+			<< "TCP packet sent " << endl;
 
 	stats->get(this->id).NumberOfSentPackets++;
 }
@@ -286,6 +289,7 @@ void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
 
 		// this occurs when packet is fragmented
 		cout << "Error: " << string(e.what()) << endl;
+		cout << "ERROR: unable to get the packet header to determine the travel time" << endl;
 		//packet->Print(cout);
 		//exit(1);
 	}
@@ -308,6 +312,7 @@ void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 	}
 	catch(std::runtime_error e) {
 		// packet fragmentation
+		cout << "ERROR: unable to get the packet header at AP to determine the travel time" << endl;
 	}
 }
 
@@ -385,6 +390,12 @@ void NodeEntry::OnUdpPacketReceivedAtAP(Ptr<const Packet> packet) {
 	} catch (std::runtime_error e) {
 		// packet fragmentation, unable to get header
 	}
+}
+
+void NodeEntry::OnMacPacketDropped(std::string context, Ptr<const Packet> packet, DropReason reason) {
+	cout << "Mac Packet Dropped!, reason:" << reason << endl;
+
+	stats->get(this->id).NumberOfDropsByReason[reason]++;
 }
 
 void NodeEntry::OnMacTxRtsFailed(std::string context, Mac48Address address) {
