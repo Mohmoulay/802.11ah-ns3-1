@@ -249,9 +249,25 @@
                                                     <td>Number of TCP Retransmissions from AP</td>
                                                     <td>---</td>
                                                 </tr>
+
+                                                <tr class="header">
+                                                    <th colspan="2"><span>-</span> AP Packet scheduling</th>
+                                                </tr>
+                                                <tr class="nodeProperty" data-property="numberOfAPScheduledPacketForNodeInNextSlot" data-max="*" data-min="0" data-type="LOWER_IS_BETTER">
+                                                    <td>Number of AP scheduled packets to next slot</td>
+                                                    <td>---</td>
+                                                </tr>
+                                                <tr class="nodeProperty" data-property="numberOfAPSentPacketForNodeImmediately" data-max="*" data-min="0" data-type="HIGHER_IS_BETTER">
+                                                    <td>Number of AP packets sent immediately</td>
+                                                    <td>---</td>
+                                                </tr>
+                                                <tr class="nodeProperty" data-property="avgRemainingSlotTimeWhenAPSendingInSameSlot" data-max="*" data-min="0" data-type="HIGHER_IS_BETTER">
+                                                    <td>Avg. rem. slot time when sending packets immediately (µs)</td>
+                                                    <td>---</td>
+                                                </tr>
                                             </table>
                                         </div>
-                                        <label>Show delta's <input id="chkShowDeltas" type="checkbox"></label>
+                                        <label>Show delta's <input id="chkShowDeltas" type="checkbox"></label><label>Show distribution<input id="chkShowDistribution" type="checkbox" style="display:none"></label>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="scrollTable" style="max-height: 280px;">

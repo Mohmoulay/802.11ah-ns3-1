@@ -77,6 +77,10 @@ class NodeValue {
     //numberOfDropsFromAPByReasonMacQeueuSizeExceeded:number = 0;
 
     tcpRTO: number = 0;
+
+    numberOfAPScheduledPacketForNodeInNextSlot:number = 0;
+    numberOfAPSentPacketForNodeImmediately:number = 0;
+    avgRemainingSlotTimeWhenAPSendingInSameSlot:number = 0;
 }
 
 class APNode extends SimulationNode {

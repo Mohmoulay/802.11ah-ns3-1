@@ -87,8 +87,8 @@ class SimulationGUI {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
-                if(typeof selectedSimulation == "undefined")
-                    return;
+        if (typeof selectedSimulation == "undefined")
+            return;
 
         this.drawRange();
         this.drawNodes();
@@ -105,7 +105,7 @@ class SimulationGUI {
         this.ctx.strokeStyle = "#CCC";
 
         let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
-        if(typeof selectedSimulation == "undefined")
+        if (typeof selectedSimulation == "undefined")
             return;
 
         for (let n of selectedSimulation.nodes) {
@@ -149,9 +149,8 @@ class SimulationGUI {
             return [0, 0];
 
     }
-    private getColorForNode(n: SimulationNode, curMax: number, curMin: number): string {
+    private getColorForNode(n: SimulationNode, curMax: number, curMin: number, el: JQuery): string {
         if (this.selectedPropertyForChart != "") {
-            let el = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "']").get(0));
             let type = el.attr("data-type");
             if (typeof type != "undefined" && type != "") {
                 let min;
@@ -169,12 +168,12 @@ class SimulationGUI {
                 if (values.length > 0) {
                     let value = values[values.length - 1][this.selectedPropertyForChart];
 
-                    let alpha:number;
-                    if(max - min != 0) 
+                    let alpha: number;
+                    if (max - min != 0)
                         alpha = (value - min) / (max - min);
                     else
                         alpha = 1;
-                        
+
                     if (type == "LOWER_IS_BETTER")
                         return this.heatMapPalette.getColorAt(1 - alpha).toString();
                     else
@@ -197,6 +196,8 @@ class SimulationGUI {
         let curMax = minmax[1];
         let curMin = minmax[0];
         let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+
+        let el = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "']").get(0));
         for (let n of selectedSimulation.nodes) {
             this.ctx.beginPath();
 
@@ -205,7 +206,7 @@ class SimulationGUI {
                 this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 6, 0, Math.PI * 2, false);
             }
             else {
-                this.ctx.fillStyle = this.getColorForNode(n, curMax, curMin);
+                this.ctx.fillStyle = this.getColorForNode(n, curMax, curMin, el);
                 this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 3, 0, Math.PI * 2, false);
             }
             this.ctx.fill();
@@ -473,7 +474,7 @@ class SimulationGUI {
         let showDeltas: boolean = $("#chkShowDeltas").prop("checked");
         let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
 
-        if(selectedSimulation.nodes.length <= 0)
+        if (selectedSimulation.nodes.length <= 0)
             return;
 
         if (this.selectedNode == -1 || this.selectedNode >= selectedSimulation.nodes.length)
@@ -498,12 +499,12 @@ class SimulationGUI {
 
                 if (!showDeltas) {
                     for (let i = 0; i < values.length; i++)
-                        selectedData.push([values[i].timestamp,values[i][this.selectedPropertyForChart] ]);
+                        selectedData.push([values[i].timestamp, values[i][this.selectedPropertyForChart]]);
                 }
                 else {
-                    selectedData.push([values[0].timestamp, values[0][this.selectedPropertyForChart] ]);
+                    selectedData.push([values[0].timestamp, values[0][this.selectedPropertyForChart]]);
                     for (let i = 1; i < values.length; i++)
-                        selectedData.push([ values[i].timestamp, values[i][this.selectedPropertyForChart] - values[i - 1][this.selectedPropertyForChart] ]);
+                        selectedData.push([values[i].timestamp, values[i][this.selectedPropertyForChart] - values[i - 1][this.selectedPropertyForChart]]);
                 }
 
                 series.push({
@@ -581,7 +582,7 @@ class SimulationGUI {
         let lastValue = firstNode.values[firstNode.values.length - 1];
 
         let activeDozePieData = [{ name: "Active", y: lastValue.totalActiveTime },
-                                  { name: "Doze", y: lastValue.totalDozeTime }]
+            { name: "Doze", y: lastValue.totalDozeTime }]
         this.createPieChart("#nodeChartActiveDoze", 'Active/doze time', activeDozePieData);
 
 
@@ -605,8 +606,11 @@ class SimulationGUI {
     }
 
     private updateChartsForAll(selectedSimulation: Simulation, simulations: Simulation[], full: boolean, showDeltas: boolean) {
-        this.updateDistributionChart(selectedSimulation, showDeltas);
-        //this.updateAverageChart(selectedSimulation, showDeltas);
+
+        if ($("#chkShowDistribution").prop("checked"))
+            this.updateDistributionChart(selectedSimulation, showDeltas);
+        else
+            this.updateAverageChart(selectedSimulation, showDeltas, full);
 
         let totalReceiveActiveTime = this.getAverageAndStdDevValue(selectedSimulation, "totalActiveTime");
         let totalReceiveDozeTime = this.getAverageAndStdDevValue(selectedSimulation, "totalDozeTime");
@@ -737,88 +741,111 @@ class SimulationGUI {
     }
 
 
-    private updateAverageChart(selectedSimulation: Simulation, showDeltas: boolean) {
+    private updateAverageChart(selectedSimulation: Simulation, showDeltas: boolean, full: boolean) {
 
         let self = this;
         let title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
 
         let averages = [];
         let ranges = [];
-        let nrOfValues = selectedSimulation.nodes[0].values.length;
+        let nrOfValues = selectedSimulation.nodes[0].values.length - 1;
 
-        for (var i = 0; i < nrOfValues; i++) {
+        if(nrOfValues <= 0)
+            return;
 
-            let minVal = Number.MAX_VALUE;
-            let maxVal = Number.MIN_VALUE;
+        let offset = (this.currentChart != null && !full) ? this.currentChart.series[0].data.length : 0;
+
+        for (var i = offset; i < nrOfValues; i++) {
+
             let sum = 0;
             let count = 0;
 
             let timestamp = selectedSimulation.nodes[0].values[i].timestamp;
             for (let n of selectedSimulation.nodes) {
-                let values = n.values
+                let values = n.values;
                 if (i < values.length) {
                     let value = values[i][this.selectedPropertyForChart];
                     sum += value;
                     count++;
-                    if (minVal > value) minVal = value;
-                    if (maxVal < value) maxVal = value;
                 }
             }
 
             let avg = sum / count;
+
+            let sumSquares = 0;
+            for (let n of selectedSimulation.nodes) {
+                let values = n.values;
+                if (i < values.length) {
+                    let val = (values[i][this.selectedPropertyForChart] - avg) * (values[i][this.selectedPropertyForChart] - avg);
+                    sumSquares += val;
+                }
+            }
+
+            let stddev = Math.sqrt(sumSquares / count);
+
             averages.push([timestamp, avg]);
-            ranges.push([timestamp, minVal, maxVal]);
+            ranges.push([timestamp, avg - stddev, avg + stddev]);
         }
 
+        if (this.currentChart != null && !full) {
 
-        $('#nodeChart').empty().highcharts({
-            chart: {
-                animation: "Highcharts.svg", // don't animate in old IE
-                marginRight: 10,
-                events: {
-                    load: function () {
-                        self.currentChart = (<HighchartsChartObject>this);
+           for(let i = 0; i < averages.length; i++) {
+               this.currentChart.series[0].addPoint(averages[i], false, false);
+               this.currentChart.series[1].addPoint(ranges[i], false, false);
+           }
+
+            this.currentChart.redraw(false);
+        }
+        else {
+            $('#nodeChart').empty().highcharts({
+                chart: {
+                    animation: "Highcharts.svg", // don't animate in old IE
+                    marginRight: 10,
+                    events: {
+                        load: function () {
+                            self.currentChart = (<HighchartsChartObject>this);
+                        }
+                    },
+                    zoomType: "x"
+                },
+                plotOptions: {
+                    series: {
+                        animation: false,
+                        marker: { enabled: false }
                     }
                 },
-                zoomType: "x"
-            },
-            plotOptions: {
-                series: {
-                    animation: false,
-                    marker: { enabled: false }
-                }
-            },
-            title: { text: title },
-            xAxis: {
-                type: 'linear',
-                tickPixelInterval: 100,
-            },
-            yAxis: {
-                title: { text: 'Value' },
-                plotLines: [{
-                    value: 0,
-                    width: 1,
-                    color: '#808080'
-                }]
-            },
-            legend: { enabled: false },
-            series: [{
-                name: title,
-                type: "spline",
-                data: averages,
-                zIndex: 1,
-            }, <any>{
-                name: 'Range',
-                data: ranges,
-                type: 'arearange',
-                zIndex: 0,
-                lineWidth: 0,
-                linkedTo: ':previous',
-                color: Highcharts.getOptions().colors[0],
-                fillOpacity: 0.3,
-            }],
-            credits: false
-        });
+                title: { text: title },
+                xAxis: {
+                    type: 'linear',
+                    tickPixelInterval: 100,
+                },
+                yAxis: {
+                    title: { text: 'Value' },
+                    plotLines: [{
+                        value: 0,
+                        width: 1,
+                        color: '#808080'
+                    }]
+                },
+                legend: { enabled: false },
+                series: [{
+                    name: title,
+                    type: "spline",
+                    data: averages,
+                    zIndex: 1,
+                }, <any>{
+                    name: 'Range',
+                    data: ranges,
+                    type: 'arearange',
+                    zIndex: 0,
+                    lineWidth: 0,
+                    linkedTo: ':previous',
+                    color: Highcharts.getOptions().colors[0],
+                    fillOpacity: 0.3,
+                }],
+                credits: false
+            });
+        }
     }
 
     createPieChart(selector: string, title: string, data: any) {
@@ -974,10 +1001,14 @@ $(document).ready(function () {
                 break;
             }
         }
-        if (selectedNode != null)
+        if (selectedNode != null) {
+            $("#chkShowDistribution").hide();
             sim.changeNodeSelection(selectedNode.id);
-        else
+        }
+        else {
+            $("#chkShowDistribution").show();
             sim.changeNodeSelection(-1);
+        }
     })
     $(".nodeProperty").click(function (ev) {
         $(".nodeProperty").removeClass("selected");
@@ -986,6 +1017,10 @@ $(document).ready(function () {
         sim.updateGUI(true);
     });
 
+    $("#chkShowDistribution").change(function(ev) {
+        sim.updateGUI(true);
+    });
+    
     $("#chkShowDeltas").change(function (ev) {
         sim.updateGUI(true);
     });
