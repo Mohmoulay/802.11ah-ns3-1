@@ -58,6 +58,7 @@ body{
     background-image: url('/images/arrow_up.png');
     background-repeat: no-repeat;
     padding-left:15px;
+    display: inline-block;
 }
 
 .valuedown {
@@ -65,4 +66,13 @@ body{
     background-image: url('/images/arrow_down.png');
     background-repeat: no-repeat;
     padding-left:15px;
+    display: inline-block;
+}
+
+.zscore {
+    width: 7px;
+    height: 7px;
+    border-radius: 5px;
+    display: inline-block;
+    margin: 2px;
 }

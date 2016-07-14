@@ -328,6 +328,9 @@ class SimulationGUI {
                 let el: string = "";
 
                 if (values.length > 0) {
+
+                    let avgStdDev = this.getAverageAndStdDevValue(selectedSimulation, prop);
+
                     if (simulations.length > 1) {
                         // compare with avg of others
                         let sumVal = 0;
@@ -354,6 +357,29 @@ class SimulationGUI {
                         el = values[values.length - 1][prop] + "";
                     }
 
+
+                    let propType = $(propertyElements[i]).attr("data-type");
+                    let zScore = avgStdDev[1] == 0 ? 0 : ((values[values.length - 1][prop] - avgStdDev[0]) / avgStdDev[1]);
+
+                    if (!isNaN(avgStdDev[0]) && !isNaN(avgStdDev[1])) {
+                        // scale zscore to [0-1]
+                        let alpha = zScore / 2;
+                        if (alpha > 1) alpha = 1;
+                        else if (alpha < -1) alpha = -1;
+                        alpha = (alpha + 1) / 2;
+
+
+                        let color: string;
+                        if (propType == "LOWER_IS_BETTER")
+                            color = this.heatMapPalette.getColorAt(1 - alpha).toString();
+                        else if (propType == "HIGHER_IS_BETTER")
+                            color = this.heatMapPalette.getColorAt(alpha).toString();
+                        else
+                            color = "black";
+
+                        // prefix z-score
+                        el = `<div class="zscore" title="Z-score: ${zScore}" style="background-color: ${color}" />` + el;
+                    }
                     $($(propertyElements[i]).find("td").get(1)).empty().append(el);
                 }
             }
@@ -750,7 +776,7 @@ class SimulationGUI {
         let ranges = [];
         let nrOfValues = selectedSimulation.nodes[0].values.length - 1;
 
-        if(nrOfValues <= 0)
+        if (nrOfValues <= 0)
             return;
 
         let offset = (this.currentChart != null && !full) ? this.currentChart.series[0].data.length : 0;
@@ -789,10 +815,10 @@ class SimulationGUI {
 
         if (this.currentChart != null && !full) {
 
-           for(let i = 0; i < averages.length; i++) {
-               this.currentChart.series[0].addPoint(averages[i], false, false);
-               this.currentChart.series[1].addPoint(ranges[i], false, false);
-           }
+            for (let i = 0; i < averages.length; i++) {
+                this.currentChart.series[0].addPoint(averages[i], false, false);
+                this.currentChart.series[1].addPoint(ranges[i], false, false);
+            }
 
             this.currentChart.redraw(false);
         }
@@ -1002,11 +1028,11 @@ $(document).ready(function () {
             }
         }
         if (selectedNode != null) {
-            $("#chkShowDistribution").hide();
+            $("#pnlDistribution").hide();
             sim.changeNodeSelection(selectedNode.id);
         }
         else {
-            $("#chkShowDistribution").show();
+            $("#pnlDistribution").show();
             sim.changeNodeSelection(-1);
         }
     })
@@ -1017,10 +1043,10 @@ $(document).ready(function () {
         sim.updateGUI(true);
     });
 
-    $("#chkShowDistribution").change(function(ev) {
+    $("#chkShowDistribution").change(function (ev) {
         sim.updateGUI(true);
     });
-    
+
     $("#chkShowDeltas").change(function (ev) {
         sim.updateGUI(true);
     });

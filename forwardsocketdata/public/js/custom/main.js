@@ -626,6 +626,7 @@ var SimulationGUI = (function () {
             if (typeof values != "undefined") {
                 var el = "";
                 if (values.length > 0) {
+                    var avgStdDev = this.getAverageAndStdDevValue(selectedSimulation, prop);
                     if (simulations.length > 1) {
                         // compare with avg of others
                         var sumVal = 0;
@@ -649,6 +650,26 @@ var SimulationGUI = (function () {
                     }
                     else {
                         el = values[values.length - 1][prop] + "";
+                    }
+                    var propType = $(propertyElements[i]).attr("data-type");
+                    var zScore = avgStdDev[1] == 0 ? 0 : ((values[values.length - 1][prop] - avgStdDev[0]) / avgStdDev[1]);
+                    if (!isNaN(avgStdDev[0]) && !isNaN(avgStdDev[1])) {
+                        // scale zscore to [0-1]
+                        var alpha = zScore / 2;
+                        if (alpha > 1)
+                            alpha = 1;
+                        else if (alpha < -1)
+                            alpha = -1;
+                        alpha = (alpha + 1) / 2;
+                        var color = void 0;
+                        if (propType == "LOWER_IS_BETTER")
+                            color = this.heatMapPalette.getColorAt(1 - alpha).toString();
+                        else if (propType == "HIGHER_IS_BETTER")
+                            color = this.heatMapPalette.getColorAt(alpha).toString();
+                        else
+                            color = "black";
+                        // prefix z-score
+                        el = ("<div class=\"zscore\" title=\"Z-score: " + zScore + "\" style=\"background-color: " + color + "\" />") + el;
                     }
                     $($(propertyElements[i]).find("td").get(1)).empty().append(el);
                 }
@@ -1181,11 +1202,11 @@ $(document).ready(function () {
             }
         }
         if (selectedNode != null) {
-            $("#chkShowDistribution").hide();
+            $("#pnlDistribution").hide();
             sim.changeNodeSelection(selectedNode.id);
         }
         else {
-            $("#chkShowDistribution").show();
+            $("#pnlDistribution").show();
             sim.changeNodeSelection(-1);
         }
     });
