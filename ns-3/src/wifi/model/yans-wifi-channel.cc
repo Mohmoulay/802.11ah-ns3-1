@@ -31,6 +31,7 @@
 #include "ns3/propagation-loss-model.h"
 #include "ns3/propagation-delay-model.h"
 
+
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("YansWifiChannel");
@@ -52,6 +53,8 @@ YansWifiChannel::GetTypeId (void)
                    PointerValue (),
                    MakePointerAccessor (&YansWifiChannel::m_delay),
                    MakePointerChecker<PropagationDelayModel> ())
+	 .AddTraceSource("Transmission", "Fired when something is transmitted on the channel",
+				MakeTraceSourceAccessor(&YansWifiChannel::m_channelTransmission), "ns3::YansWifiChannel::TransmissionCallback")
   ;
   return tid;
 }
@@ -117,6 +120,8 @@ YansWifiChannel::Send (Ptr<YansWifiPhy> sender, Ptr<const Packet> packet, double
           *atts = rxPowerDbm;
           *(atts + 1) = packetType;
           *(atts + 2) = duration.GetNanoSeconds ();
+
+          m_channelTransmission(NanoSeconds(delay.GetNanoSeconds()));
 
           Simulator::ScheduleWithContext (dstNode,
                                           delay, &YansWifiChannel::Receive, this,

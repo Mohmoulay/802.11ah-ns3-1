@@ -47,6 +47,11 @@ ApplicationContainer serverApp;
 
 vector<NodeEntry*> nodes;
 
+vector<long> transmissionsPerTIMGroupAndSlotSinceLastInterval;
+
+void configureChannel();
+
+
 void configureSTANodes(Ssid& ssid);
 
 void configureAPNode(Ssid& ssid);
@@ -70,7 +75,9 @@ void configureTCPEchoServer();
 
 void onSTAAssociated(int i);
 void onSTADeassociated(int i);
-    
+
+void onChannelTransmission(Time delay);
+
 void updateNodesQueueLength();
 
 

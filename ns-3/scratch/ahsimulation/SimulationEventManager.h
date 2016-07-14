@@ -40,6 +40,8 @@ public:
 
 	string SerializeDropReason(map<DropReason, long>& map);
 
+	void onUpdateSlotStatistics(vector<long>& transmissionsPerSlot, Configuration& config);
+
 	void onUpdateStatistics(Statistics& stats);
 
 	virtual ~SimulationEventManager();
