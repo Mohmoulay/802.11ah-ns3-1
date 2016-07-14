@@ -71,6 +71,9 @@ public:
   static TypeId GetTypeId (void);
 
 
+  typedef void (* CollisionCallback)(uint32_t nrOfSlotsToBackOff);
+
+
   bool DEBUG_TRACK_PACKETS = false;
 
   /**
@@ -353,6 +356,8 @@ private:
   Ptr<WifiRemoteStationManager> m_stationManager;
   TransmissionListener *m_transmissionListener;
   RandomStream *m_rng;
+
+  TracedCallback<uint32_t> m_collisionTrace;
 
   bool m_accessOngoing;
   Ptr<const Packet> m_currentPacket;

@@ -94,6 +94,8 @@ public:
    */
   typedef Callback <void, const WifiMacHeader&> TxFailed;
 
+  typedef void (* CollisionCallback)(uint32_t nrOfSlotsToBackOff);
+
   static TypeId GetTypeId (void);
   EdcaTxopN ();
   virtual ~EdcaTxopN ();
@@ -566,6 +568,7 @@ private:
   struct Bar m_currentBar;
   bool m_ampduExist;
     
+  TracedCallback<uint32_t> m_collisionTrace;
   
 };
 

@@ -568,7 +568,7 @@ DcfManager::DoGrantAccess (void)
            * the result of the calculations.
            */
 
-          std::cout << Simulator::Now().GetMicroSeconds() << " Access granted for DCF" << std::endl;
+          //std::cout << Simulator::Now().GetMicroSeconds() << " Access granted for DCF" << std::endl;
 
           state->NotifyAccessGranted ();
           for (std::vector<DcfState *>::const_iterator k = internalCollisionStates.begin ();
@@ -650,7 +650,7 @@ DcfManager::GetBackoffStartFor (DcfState *state)
 Time
 DcfManager::GetBackoffEndFor (DcfState *state)
 {
-	std::cout << "Calculating backoff end, start is " << GetBackoffStartFor (state).GetMicroSeconds() << ", duration of backoff is (slots: " << state->GetBackoffSlots() << ", slot duration: " << m_slotTimeUs << "), total duration: " << state->GetBackoffSlots () * m_slotTimeUs << std::endl;
+	//std::cout << "Calculating backoff end, start is " << GetBackoffStartFor (state).GetMicroSeconds() << ", duration of backoff is (slots: " << state->GetBackoffSlots() << ", slot duration: " << m_slotTimeUs << "), total duration: " << state->GetBackoffSlots () * m_slotTimeUs << std::endl;
     Time backOffEnd = GetBackoffStartFor (state) + MicroSeconds (state->GetBackoffSlots () * m_slotTimeUs);
 
 	if(m_rawSlotStart + m_rawSlotDuration == Time(0)) // if not set

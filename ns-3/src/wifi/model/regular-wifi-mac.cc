@@ -61,6 +61,8 @@ RegularWifiMac::RegularWifiMac ()
 
   m_dca->GetQueue()->TraceConnect("PacketDropped", "", MakeCallback(&RegularWifiMac::OnQueuePacketDropped, this));
 
+  m_dca->TraceConnect("Collision", "", MakeCallback(&RegularWifiMac::OnCollision, this));
+
   //Construct the EDCAFs. The ordering is important - highest
   //priority (Table 9-1 UP-to-AC mapping; IEEE 802.11-2012) must be created
   //first.
@@ -74,6 +76,12 @@ void
 RegularWifiMac::OnQueuePacketDropped(std::string context, Ptr<const Packet> packet, DropReason reason) {
 	m_packetdropped(packet,reason);
 }
+
+void
+RegularWifiMac::OnCollision(std::string context, uint32_t nrOfBackOffSlots) {
+	m_collisionTrace(nrOfBackOffSlots);
+}
+
 
 RegularWifiMac::~RegularWifiMac ()
 {
@@ -163,6 +171,7 @@ RegularWifiMac::SetupEdcaQueue (enum AcIndex ac)
   m_edca.insert (std::make_pair (ac, edca));
 
   edca->GetEdcaQueue()->TraceConnect("PacketDropped", "", MakeCallback(&RegularWifiMac::OnQueuePacketDropped, this));
+  edca->TraceConnect("Collision", "", MakeCallback(&RegularWifiMac::OnCollision, this));
 }
 
 void
@@ -732,6 +741,9 @@ RegularWifiMac::GetTypeId (void)
 					 "has been dropped from one of the queues",
 					 MakeTraceSourceAccessor (&RegularWifiMac::m_packetdropped),
 					 "ns3::RegularWifiMac::PacketDroppedCallback")
+
+    .AddTraceSource("Collision", "Fired when a collision occurred",
+				MakeTraceSourceAccessor(&RegularWifiMac::m_collisionTrace), "ns3::RegularWifiMac::CollisionCallback")
 
   ;
   return tid;

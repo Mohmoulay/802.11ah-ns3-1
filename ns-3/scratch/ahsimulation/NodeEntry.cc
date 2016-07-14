@@ -393,10 +393,17 @@ void NodeEntry::OnUdpPacketReceivedAtAP(Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnMacPacketDropped(std::string context, Ptr<const Packet> packet, DropReason reason) {
-	cout << "Mac Packet Dropped!, reason:" << reason << endl;
+	//cout << "Mac Packet Dropped!, reason:" << reason << endl;
 
 	stats->get(this->id).NumberOfDropsByReason[reason]++;
 }
+
+void NodeEntry::OnCollision(std::string context, uint32_t nrOfBackoffSlots) {
+	cout << "Collision sensed" << endl;
+
+	stats->get(this->id).NumberOfCollisions++;
+}
+
 
 void NodeEntry::OnMacTxRtsFailed(std::string context, Mac48Address address) {
 	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "

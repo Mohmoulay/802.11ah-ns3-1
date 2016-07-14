@@ -56,6 +56,8 @@ public:
   typedef void (* PacketDroppedCallback)
                     (Ptr<const Packet> packet, DropReason reason);
 
+  typedef void (* CollisionCallback)(uint32_t nrOfSlotsToBackOff);
+
   RegularWifiMac ();
   virtual ~RegularWifiMac ();
 
@@ -275,6 +277,8 @@ protected:
 
   virtual void OnQueuePacketDropped(std::string context, Ptr<const Packet> packet, DropReason reason);
 
+  virtual void OnCollision(std::string context, uint32_t nrOfBackOffSlots);
+
   /**
    * Accessor for the DCF object
    *
@@ -435,6 +439,8 @@ protected:
   bool m_s1gSupported;
 
   TracedCallback<Ptr<const Packet>, DropReason> m_packetdropped;
+  TracedCallback<uint32_t> m_collisionTrace;
+
 
   /**
    * Enable or disable HT support for the device.

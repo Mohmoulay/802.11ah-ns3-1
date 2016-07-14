@@ -61,6 +61,8 @@ public:
     Time APTotalTimeRemainingWhenSendingPacketInSameSlot;
 
     Time getAverageRemainingWhenAPSendingPacketInSameSlot();
+
+    long NumberOfCollisions = 0;
 };
 
 #endif /* NODESTATISTICS_H */
