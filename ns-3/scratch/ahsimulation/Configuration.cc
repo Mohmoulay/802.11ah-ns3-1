@@ -21,6 +21,8 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("APScheduleTransmissionForNextSlotIfLessThan", "AP schedules transmission for next slot if slot time is less than (microseconds)", APScheduleTransmissionForNextSlotIfLessThan);
 
     cmd.AddValue("TrafficInterval", "Traffic interval time in ms", trafficInterval);
+    cmd.AddValue("TrafficIntervalDeviation", "Traffic interval deviation time in ms, each interval will have a random deviation between - dev/2 and + dev/2", trafficIntervalDeviation);
+
     cmd.AddValue("TrafficPacketSize", "Size of packets to send in bytes", trafficPacketSize);
     cmd.AddValue("TrafficType", "Kind of traffic (udp, udpecho, tcpecho)", trafficType);
 

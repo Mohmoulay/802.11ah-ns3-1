@@ -156,6 +156,8 @@ private:
 
   uint32_t m_count;
   Time m_interval;
+  Time m_intervalDeviation;
+
   uint32_t m_size;
 
   uint32_t m_dataSize;

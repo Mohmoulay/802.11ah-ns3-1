@@ -416,6 +416,7 @@ void configureTCPEchoClients() {
 	TcpEchoClientHelper clientHelper(apNodeInterfaces.GetAddress(0), 80); //address of remote node
 	clientHelper.SetAttribute("MaxPackets", UintegerValue(4294967295u));
 	clientHelper.SetAttribute("Interval", TimeValue(MilliSeconds(config.trafficInterval)));
+	clientHelper.SetAttribute("IntervalDeviation", TimeValue(MilliSeconds(config.trafficIntervalDeviation)));
 	clientHelper.SetAttribute("PacketSize", UintegerValue(config.trafficPacketSize));
 	for (uint16_t i = 0; i < config.Nsta; i++) {
 		ApplicationContainer clientApp = clientHelper.Install(staNodes.Get(i));

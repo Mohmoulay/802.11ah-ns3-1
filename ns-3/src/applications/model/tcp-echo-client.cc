@@ -50,6 +50,13 @@ TcpEchoClient::GetTypeId (void)
                    TimeValue (Seconds (1.0)),
                    MakeTimeAccessor (&TcpEchoClient::m_interval),
                    MakeTimeChecker ())
+
+	.AddAttribute ("IntervalDeviation",
+				   "The possible deviation from the interval to send packets",
+				   TimeValue (Seconds (0)),
+				   MakeTimeAccessor (&TcpEchoClient::m_intervalDeviation),
+				   MakeTimeChecker ())
+
     .AddAttribute ("RemoteAddress",
                    "The destination Ipv4Address of the outbound packets",
                    Ipv4AddressValue (),
@@ -65,6 +72,9 @@ TcpEchoClient::GetTypeId (void)
                    MakeUintegerAccessor (&TcpEchoClient::SetDataSize,
                                          &TcpEchoClient::GetDataSize),
                    MakeUintegerChecker<uint32_t> ())
+
+
+
     .AddTraceSource ("Tx", "A new packet is created and is sent",
                      MakeTraceSourceAccessor (&TcpEchoClient::m_txTrace))
 	.AddTraceSource("Rx",
@@ -342,7 +352,8 @@ TcpEchoClient::Send (void)
 
   if (m_sent < m_count)
     {
-      ScheduleTransmit (m_interval);
+	  double deviation = (rand() % 1000) / (double)1000 - 0.5;
+      ScheduleTransmit (m_interval + m_intervalDeviation * deviation);
     }
 }
 
