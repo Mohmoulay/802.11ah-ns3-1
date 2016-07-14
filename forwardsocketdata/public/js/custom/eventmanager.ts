@@ -56,7 +56,8 @@ class EventManager {
                         parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]), parseInt(ev.parts[20]),
                         parseInt(ev.parts[21]), parseInt(ev.parts[22]), parseInt(ev.parts[23]), parseInt(ev.parts[24]),
                         ev.parts[25], ev.parts[26], parseInt(ev.parts[27]),
-                        parseInt(ev.parts[28]), parseInt(ev.parts[29]), parseFloat(ev.parts[30]));
+                        parseInt(ev.parts[28]), parseInt(ev.parts[29]), parseFloat(ev.parts[30]),
+                        parseInt(ev.parts[31]), parseInt(ev.parts[32]));
                     break;
 
                 case 'slotstats':
@@ -202,8 +203,9 @@ class EventManager {
         avgPacketTimeOfFlight: number, goodputKbit: number,
         edcaQueueLength: number, nrOfSuccessfulRoundtripPackets: number, avgRoundTripTime: number, tcpCongestionWindow: number,
         numberOfTCPRetransmissions: number, numberOfTCPRetransmissionsFromAP: number, nrOfReceivesDroppedByDestination: number,
-        numberOfMACTxRTSFailed: number, numberOfMACTxDataFailed: number, numberOfDropsByReason: string, numberOfDropsByReasonAtAP: string,
-        tcpRtoValue: number, numberOfAPScheduledPacketForNodeInNextSlot:number, numberOfAPSentPacketForNodeImmediately:number, avgRemainingSlotTimeWhenAPSendingInSameSlot:number) {
+        numberOfMACTxRTSFailed: number, numberOfMACTxMissedACK: number, numberOfDropsByReason: string, numberOfDropsByReasonAtAP: string,
+        tcpRtoValue: number, numberOfAPScheduledPacketForNodeInNextSlot:number, numberOfAPSentPacketForNodeImmediately:number, avgRemainingSlotTimeWhenAPSendingInSameSlot:number,
+        numberOfCollisions:number, numberofMACTxMissedACKAndDroppedPacket:number) {
 
         let simulation = this.sim.simulationContainer.getSimulation(stream);
 
@@ -245,7 +247,8 @@ class EventManager {
         nodeVal.tcpRTO = tcpRtoValue;
 
         nodeVal.numberOfMACTxRTSFailed = numberOfMACTxRTSFailed;
-        nodeVal.numberOfMACTxDataFailed = numberOfMACTxDataFailed;
+        nodeVal.numberOfMACTxMissedACK = numberOfMACTxMissedACK;
+        nodeVal.numberofMACTxMissedACKAndDroppedPacket = numberofMACTxMissedACKAndDroppedPacket;
 
         if (typeof numberOfDropsByReason != "undefined") {
             let dropParts = numberOfDropsByReason.split(',');
@@ -288,6 +291,8 @@ class EventManager {
         nodeVal.numberOfAPSentPacketForNodeImmediately = numberOfAPSentPacketForNodeImmediately;
         nodeVal.avgRemainingSlotTimeWhenAPSendingInSameSlot = avgRemainingSlotTimeWhenAPSendingInSameSlot;
         
+        nodeVal.numberOfCollisions = numberOfCollisions;
+
         if (this.updateGUI && stream == this.sim.selectedStream) {
             if (this.hasIncreased(n, "totalTransmitTime")) {
                 this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));

@@ -183,7 +183,7 @@ var EventManager = (function () {
                     this.onNodeAdded(ev.stream, false, -1, parseFloat(ev.parts[2]), parseFloat(ev.parts[3]), -1);
                     break;
                 case 'nodestats':
-                    this.onStatsUpdated(ev.stream, ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]), parseInt(ev.parts[20]), parseInt(ev.parts[21]), parseInt(ev.parts[22]), parseInt(ev.parts[23]), parseInt(ev.parts[24]), ev.parts[25], ev.parts[26], parseInt(ev.parts[27]), parseInt(ev.parts[28]), parseInt(ev.parts[29]), parseFloat(ev.parts[30]));
+                    this.onStatsUpdated(ev.stream, ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]), parseInt(ev.parts[20]), parseInt(ev.parts[21]), parseInt(ev.parts[22]), parseInt(ev.parts[23]), parseInt(ev.parts[24]), ev.parts[25], ev.parts[26], parseInt(ev.parts[27]), parseInt(ev.parts[28]), parseInt(ev.parts[29]), parseFloat(ev.parts[30]), parseInt(ev.parts[31]), parseInt(ev.parts[32]));
                     break;
                 case 'slotstats':
                     var values = [];
@@ -292,7 +292,7 @@ var EventManager = (function () {
         else
             return false;
     };
-    EventManager.prototype.onStatsUpdated = function (stream, timestamp, id, totalTransmitTime, totalReceiveTime, totalDozeTime, totalActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTime, tcpCongestionWindow, numberOfTCPRetransmissions, numberOfTCPRetransmissionsFromAP, nrOfReceivesDroppedByDestination, numberOfMACTxRTSFailed, numberOfMACTxDataFailed, numberOfDropsByReason, numberOfDropsByReasonAtAP, tcpRtoValue, numberOfAPScheduledPacketForNodeInNextSlot, numberOfAPSentPacketForNodeImmediately, avgRemainingSlotTimeWhenAPSendingInSameSlot) {
+    EventManager.prototype.onStatsUpdated = function (stream, timestamp, id, totalTransmitTime, totalReceiveTime, totalDozeTime, totalActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTime, tcpCongestionWindow, numberOfTCPRetransmissions, numberOfTCPRetransmissionsFromAP, nrOfReceivesDroppedByDestination, numberOfMACTxRTSFailed, numberOfMACTxMissedACK, numberOfDropsByReason, numberOfDropsByReasonAtAP, tcpRtoValue, numberOfAPScheduledPacketForNodeInNextSlot, numberOfAPSentPacketForNodeImmediately, avgRemainingSlotTimeWhenAPSendingInSameSlot, numberOfCollisions, numberofMACTxMissedACKAndDroppedPacket) {
         var simulation = this.sim.simulationContainer.getSimulation(stream);
         if (id < 0 || id >= simulation.nodes.length)
             return;
@@ -323,7 +323,8 @@ var EventManager = (function () {
         nodeVal.numberOfTCPRetransmissionsFromAP = numberOfTCPRetransmissionsFromAP;
         nodeVal.tcpRTO = tcpRtoValue;
         nodeVal.numberOfMACTxRTSFailed = numberOfMACTxRTSFailed;
-        nodeVal.numberOfMACTxDataFailed = numberOfMACTxDataFailed;
+        nodeVal.numberOfMACTxMissedACK = numberOfMACTxMissedACK;
+        nodeVal.numberofMACTxMissedACKAndDroppedPacket = numberofMACTxMissedACKAndDroppedPacket;
         if (typeof numberOfDropsByReason != "undefined") {
             var dropParts = numberOfDropsByReason.split(',');
             nodeVal.numberOfDropsByReasonUnknown = parseInt(dropParts[0]);
@@ -358,6 +359,7 @@ var EventManager = (function () {
         nodeVal.numberOfAPScheduledPacketForNodeInNextSlot = numberOfAPScheduledPacketForNodeInNextSlot;
         nodeVal.numberOfAPSentPacketForNodeImmediately = numberOfAPSentPacketForNodeImmediately;
         nodeVal.avgRemainingSlotTimeWhenAPSendingInSameSlot = avgRemainingSlotTimeWhenAPSendingInSameSlot;
+        nodeVal.numberOfCollisions = numberOfCollisions;
         if (this.updateGUI && stream == this.sim.selectedStream) {
             if (this.hasIncreased(n, "totalTransmitTime")) {
                 this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));
@@ -1352,7 +1354,8 @@ var NodeValue = (function () {
         this.nrOfReceivesDroppedByDestination = 0;
         this.numberOfTCPRetransmissionsFromAP = 0;
         this.numberOfMACTxRTSFailed = 0;
-        this.numberOfMACTxDataFailed = 0;
+        this.numberofMACTxMissedACKAndDroppedPacket = 0;
+        this.numberOfMACTxMissedACK = 0;
         this.numberOfDropsByReasonUnknown = 0;
         this.numberOfDropsByReasonPhyInSleepMode = 0;
         this.numberOfDropsByReasonPhyNotEnoughSignalPower = 0;
@@ -1383,6 +1386,7 @@ var NodeValue = (function () {
         this.numberOfAPScheduledPacketForNodeInNextSlot = 0;
         this.numberOfAPSentPacketForNodeImmediately = 0;
         this.avgRemainingSlotTimeWhenAPSendingInSameSlot = 0;
+        this.numberOfCollisions = 0;
     }
     return NodeValue;
 })();

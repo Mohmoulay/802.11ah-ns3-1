@@ -45,7 +45,8 @@ class NodeValue {
 
     numberOfTCPRetransmissionsFromAP : number = 0;
     numberOfMACTxRTSFailed : number = 0;
-    numberOfMACTxDataFailed : number = 0;
+    numberofMACTxMissedACKAndDroppedPacket : number = 0;
+    numberOfMACTxMissedACK : number = 0;
 
     numberOfDropsByReasonUnknown:number = 0;
     numberOfDropsByReasonPhyInSleepMode:number = 0;
@@ -81,6 +82,8 @@ class NodeValue {
     numberOfAPScheduledPacketForNodeInNextSlot:number = 0;
     numberOfAPSentPacketForNodeImmediately:number = 0;
     avgRemainingSlotTimeWhenAPSendingInSameSlot:number = 0;
+
+    numberOfCollisions:number = 0;
 }
 
 class APNode extends SimulationNode {
