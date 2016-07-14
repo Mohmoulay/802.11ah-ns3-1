@@ -18,6 +18,7 @@ int main(int argc, char** argv) {
 
     if(config.trafficType == "tcpecho") {
     	Config::SetDefault ("ns3::TcpSocketBase::MinRto",TimeValue(MicroSeconds(config.MinRTO)));
+    	Config::SetDefault ("ns3::TcpSocket::DelAckTimeout",TimeValue(MicroSeconds(config.MinRTO)));
     }
 
     // setup wifi channel

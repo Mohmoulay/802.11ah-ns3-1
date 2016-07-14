@@ -227,6 +227,10 @@ private:
   /**
    * Ensure that data to send does not expire before the slot arrives
    */
+
+  void
+  EnsureBackoffDoesNotExceedRAWSlot(S1gBeaconHeader& beacon);
+
   void
   EnsureQueuesKeepDataLongEnough(S1gBeaconHeader& beacon);
 

@@ -567,6 +567,9 @@ DcfManager::DoGrantAccess (void)
            * could change the global state of the manager, and, thus, could change
            * the result of the calculations.
            */
+
+          std::cout << Simulator::Now().GetMicroSeconds() << " Access granted for DCF" << std::endl;
+
           state->NotifyAccessGranted ();
           for (std::vector<DcfState *>::const_iterator k = internalCollisionStates.begin ();
                k != internalCollisionStates.end (); k++)
@@ -647,7 +650,7 @@ DcfManager::GetBackoffStartFor (DcfState *state)
 Time
 DcfManager::GetBackoffEndFor (DcfState *state)
 {
-	MY_DEBUG("Calculating backoff end, start is " << GetBackoffStartFor (state).GetMicroSeconds() << ", duration of backoff is (slots: " << state->GetBackoffSlots() << ", slot duration: " << m_slotTimeUs << "), total duration: " << state->GetBackoffSlots () * m_slotTimeUs)
+	std::cout << "Calculating backoff end, start is " << GetBackoffStartFor (state).GetMicroSeconds() << ", duration of backoff is (slots: " << state->GetBackoffSlots() << ", slot duration: " << m_slotTimeUs << "), total duration: " << state->GetBackoffSlots () * m_slotTimeUs << std::endl;
     Time backOffEnd = GetBackoffStartFor (state) + MicroSeconds (state->GetBackoffSlots () * m_slotTimeUs);
 
 	if(m_rawSlotStart + m_rawSlotDuration == Time(0)) // if not set
@@ -663,10 +666,13 @@ DcfManager::GetBackoffEndFor (DcfState *state)
 		if(adjusted <= GetBackoffStartFor (state)) {
 			// eh can't adjust it, the start of the backoff is already later
 			// nothing to be done now, let it drop
+			std::cout << "Unable to adjust the backoff end to prevent going out of the RAW period, the start is already later than the raw slot end" << std::endl;;
 			return backOffEnd;
 		}
-		else
+		else {
 			return adjusted;
+			std::cout << "Adjusted the backoff end to prevent going out of the RAW period to " << adjusted.GetMicroSeconds() << "µs" << std::endl;
+		}
 	}
 	else
 		return backOffEnd;

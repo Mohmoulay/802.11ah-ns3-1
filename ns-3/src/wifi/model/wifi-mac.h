@@ -307,15 +307,54 @@ protected:
    */
   void ConfigureDcf (Ptr<Dcf> dcf, uint32_t cwmin, uint32_t cwmax, enum AcIndex ac);
 
+  /**
+     * \return the default maximum propagation delay
+     *
+     * By default, we get the maximum propagation delay from 1000 m and speed of light
+     * (3e8 m/s).
+     */
+    static Time GetDefaultMaxPropagationDelay (void);
+
+    /**
+     * \return the default CTS and ACK timeout
+     *
+     * Return the default CTS and ACK timeout.
+     * Cts_Timeout and Ack_Timeout are specified in the Annex C
+     * (Formal description of MAC operation, see details on the
+     * Trsp timer setting at page 346)
+     */
+    static Time GetDefaultCtsAckTimeout (void);
+    /**
+     * Return the default basic block ACK delay.
+     * Currently it returns 250 microseconds.
+     *
+     * \return the default basic block ACK delay
+     */
+    static Time GetDefaultBasicBlockAckDelay (void);
+    /**
+     * Return the default basic block ACK timeout.
+     *
+     * \return the default basic block ACK timeout
+     */
+    static Time GetDefaultBasicBlockAckTimeout (void);
+    /**
+     * Return the default compressed block ACK delay.
+     * Currently it returns 76 microseconds.
+     *
+     * \return the default compressed block ACK delay
+     */
+    static Time GetDefaultCompressedBlockAckDelay (void);
+    /**
+     * Return the default compressed block ACK timeout.
+     *
+     * \return the default compressed block ACK timeout
+     */
+    static Time GetDefaultCompressedBlockAckTimeout (void);
+
+
 
 private:
-  /**
-   * \return the default maximum propagation delay
-   *
-   * By default, we get the maximum propagation delay from 1000 m and speed of light
-   * (3e8 m/s).
-   */
-  static Time GetDefaultMaxPropagationDelay (void);
+
   /**
    * \return the default slot duration
    *
@@ -347,42 +386,6 @@ private:
    * Return a default value for 802.11a at 6Mbps (44 microseconds)
    */
   static Time GetDefaultCtsAckDelay (void);
-  /**
-   * \return the default CTS and ACK timeout
-   *
-   * Return the default CTS and ACK timeout.
-   * Cts_Timeout and Ack_Timeout are specified in the Annex C
-   * (Formal description of MAC operation, see details on the
-   * Trsp timer setting at page 346)
-   */
-  static Time GetDefaultCtsAckTimeout (void);
-  /**
-   * Return the default basic block ACK delay.
-   * Currently it returns 250 microseconds.
-   *
-   * \return the default basic block ACK delay
-   */
-  static Time GetDefaultBasicBlockAckDelay (void);
-  /**
-   * Return the default basic block ACK timeout.
-   *
-   * \return the default basic block ACK timeout
-   */
-  static Time GetDefaultBasicBlockAckTimeout (void);
-  /**
-   * Return the default compressed block ACK delay.
-   * Currently it returns 76 microseconds.
-   *
-   * \return the default compressed block ACK delay
-   */
-  static Time GetDefaultCompressedBlockAckDelay (void);
-  /**
-   * Return the default compressed block ACK timeout.
-   *
-   * \return the default compressed block ACK timeout
-   */
-  static Time GetDefaultCompressedBlockAckTimeout (void);
-
   /**
    * \param standard the phy standard to be used
    *
