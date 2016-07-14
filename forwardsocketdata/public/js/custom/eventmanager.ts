@@ -58,6 +58,15 @@ class EventManager {
                         ev.parts[25], ev.parts[26], parseInt(ev.parts[27]),
                         parseInt(ev.parts[28]), parseInt(ev.parts[29]), parseFloat(ev.parts[30]));
                     break;
+
+                case 'slotstats':
+                    let values:number[] = [];
+                    for (var i = 2; i < ev.parts.length; i++)
+                        values.push(parseInt(ev.parts[i]));  
+
+                    this.onSlotStats(ev.stream, values);
+
+                    break;
                 default:
             }
             lastTime = ev.time;
@@ -96,6 +105,9 @@ class EventManager {
         }
 
         simulation.nodes = [];
+        simulation.slotUsage = [];
+        simulation.totalSlotUsage = [];
+
         let config = simulation.config;
         config.AIDRAWRange = aidRAWRange;
         config.numberOfRAWGroups = numberOfRAWGroups;
@@ -116,6 +128,24 @@ class EventManager {
         config.minRTO = minRTO;
         config.simulationTime = simulationTime;
 
+    }
+
+
+    onSlotStats(stream:string, values:number[]) {
+        let sim = this.sim.simulationContainer.getSimulation(stream);
+        sim.slotUsage.push(values);
+
+        if(sim.totalSlotUsage.length == 0) {
+            sim.totalSlotUsage = values;   
+        }
+        else {
+            let smoothingFactor = 0.8;
+            for(let i = 0; i < values.length; i++) {
+
+                sim.totalSlotUsage[i] = sim.totalSlotUsage[i] * smoothingFactor + (1-smoothingFactor) * values[i];
+
+            }
+        }
     }
 
     onNodeAdded(stream: string, isSTA: boolean, id: number, x: number, y: number, aId: number) {

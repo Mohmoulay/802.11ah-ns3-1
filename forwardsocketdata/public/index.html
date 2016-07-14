@@ -267,7 +267,14 @@
                                                 </tr>
                                             </table>
                                         </div>
-                                        <label>Show delta's <input id="chkShowDeltas" type="checkbox"></label><div id="pnlDistribution" style="display:none"><label>Show distribution<input id="chkShowDistribution" type="checkbox"></label></div>
+                                        <div>
+                                            <div style="float:left">
+                                                <label>Show delta's <input id="chkShowDeltas" type="checkbox"></label>
+                                            </div>
+                                            <div id="pnlDistribution" style="float:left; display:none">
+                                                <label>Show distribution<input id="chkShowDistribution" type="checkbox"></label>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="scrollTable" style="max-height: 280px;">
@@ -399,6 +406,14 @@
                 </div>
                 <div class="panel panel-default">
                     <div class="panel-heading">
+                        <h3 class="panel-title">TIM group/slot usage</h3>
+                    </div>
+                    <div class="panel-body" style="padding:5px">
+                        <canvas height="100" id="canvSlots" width="480"></canvas>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
                         <h3 class="panel-title"></h3>
                     </div>
                     <div class="panel-body">
@@ -406,16 +421,16 @@
                             <div class="col-md-12">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <div id="nodeChartActiveDoze" style="margin: 0 auto; height:150px"></div>
+                                        <div id="nodeChartActiveDoze" style="margin: 0 auto; height:130px"></div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div id="nodeChartTxSuccessDropped" style="margin: 0 auto; height:150px"></div>
+                                        <div id="nodeChartTxSuccessDropped" style="margin: 0 auto; height:130px"></div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div id="nodeChartRxSuccessDropped" style="margin: 0 auto; height:150px"></div>
+                                        <div id="nodeChartRxSuccessDropped" style="margin: 0 auto; height:130px"></div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div id="nodeChartPacketSuccessDropped" style="margin: 0 auto; height:150px"></div>
+                                        <div id="nodeChartPacketSuccessDropped" style="margin: 0 auto; height:130px"></div>
                                     </div>
                                 </div>
                             </div>

@@ -90,12 +90,68 @@ class SimulationGUI {
         if (typeof selectedSimulation == "undefined")
             return;
 
+        this.drawSlotStats();
         this.drawRange();
         this.drawNodes();
 
         for (let a of this.animations) {
             a.draw(this.canvas, this.ctx, this.area);
         }
+    }
+
+    private drawSlotStats() {
+        let canv = <HTMLCanvasElement>document.getElementById("canvSlots");
+        let ctx = canv.getContext("2d");
+        let selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+
+        let groups = selectedSimulation.config.numberOfRAWGroups;
+        let slots = selectedSimulation.config.numberOfRAWSlots;
+
+        if(selectedSimulation.slotUsage.length == 0)
+            return;
+
+        let lastValues = selectedSimulation.totalSlotUsage;
+
+        let max = Number.MIN_VALUE;
+        for(let i = 0; i < lastValues.length;i++) {
+            if(max < lastValues[i]) max = lastValues[i];
+        }
+        
+        let width = canv.width;
+        let height = canv.height;
+
+        let padding = 5;
+        let groupWidth = Math.floor(width / groups) - 2 * padding; 
+
+        ctx.fillStyle = "white";
+        ctx.fillRect(0,0, width,height);
+
+        ctx.strokeStyle = "#CCC";
+        ctx.fillStyle = "#7cb5ec";
+
+        let rectHeight  =height - 2 * padding;
+        ctx.lineWidth = 1;
+        for (var g = 0; g < groups; g++) {
+            ctx.beginPath(); 
+            ctx.rect(padding + g * (padding+groupWidth) + 0.5, padding+ 0.5, groupWidth, rectHeight);
+            ctx.stroke();
+
+            let slotWidth = groupWidth / slots;
+            for(let s = 0; s < slots; s++) {
+
+
+                let value = lastValues[g * slots + s];
+                let y = (1-value/max) * rectHeight; 
+                ctx.fillRect(padding + g * (padding+groupWidth) + s * slotWidth+ 0.5, padding + y+ 0.5, slotWidth, rectHeight - y);
+
+                ctx.beginPath(); 
+                ctx.rect(padding + g * (padding+groupWidth) + s * slotWidth+ 0.5, padding+ 0.5, slotWidth, height - 2 * padding);
+                ctx.stroke();
+            }
+        }
+
+        
+            
     }
 
     private drawRange() {

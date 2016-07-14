@@ -126,5 +126,10 @@ class SimulationConfiguration {
 class Simulation {
 
     nodes: SimulationNode[] = [];
+
+    slotUsage:number[][] = [];
+
+    totalSlotUsage:number[] = [];
+
     config: SimulationConfiguration = new SimulationConfiguration();
 }

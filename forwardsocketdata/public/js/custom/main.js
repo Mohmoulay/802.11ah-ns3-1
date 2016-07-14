@@ -185,6 +185,12 @@ var EventManager = (function () {
                 case 'nodestats':
                     this.onStatsUpdated(ev.stream, ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]), parseInt(ev.parts[20]), parseInt(ev.parts[21]), parseInt(ev.parts[22]), parseInt(ev.parts[23]), parseInt(ev.parts[24]), ev.parts[25], ev.parts[26], parseInt(ev.parts[27]), parseInt(ev.parts[28]), parseInt(ev.parts[29]), parseFloat(ev.parts[30]));
                     break;
+                case 'slotstats':
+                    var values = [];
+                    for (var i = 2; i < ev.parts.length; i++)
+                        values.push(parseInt(ev.parts[i]));
+                    this.onSlotStats(ev.stream, values);
+                    break;
                 default:
             }
             lastTime = ev.time;
@@ -215,6 +221,8 @@ var EventManager = (function () {
             this.sim.simulationContainer.setSimulation(stream, simulation);
         }
         simulation.nodes = [];
+        simulation.slotUsage = [];
+        simulation.totalSlotUsage = [];
         var config = simulation.config;
         config.AIDRAWRange = aidRAWRange;
         config.numberOfRAWGroups = numberOfRAWGroups;
@@ -233,6 +241,19 @@ var EventManager = (function () {
         config.apAlwaysSchedulesForNextSlot = apAlwaysSchedulesForNextSlot;
         config.minRTO = minRTO;
         config.simulationTime = simulationTime;
+    };
+    EventManager.prototype.onSlotStats = function (stream, values) {
+        var sim = this.sim.simulationContainer.getSimulation(stream);
+        sim.slotUsage.push(values);
+        if (sim.totalSlotUsage.length == 0) {
+            sim.totalSlotUsage = values;
+        }
+        else {
+            var smoothingFactor = 0.8;
+            for (var i = 0; i < values.length; i++) {
+                sim.totalSlotUsage[i] = sim.totalSlotUsage[i] * smoothingFactor + (1 - smoothingFactor) * values[i];
+            }
+        }
     };
     EventManager.prototype.onNodeAdded = function (stream, isSTA, id, x, y, aId) {
         var n = isSTA ? new STANode() : new APNode();
@@ -424,11 +445,51 @@ var SimulationGUI = (function () {
         var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
         if (typeof selectedSimulation == "undefined")
             return;
+        this.drawSlotStats();
         this.drawRange();
         this.drawNodes();
         for (var _i = 0, _a = this.animations; _i < _a.length; _i++) {
             var a = _a[_i];
             a.draw(this.canvas, this.ctx, this.area);
+        }
+    };
+    SimulationGUI.prototype.drawSlotStats = function () {
+        var canv = document.getElementById("canvSlots");
+        var ctx = canv.getContext("2d");
+        var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        var groups = selectedSimulation.config.numberOfRAWGroups;
+        var slots = selectedSimulation.config.numberOfRAWSlots;
+        if (selectedSimulation.slotUsage.length == 0)
+            return;
+        var lastValues = selectedSimulation.totalSlotUsage;
+        var max = Number.MIN_VALUE;
+        for (var i = 0; i < lastValues.length; i++) {
+            if (max < lastValues[i])
+                max = lastValues[i];
+        }
+        var width = canv.width;
+        var height = canv.height;
+        var padding = 5;
+        var groupWidth = Math.floor(width / groups) - 2 * padding;
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, width, height);
+        ctx.strokeStyle = "#CCC";
+        ctx.fillStyle = "#7cb5ec";
+        var rectHeight = height - 2 * padding;
+        ctx.lineWidth = 1;
+        for (var g = 0; g < groups; g++) {
+            ctx.beginPath();
+            ctx.rect(padding + g * (padding + groupWidth) + 0.5, padding + 0.5, groupWidth, rectHeight);
+            ctx.stroke();
+            var slotWidth = groupWidth / slots;
+            for (var s = 0; s < slots; s++) {
+                var value = lastValues[g * slots + s];
+                var y = (1 - value / max) * rectHeight;
+                ctx.fillRect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + y + 0.5, slotWidth, rectHeight - y);
+                ctx.beginPath();
+                ctx.rect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + 0.5, slotWidth, height - 2 * padding);
+                ctx.stroke();
+            }
         }
     };
     SimulationGUI.prototype.drawRange = function () {
@@ -1351,6 +1412,8 @@ var SimulationConfiguration = (function () {
 var Simulation = (function () {
     function Simulation() {
         this.nodes = [];
+        this.slotUsage = [];
+        this.totalSlotUsage = [];
         this.config = new SimulationConfiguration();
     }
     return Simulation;
