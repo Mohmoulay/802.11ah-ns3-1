@@ -179,7 +179,7 @@ void OnAPPhyRxDrop(std::string context, Ptr<const Packet> packet, DropReason rea
 
 }
 
-void OnAPPacketToTransmitReceived(string context, Mac48Address to, Ptr<const Packet> packet, bool isScheduled, bool isDuringSlotOfSTA, Time timeLeftInSlot) {
+void OnAPPacketToTransmitReceived(string context, Ptr<const Packet> packet, Mac48Address to, bool isScheduled, bool isDuringSlotOfSTA, Time timeLeftInSlot) {
 
 	int staId = -1;
 	for(int i = 0; i < staNodeInterfaces.GetN(); i++) {
@@ -252,7 +252,7 @@ void configureAPNode(Ssid& ssid) {
 
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeCallback(&OnAPPhyRxBegin));
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDropWithReason", MakeCallback(&OnAPPhyRxDrop));
-	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::ApWifiMac/PacketToTransmitReceivedFromUpperLayer", MakeCallback(&OnAPPacketToTransmitReceived));
+	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::S1gApWifiMac/PacketToTransmitReceivedFromUpperLayer", MakeCallback(&OnAPPacketToTransmitReceived));
 
 	phy.EnablePcap("apfile", apNodes, 0);
 

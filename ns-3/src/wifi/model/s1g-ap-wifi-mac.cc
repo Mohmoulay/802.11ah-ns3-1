@@ -395,7 +395,7 @@ void S1gApWifiMac::Enqueue(Ptr<const Packet> packet, Mac48Address to,
 						LOG_TRAFFIC(Simulator::Now().GetMicroSeconds() << " Data for [" << aId << "] is transmitted immediately because AP can still get it out during the STA slot, in which the STA is actively listening, there's " << timeRemaining.GetMicroSeconds() << "µs remaining until slot is over");
 					}
 					else {
-						std::cout << "AP can't send the tranmission directly, not enough time left (" << timeRemaining.GetMicroSeconds() << "µs while " << m_scheduleTransmissionForNextSlotIfLessThan.GetMicroSeconds() << " was required " << std::endl;
+						//std::cout << "AP can't send the transmission directly, not enough time left (" << timeRemaining.GetMicroSeconds() << "µs while " << m_scheduleTransmissionForNextSlotIfLessThan.GetMicroSeconds() << " was required " << std::endl;
 					}
 
 				}
