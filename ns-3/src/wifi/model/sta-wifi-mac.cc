@@ -908,7 +908,7 @@ StaWifiMac::HandleS1gSleepFromSTATIMGroupBeacon(S1gBeaconHeader& beacon) {
 
 	// for the same reason, only sleep 2 ms later than the slot has passed because when transmissions at the end of the slot
 	// are sent, the AP will respond with a short 802.11 ACK that if missed will start a cascade of packet drop
-	Simulator::Schedule(endOfSlotTime + MilliSeconds(4), &StaWifiMac::GoToSleep, this, sleepTime);
+	Simulator::Schedule(endOfSlotTime, &StaWifiMac::GoToSleep, this, sleepTime);
 
 	Simulator::Schedule(slotStartOffset, &StaWifiMac::OnRAWSlotStart, this);
 	Simulator::Schedule(endOfSlotTime, &StaWifiMac::OnRAWSlotEnd, this);
@@ -1072,7 +1072,7 @@ StaWifiMac::GoToSleep(Time duration) {
 	// wake up sliiiiiiiiiiiightly earlier or the station will miss the
 	// data that it's supposed to receive
 	// this greatly depends on how fast the radio can go from sleep -> active
-	auto earlyWake = MilliSeconds(4);
+	auto earlyWake = MilliSeconds(5);
 	if(duration > earlyWake) {
 		m_phy->SetSleepMode();
 		auto sleepTime = duration - earlyWake;

@@ -54,7 +54,8 @@ public:
     long NumberOfTCPRetransmissionsFromAP = 0;
 
     long NumberOfMACTxRTSFailed = 0;
-    long NumberOfMACTxDataFailed = 0;
+    long NumberOfMACTxMissedACK = 0;
+    long NumberOfMACTxMissedACKAndDroppedPacket = 0;
 
     long NumberOfAPScheduledPacketForNodeInNextSlot = 0;
     long NumberOfAPSentPacketForNodeImmediately = 0;
@@ -63,6 +64,8 @@ public:
     Time getAverageRemainingWhenAPSendingPacketInSameSlot();
 
     long NumberOfCollisions = 0;
+
+    long TotalNumberOfBackedOffSlots = 0;
 };
 
 #endif /* NODESTATISTICS_H */

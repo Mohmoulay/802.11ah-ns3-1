@@ -402,6 +402,7 @@ void NodeEntry::OnCollision(std::string context, uint32_t nrOfBackoffSlots) {
 	cout << "Collision sensed" << endl;
 
 	stats->get(this->id).NumberOfCollisions++;
+	stats->get(this->id).TotalNumberOfBackedOffSlots+= nrOfBackoffSlots;
 }
 
 
@@ -416,7 +417,7 @@ void NodeEntry::OnMacTxDataFailed(std::string context, Mac48Address address) {
 	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
 	//		<< " MAC Tx Data Failed" << endl;
 
-	stats->get(this->id).NumberOfMACTxDataFailed++;
+	stats->get(this->id).NumberOfMACTxMissedACK++;
 }
 
 void NodeEntry::OnMacTxFinalRtsFailed(std::string context,
@@ -432,7 +433,7 @@ void NodeEntry::OnMacTxFinalDataFailed(std::string context,
 	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
 	//		<< " MAC Tx Final data Failed" << endl;
 
-	stats->get(this->id).NumberOfMACTxDataFailed++;
+	stats->get(this->id).NumberOfMACTxMissedACKAndDroppedPacket++;
 }
 
 void NodeEntry::SetAssociatedCallback(std::function<void()> assocCallback) {
