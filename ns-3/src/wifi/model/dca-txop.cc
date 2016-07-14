@@ -146,6 +146,8 @@ DcaTxop::GetTypeId (void)
                    PointerValue (),
                    MakePointerAccessor (&DcaTxop::GetQueue),
                    MakePointerChecker<WifiMacQueue> ())
+	.AddTraceSource("Collision", "Fired when a collision occurred",
+			MakeTraceSourceAccessor(&DcaTxop::m_collisionTrace), "ns3::DcaTxop::CollisionCallback")
   ;
   return tid;
 }
@@ -598,7 +600,11 @@ DcaTxop::NotifyCollision (void)
 {
   NS_LOG_FUNCTION (this);
   NS_LOG_DEBUG ("collision");
-  m_dcf->StartBackoffNow (m_rng->GetNext (0, m_dcf->GetCw ()));
+
+  auto cw = m_rng->GetNext (0, m_dcf->GetCw ());
+  m_collisionTrace(cw);
+
+  m_dcf->StartBackoffNow (cw);
   RestartAccessIfNeeded ();
 }
 

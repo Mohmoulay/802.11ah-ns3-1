@@ -12,19 +12,18 @@ int main(int argc, char** argv) {
     config = Configuration(argc, argv);
     stats = Statistics(config.Nsta);
 
+    transmissionsPerTIMGroupAndSlotSinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
+
     eventManager = SimulationEventManager(config.visualizerIP, config.visualizerPort);
 
     RngSeedManager::SetSeed(config.seed);
 
     if(config.trafficType == "tcpecho") {
     	Config::SetDefault ("ns3::TcpSocketBase::MinRto",TimeValue(MicroSeconds(config.MinRTO)));
+    	Config::SetDefault ("ns3::TcpSocket::DelAckTimeout",TimeValue(MicroSeconds(config.MinRTO)));
     }
 
-    // setup wifi channel
-    YansWifiChannelHelper channelBuilder = YansWifiChannelHelper();
-    channelBuilder.AddPropagationLoss("ns3::LogDistancePropagationLossModel", "Exponent", DoubleValue(config.propagationLossExponent), "ReferenceLoss", DoubleValue(config.propagationLossReferenceLoss), "ReferenceDistance", DoubleValue(1.0));
-    channelBuilder.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
-    channel = channelBuilder.Create();
+    configureChannel();
 
     Ssid ssid = Ssid("ns380211ah");
 
@@ -82,6 +81,28 @@ int main(int argc, char** argv) {
     printStatistics();
 
     return (EXIT_SUCCESS);
+}
+
+void configureChannel() {
+    // setup wifi channel
+    YansWifiChannelHelper channelBuilder = YansWifiChannelHelper();
+    channelBuilder.AddPropagationLoss("ns3::LogDistancePropagationLossModel", "Exponent", DoubleValue(config.propagationLossExponent), "ReferenceLoss", DoubleValue(config.propagationLossReferenceLoss), "ReferenceDistance", DoubleValue(1.0));
+    channelBuilder.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
+    channel = channelBuilder.Create();
+
+    channel->TraceConnectWithoutContext("Transmission", MakeCallback(&onChannelTransmission));
+}
+
+void onChannelTransmission(Time delay) {
+
+	int timGroup = (Simulator::Now().GetMicroSeconds() / config.BeaconInterval) % config.NGroup;
+
+	S1gStrategy strategy;
+	auto slotDuration = strategy.GetSlotDuration(config.NRawSlotCount);
+	int slotIndex = (Simulator::Now().GetMicroSeconds() % config.BeaconInterval) / slotDuration.GetMicroSeconds();
+
+	//cout << "Transission during tim group " << timGroup << ", slot: " << slotIndex << endl;
+	transmissionsPerTIMGroupAndSlotSinceLastInterval[timGroup * config.NRawSlotNum + slotIndex]++;
 }
 
 void configureSTANodes(Ssid& ssid) {
@@ -290,6 +311,7 @@ void configureNodes() {
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/$ns3::StaWifiMac/DeAssoc", MakeCallback(&NodeEntry::UnsetAssociation, n));
 
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/$ns3::StaWifiMac/PacketDropped", MakeCallback(&NodeEntry::OnMacPacketDropped, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/$ns3::StaWifiMac/Collision", MakeCallback(&NodeEntry::OnCollision, n));
 
 
         // hook up TX
@@ -411,8 +433,6 @@ void configureTCPEchoClients() {
 }
 
 void configureUDPClients() {
-
-
     UdpClientHelper clientHelper(apNodeInterfaces.GetAddress(0), 9); //address of remote node
     clientHelper.SetAttribute("MaxPackets", UintegerValue(4294967295u));
     clientHelper.SetAttribute("Interval", TimeValue(MilliSeconds(config.trafficInterval)));
@@ -542,5 +562,10 @@ void printStatistics() {
 
 void sendStatistics() {
 	eventManager.onUpdateStatistics(stats);
+
+	eventManager.onUpdateSlotStatistics(transmissionsPerTIMGroupAndSlotSinceLastInterval, config);
+	// reset
+    transmissionsPerTIMGroupAndSlotSinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
+
 	Simulator::Schedule(Seconds(config.visualizerSamplingInterval), &sendStatistics);
 }

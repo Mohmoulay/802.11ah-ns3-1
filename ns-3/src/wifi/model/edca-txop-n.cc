@@ -253,6 +253,8 @@ EdcaTxopN::GetTypeId (void)
                      "The header of successfully transmitted packet",
                      MakeTraceSourceAccessor (&EdcaTxopN::m_AccessQuest_record),
                      "ns3::TimeSeriesAdaptor::OutputTracedCallback")
+	 .AddTraceSource("Collision", "Fired when a collision occurred",
+				MakeTraceSourceAccessor(&EdcaTxopN::m_collisionTrace), "ns3::EdcaTxopN::CollisionCallback")
   ;
   return tid;
 }
@@ -668,7 +670,10 @@ void
 EdcaTxopN::NotifyCollision (void)
 {
   NS_LOG_FUNCTION (this);
-  m_dcf->StartBackoffNow (m_rng->GetNext (0, m_dcf->GetCw ()));
+  auto cw = m_rng->GetNext (0, m_dcf->GetCw ());
+  m_collisionTrace(cw);
+
+  m_dcf->StartBackoffNow (cw);
   RestartAccessIfNeeded ();
 }
 

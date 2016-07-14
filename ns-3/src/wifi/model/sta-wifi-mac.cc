@@ -40,7 +40,7 @@
 #include "ht-capabilities.h"
 #include "random-stream.h"
 
-#define LOG_SLEEP(msg)	if(false) std::cout << "[" << (GetAID()) << "] " << msg << std::endl;
+#define LOG_SLEEP(msg)	if(true) std::cout << "[" << (GetAID()) << "] " << msg << std::endl;
 
 /*
  * The state machine for this STA is:
@@ -733,6 +733,7 @@ StaWifiMac::Receive(Ptr<Packet> packet, const WifiMacHeader *hdr) {
 
 		}
 
+		EnsureBackoffDoesNotExceedRAWSlot(beacon);
 		EnsureQueuesKeepDataLongEnough(beacon);
 		HandleS1gSleepAndSlotTimingsFromBeacon(beacon);
 
@@ -825,6 +826,24 @@ StaWifiMac::Receive(Ptr<Packet> packet, const WifiMacHeader *hdr) {
 }
 
 void
+StaWifiMac::EnsureBackoffDoesNotExceedRAWSlot(S1gBeaconHeader& beacon) {
+
+	 auto rawSlotDuration = strategy->GetSlotDuration(beacon.GetRPS().GetRawAssigmentObj().GetSlotDurationCount()).GetMicroSeconds();
+
+	  // CWMax is 1023 so max backoff slot duration has to be RAWslotduration / 1023
+	  uint16_t backoffSlotDuration = rawSlotDuration / 1023;
+
+	  SetSifs (MicroSeconds (160));
+	  SetSlot (MicroSeconds (backoffSlotDuration));
+	  SetEifsNoDifs (MicroSeconds (160 + 1120));
+	  SetPifs (MicroSeconds (160 + backoffSlotDuration));
+	  SetCtsTimeout (MicroSeconds (160 + 1120 + backoffSlotDuration + GetDefaultMaxPropagationDelay ().GetMicroSeconds () * 2));//
+	  SetAckTimeout (MicroSeconds (160 + 1120 + backoffSlotDuration + GetDefaultMaxPropagationDelay ().GetMicroSeconds () * 2));//
+	  SetBasicBlockAckTimeout (GetSifs () + GetSlot () + GetDefaultBasicBlockAckDelay () + GetDefaultMaxPropagationDelay () * 2);
+	  SetCompressedBlockAckTimeout (GetSifs () + GetSlot () + GetDefaultCompressedBlockAckDelay () + GetDefaultMaxPropagationDelay () * 2);
+}
+
+void
 StaWifiMac::EnsureQueuesKeepDataLongEnough(S1gBeaconHeader& beacon) {
 	Time entireCycle = MicroSeconds(beacon.GetTIM().GetDTIMPeriod() * beacon.GetBeaconCompatibility().GetBeaconInterval());
 
@@ -886,7 +905,10 @@ StaWifiMac::HandleS1gSleepFromSTATIMGroupBeacon(S1gBeaconHeader& beacon) {
 	//					    ^ slotStartOffset + slotDuration
 
 	LOG_SLEEP("Scheduling sleep on " << (Simulator::Now() + endOfSlotTime).GetMicroSeconds() << "µs to sleep for " << sleepTime.GetMicroSeconds() << "µs");
-	Simulator::Schedule(endOfSlotTime, &StaWifiMac::GoToSleep, this, sleepTime);
+
+	// for the same reason, only sleep 2 ms later than the slot has passed because when transmissions at the end of the slot
+	// are sent, the AP will respond with a short 802.11 ACK that if missed will start a cascade of packet drop
+	Simulator::Schedule(endOfSlotTime + MilliSeconds(4), &StaWifiMac::GoToSleep, this, sleepTime);
 
 	Simulator::Schedule(slotStartOffset, &StaWifiMac::OnRAWSlotStart, this);
 	Simulator::Schedule(endOfSlotTime, &StaWifiMac::OnRAWSlotEnd, this);

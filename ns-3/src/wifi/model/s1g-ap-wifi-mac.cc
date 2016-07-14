@@ -24,7 +24,7 @@ NS_LOG_COMPONENT_DEFINE("S1gApWifiMac");
 
 NS_OBJECT_ENSURE_REGISTERED(S1gApWifiMac);
 
-#define LOG_TRAFFIC(msg)	if(false) std::cout << msg << std::endl;
+#define LOG_TRAFFIC(msg)	if(true) std::cout << msg << std::endl;
 
 TypeId S1gApWifiMac::GetTypeId(void) {
 	static TypeId tid =
@@ -433,6 +433,9 @@ void S1gApWifiMac::Enqueue(Ptr<const Packet> packet, Mac48Address to,
 
 			//align with beacon interval
 			packetSendTime -= (Simulator::Now() - lastBeaconTime);
+
+			// choose a time between 0 and 50% of the slot time
+			packetSendTime = packetSendTime + MicroSeconds(rand() % (strategy->GetSlotDuration(m_slotDurationCount) / 2).GetMicroSeconds());
 
 			// transmit in second half of RAW window
 			//packetSendTime += MilliSeconds(m_beaconInterval/2);
@@ -918,6 +921,23 @@ void S1gApWifiMac::DoInitialize(void) {
 
 	// TODO subclass multiple strategies
 	strategy = new S1gStrategy();
+
+
+	 // also apply the correct backoff slot durations, same as for STA wifi mac.
+	 auto rawSlotDuration = strategy->GetSlotDuration(m_slotDurationCount).GetMicroSeconds();
+
+	  // CWMax is 1023 so max backoff slot duration has to be RAWslotduration / 1023
+	  uint16_t backoffSlotDuration = rawSlotDuration / 1023;
+
+	  SetSifs (MicroSeconds (160));
+	  SetSlot (MicroSeconds (backoffSlotDuration));
+	  SetEifsNoDifs (MicroSeconds (160 + 1120));
+	  SetPifs (MicroSeconds (160 + backoffSlotDuration));
+	  SetCtsTimeout (MicroSeconds (160 + 1120 + backoffSlotDuration + GetDefaultMaxPropagationDelay ().GetMicroSeconds () * 2));//
+	  SetAckTimeout (MicroSeconds (160 + 1120 + backoffSlotDuration + GetDefaultMaxPropagationDelay ().GetMicroSeconds () * 2));//
+	  SetBasicBlockAckTimeout (GetSifs () + GetSlot () + GetDefaultBasicBlockAckDelay () + GetDefaultMaxPropagationDelay () * 2);
+	  SetCompressedBlockAckTimeout (GetSifs () + GetSlot () + GetDefaultCompressedBlockAckDelay () + GetDefaultMaxPropagationDelay () * 2);
+
 
 	m_nrOfTIMGroups = ceil(m_totalStaNum / (float) m_rawGroupInterval);
 	// initialize queue

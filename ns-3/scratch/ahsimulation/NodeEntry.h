@@ -76,6 +76,8 @@ public:
     void OnMacTxFinalDataFailed(std::string context,Mac48Address address);
 
 
+    void OnCollision(std::string context, uint32_t nrOfBackoffSlots);
+
     void OnPhyStateChange(std::string context, const Time start, const Time duration, const WifiPhy::State state);
 
     void OnTcpPacketSent(Ptr<const Packet> packet);

@@ -70,6 +70,17 @@ string SimulationEventManager::SerializeDropReason(map<DropReason, long>& map) {
 	return s.str();
 }
 
+void SimulationEventManager::onUpdateSlotStatistics(vector<long>& transmissionsPerSlot, Configuration& config) {
+
+	vector<string> values;
+
+	values.push_back("slotstats");
+	for(int i = 0; i < transmissionsPerSlot.size(); i++) {
+		values.push_back(std::to_string(transmissionsPerSlot[i]));
+	}
+	send(values);
+}
+
 void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 	for(int i = 0; i < stats.getNumberOfNodes(); i++) {
 		send({"nodestats", std::to_string(i),
@@ -101,6 +112,7 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 			std::to_string(stats.get(i).NumberOfAPScheduledPacketForNodeInNextSlot),
 			std::to_string(stats.get(i).NumberOfAPSentPacketForNodeImmediately),
 			std::to_string(stats.get(i).getAverageRemainingWhenAPSendingPacketInSameSlot().GetMicroSeconds()),
+			std::to_string(stats.get(i).NumberOfCollisions)
 		});
 	}
 }
