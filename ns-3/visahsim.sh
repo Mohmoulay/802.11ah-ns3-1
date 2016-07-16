@@ -1,5 +1,5 @@
 ./waf --run "scratch/ahsimulation/ahsimulation"\
-" --NGroup=32"\
+" --NGroup=4"\
 " --SlotFormat=0"\
 " --NRawSlotCount=162"\
 " --NRawSlotNum=5"\
@@ -7,7 +7,7 @@
 " --Datarate=0.65"\
 " --BandWidth=2"\
 " --Rho=\"500\""\
-" --SimulationTime=1000"\
+" --SimulationTime=100"\
 " --TrafficPacketSize=100"\
 " --TrafficInterval=9876"\
 " --BeaconInterval=102400"\
@@ -15,8 +15,8 @@
 " --TCPConnectionTimeout=60000000"\
 " --APAlwaysSchedulesForNextSlot=false"\
 " --APScheduleTransmissionForNextSlotIfLessThan=5000"\
-" --NRawSta=96"\
-" --Nsta=10"\
+" --NRawSta=200"\
+" --Nsta=200"\
 " --VisualizerIP=\"192.168.0.247\""\
 " --VisualizerPort=7707"\
 " --VisualizerSamplingInterval=1"\

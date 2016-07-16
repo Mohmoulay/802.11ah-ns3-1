@@ -23,7 +23,7 @@ using namespace std;
 struct Configuration {
 	double simulationTime = 500;
 	uint32_t seed = 1;
-	uint32_t Nsta = 96;
+	uint32_t Nsta = 1;
 	uint32_t NRawSta = 96;
 	uint32_t SlotFormat = 0;
 	uint32_t NRawSlotCount = 126;

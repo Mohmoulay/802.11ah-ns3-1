@@ -130,6 +130,13 @@ public:
 
 
 private:
+
+
+
+  void OnRAWSlotStart(uint8_t timGroup, uint8_t slot);
+
+  void OnRAWSlotEnd(uint8_t timGroup, uint8_t slot);
+
   virtual void Receive (Ptr<Packet> packet, const WifiMacHeader *hdr);
   /**
    * The packet we sent was successfully received by the receiver
@@ -263,6 +270,8 @@ private:
 
   uint8_t m_nrOfTIMGroups;
   uint8_t m_currentBeaconTIMGroup = -1; // -1 because first beacon will have to be 0
+  uint8_t m_currentTIMGroupSlot = -1;
+
   uint32_t current_aid_start = 1;
   uint32_t current_aid_end = m_rawGroupInterval; //m_rawGroupInterval;
 
@@ -270,6 +279,8 @@ private:
 
   std::map<Mac48Address, uint16_t> macToAIDMap;
 
+
+  std::vector<Ptr<DcaTxop>> rawSlotsDCA;
   std::vector<int> pendingDataSizeForStations;
   std::vector<bool> staIsActiveDuringCurrentCycle;
 

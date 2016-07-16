@@ -152,6 +152,11 @@ void S1gApWifiMac::DoDispose() {
 		delete strategy;
 	strategy = nullptr;
 
+
+	for(int i = 0; i < rawSlotsDCA.size(); i++) {
+		rawSlotsDCA[i] = 0;
+	}
+
 	m_beaconEvent.Cancel();
 	RegularWifiMac::DoDispose();
 }
@@ -225,6 +230,11 @@ void S1gApWifiMac::SetWifiRemoteStationManager(
 		Ptr<WifiRemoteStationManager> stationManager) {
 	NS_LOG_FUNCTION(this << stationManager);
 	m_beaconDca->SetWifiRemoteStationManager(stationManager);
+
+	for(auto& p : rawSlotsDCA) {
+		p->SetWifiRemoteStationManager(stationManager);
+	}
+
 	RegularWifiMac::SetWifiRemoteStationManager(stationManager);
 }
 
@@ -349,12 +359,23 @@ void S1gApWifiMac::ForwardDown(Ptr<const Packet> packet, Mac48Address from,
 	hdr.SetDsFrom();
 	hdr.SetDsNotTo();
 
-	if (m_qosSupported) {
-		//Sanity check that the TID is valid
-		NS_ASSERT(tid < 8);
-		m_edca[QosUtilsMapTidToAc(tid)]->Queue(packet, hdr);
-	} else {
-		m_dca->Queue(packet, hdr);
+	if(macToAIDMap.find(to) != macToAIDMap.end()) {
+		auto aId = macToAIDMap[to];
+
+		auto targetTIMGroup = strategy->GetTIMGroupFromAID(aId, m_rawGroupInterval);
+		auto targetSlotIndex = strategy->GetSlotIndexFromAID(aId, m_slotNum);
+
+		// queue the packet in the specific raw slot period DCA
+		rawSlotsDCA[targetTIMGroup * m_slotNum + targetSlotIndex]->Queue(packet, hdr);
+	}
+	else {
+		if (m_qosSupported) {
+			//Sanity check that the TID is valid
+			NS_ASSERT(tid < 8);
+			m_edca[QosUtilsMapTidToAc(tid)]->Queue(packet, hdr);
+		} else {
+			m_dca->Queue(packet, hdr);
+		}
 	}
 }
 
@@ -586,136 +607,170 @@ void S1gApWifiMac::SendOneBeacon(void) {
 
 	lastBeaconTime = Simulator::Now();
 
-	if (m_s1gSupported) {
+	m_currentBeaconTIMGroup = (m_currentBeaconTIMGroup + 1) % m_nrOfTIMGroups;
 
-		m_currentBeaconTIMGroup = (m_currentBeaconTIMGroup + 1) % m_nrOfTIMGroups;
+	hdr.SetS1gBeacon();
+	hdr.SetAddr1(Mac48Address::GetBroadcast());
+	hdr.SetAddr2(GetAddress()); // for debug, not accordance with draft, need change
+	hdr.SetAddr3(GetAddress()); // for debug
+	Ptr<Packet> packet = Create<Packet>();
+	S1gBeaconHeader beacon;
+	S1gBeaconCompatibility compatibility;
+	compatibility.SetBeaconInterval(m_beaconInterval.GetMicroSeconds());
+	beacon.SetBeaconCompatibility(compatibility);
+	RPS m_rps;
+	RPS::RawAssignment raw;
+	uint8_t control = 0;
+	raw.SetRawControl(control); //support paged STA or not
+	raw.SetSlotFormat(m_SlotFormat);
+	raw.SetSlotCrossBoundary(m_slotCrossBoundary);
+	raw.SetSlotDurationCount(m_slotDurationCount);
+	raw.SetSlotNum(m_slotNum);
+	raw.SetRawStart(0); // immediately after the beacon;
 
-		hdr.SetS1gBeacon();
-		hdr.SetAddr1(Mac48Address::GetBroadcast());
-		hdr.SetAddr2(GetAddress()); // for debug, not accordance with draft, need change
-		hdr.SetAddr3(GetAddress()); // for debug
-		Ptr<Packet> packet = Create<Packet>();
-		S1gBeaconHeader beacon;
-		S1gBeaconCompatibility compatibility;
-		compatibility.SetBeaconInterval(m_beaconInterval.GetMicroSeconds());
-		beacon.SetBeaconCompatibility(compatibility);
-		RPS m_rps;
-		RPS::RawAssignment raw;
-		uint8_t control = 0;
-		raw.SetRawControl(control); //support paged STA or not
-		raw.SetSlotFormat(m_SlotFormat);
-		raw.SetSlotCrossBoundary(m_slotCrossBoundary);
-		raw.SetSlotDurationCount(m_slotDurationCount);
-		raw.SetSlotNum(m_slotNum);
-		raw.SetRawStart(0); // immediately after the beacon;
+	uint32_t page = 0;
 
-		uint32_t page = 0;
+	uint32_t rawinfo = (current_aid_end << 13) | (current_aid_start << 2) | page;
 
-		uint32_t rawinfo = (current_aid_end << 13) | (current_aid_start << 2) | page;
+	raw.SetRawGroup(rawinfo); // (b0-b1, page index) (b2-b12, raw start AID) (b13-b23, raw end AID)
 
-		raw.SetRawGroup(rawinfo); // (b0-b1, page index) (b2-b12, raw start AID) (b13-b23, raw end AID)
+	// TODO set partial bitmap for TIM beacon for individual station indices
 
-		// TODO set partial bitmap for TIM beacon for individual station indices
+	//std::cout << "Sending S1G Beacon with raw range " << current_aid_start << " - " << current_aid_end << std::endl;
 
-		//std::cout << "Sending S1G Beacon with raw range " << current_aid_start << " - " << current_aid_end << std::endl;
+	m_rps.SetRawAssignment(raw);
 
-		m_rps.SetRawAssignment(raw);
+	beacon.SetRPS(m_rps);
 
-		beacon.SetRPS(m_rps);
+	AuthenticationCtrl AuthenCtrl;
+	AuthenCtrl.SetControlType(false); //centralized
+	Ptr<WifiMacQueue> MgtQueue = m_dca->GetQueue();
+	uint32_t MgtQueueSize = MgtQueue->GetSize();
+	if (MgtQueueSize < 10) {
+		if (AuthenThreshold <= 950) {
+			AuthenThreshold += 50;
+		}
+	} else {
+		if (AuthenThreshold > 50) {
+			AuthenThreshold -= 50;
+		}
+	}
+	AuthenCtrl.SetThreshold(AuthenThreshold); //centralized
+	beacon.SetAuthCtrl(AuthenCtrl);
 
-		AuthenticationCtrl AuthenCtrl;
-		AuthenCtrl.SetControlType(false); //centralized
-		Ptr<WifiMacQueue> MgtQueue = m_dca->GetQueue();
-		uint32_t MgtQueueSize = MgtQueue->GetSize();
-		if (MgtQueueSize < 10) {
-			if (AuthenThreshold <= 950) {
-				AuthenThreshold += 50;
+	if (m_currentBeaconTIMGroup == 0) {
+		//DTIM header
+		TIM tim;
+		tim.SetDTIMPeriod(m_nrOfTIMGroups);
+		tim.SetDTIMCount(0);
+
+		// support up to 32 TIM groups
+		uint32_t vmap = 0;
+
+
+
+		// check the DCA queues if there is pending data
+		for(int group = 0; group < m_nrOfTIMGroups; group++) {
+			bool hasPendingData = false;
+			for(int slot = 0; slot < m_slotNum; slot++) {
+
+				if(rawSlotsDCA[group * m_slotNum + slot]->NeedsAccess()) {
+					// pending data
+					hasPendingData = true;
+					break;
+				}
 			}
-		} else {
-			if (AuthenThreshold > 50) {
-				AuthenThreshold -= 50;
+
+			// if there is no pending data in the DCA queues, check the panding data that is scheduled
+			// to be forwarded to the next layer. Both systems are still required because otherwise
+			// it's possible that data is sent directly through the DCA because it had RAW slot access
+			// but the station wasn't listening because the DTIM didn't flag that
+
+			if(hasPendingData) {
+				vmap = vmap | (1 << group);
 			}
 		}
-		AuthenCtrl.SetThreshold(AuthenThreshold); //centralized
-		beacon.SetAuthCtrl(AuthenCtrl);
 
-		if (m_currentBeaconTIMGroup == 0) {
-			//DTIM header
-			TIM tim;
-			tim.SetDTIMPeriod(m_nrOfTIMGroups);
-			tim.SetDTIMCount(0);
 
-			// support up to 32 TIM groups
-			uint32_t vmap = 0;
-
-			//std::cout << Simulator::Now().GetMicroSeconds() <<  " DTIM VMAP Building" << std::endl;
-			for (int i = 0; i < this->m_totalStaNum; i++) {
-				if (pendingDataSizeForStations.at(i) > 0) {
-					int group = i / m_rawGroupInterval;
-					//std::cout << Simulator::Now().GetMicroSeconds() << " there is data for " << i << "( " << "group " << group << ")" << std::endl;
-					vmap = vmap | (1 << group);
-
-					staIsActiveDuringCurrentCycle[i] = true;
-				}
-				else
-					staIsActiveDuringCurrentCycle[i] = false;
+		for(auto& pair : macToAIDMap) {
+			uint16_t aId = pair.second;
+			if (pendingDataSizeForStations.at(aId-1) > 0) {
+				int group = strategy->GetTIMGroupFromAID(aId, m_rawGroupInterval);
+				vmap = vmap | (1 << group);
 			}
+		}
+
+		// determine if stations will be active
+		for(auto& pair : macToAIDMap) {
+			uint16_t aId = pair.second;
+			int group = strategy->GetTIMGroupFromAID(aId, m_rawGroupInterval);
+
+			if((vmap >> group) & 0x01 == 0x01) {
+				//std::cout << Simulator::Now().GetMicroSeconds() << " there is data for " << i << "( " << "group " << group << ")" << std::endl;
+				staIsActiveDuringCurrentCycle[aId-1] = true;
+			}
+			else
+				staIsActiveDuringCurrentCycle[aId-1] = false;
+		}
 
 /*
-				std::cout << Simulator::Now().GetMicroSeconds() << " DTIM beacon send, VMAP: ";
-				for(int i = 31; i >= 0; i--)
-					std::cout << ((vmap >> i) & 0x01);
-				std::cout << std::endl;
+		std::cout << Simulator::Now().GetMicroSeconds() << " DTIM beacon send, VMAP: ";
+		for(int i = 31; i >= 0; i--)
+			std::cout << ((vmap >> i) & 0x01);
+		std::cout << std::endl;
 */
 
-			tim.SetPartialVBitmap(vmap);
+		tim.SetPartialVBitmap(vmap);
 
-			beacon.SetTIM(tim);
-		}
-		else {
-			TIM tim;
-			tim.SetDTIMPeriod(m_nrOfTIMGroups);
-			tim.SetDTIMCount(m_nrOfTIMGroups - m_currentBeaconTIMGroup);
-			tim.SetPartialVBitmap(0); // no map
-			beacon.SetTIM(tim);
-		}
-
-		packet->AddHeader(beacon);
-		m_beaconDca->Queue(packet, hdr);
-
-		m_transmitBeaconTrace(beacon, raw);
-
-		current_aid_start += m_rawGroupInterval;
-		current_aid_end += m_rawGroupInterval;
-		if (current_aid_end > m_totalStaNum) {
-			current_aid_start = 1;
-			current_aid_end = m_rawGroupInterval;
-		}
-
-	} else {
-		hdr.SetBeacon();
-		hdr.SetAddr1(Mac48Address::GetBroadcast());
-		hdr.SetAddr2(GetAddress());
-		hdr.SetAddr3(GetAddress());
-		hdr.SetDsNotFrom();
-		hdr.SetDsNotTo();
-		Ptr<Packet> packet = Create<Packet>();
-		MgtBeaconHeader beacon;
-		beacon.SetSsid(GetSsid());
-		beacon.SetSupportedRates(GetSupportedRates());
-		beacon.SetBeaconIntervalUs(m_beaconInterval.GetMicroSeconds());
-		if (m_htSupported) {
-			beacon.SetHtCapabilities(GetHtCapabilities());
-			hdr.SetNoOrder();
-		}
-		packet->AddHeader(beacon);
-		//The beacon has it's own special queue, so we load it in there
-		m_beaconDca->Queue(packet, hdr);
-
+		beacon.SetTIM(tim);
 	}
+	else {
+		TIM tim;
+		tim.SetDTIMPeriod(m_nrOfTIMGroups);
+		tim.SetDTIMCount(m_nrOfTIMGroups - m_currentBeaconTIMGroup);
+		tim.SetPartialVBitmap(0); // no map
+		beacon.SetTIM(tim);
+	}
+
+	packet->AddHeader(beacon);
+	m_beaconDca->Queue(packet, hdr);
+
+	m_transmitBeaconTrace(beacon, raw);
+
+	current_aid_start += m_rawGroupInterval;
+	current_aid_end += m_rawGroupInterval;
+	if (current_aid_end > m_totalStaNum) {
+		current_aid_start = 1;
+		current_aid_end = m_rawGroupInterval;
+	}
+
+
+	// schedule the slot start & ends
+	Time slotDuration = strategy->GetSlotDuration(m_slotDurationCount);
+	for(int i = 0; i < m_slotNum; i++) {
+		Simulator::Schedule(slotDuration * i, &S1gApWifiMac::OnRAWSlotStart, this,m_currentBeaconTIMGroup, i);
+		Simulator::Schedule(slotDuration * (i+1), &S1gApWifiMac::OnRAWSlotEnd, this,m_currentBeaconTIMGroup, i);
+	}
+
 	m_beaconEvent = Simulator::Schedule(m_beaconInterval,
 			&S1gApWifiMac::SendOneBeacon, this);
 }
+
+void S1gApWifiMac::OnRAWSlotStart(uint8_t timGroup, uint8_t slot) {
+	LOG_TRAFFIC("AP RAW SLOT START FOR TIM GROUP " << std::to_string(timGroup) << " SLOT " << std::to_string(slot));
+	m_currentTIMGroupSlot = slot;
+
+	rawSlotsDCA[timGroup * m_slotNum + slot]->AccessAllowedIfRaw (true);
+	rawSlotsDCA[timGroup * m_slotNum + slot]->RawStart();
+}
+
+void S1gApWifiMac::OnRAWSlotEnd(uint8_t timGroup, uint8_t slot) {
+	LOG_TRAFFIC("AP RAW SLOT END FOR TIM GROUP " << std::to_string(timGroup) << " SLOT " << std::to_string(slot));
+
+	rawSlotsDCA[timGroup * m_slotNum + slot]->AccessAllowedIfRaw (false);
+	rawSlotsDCA[timGroup * m_slotNum + slot]->OutsideRawStart();
+}
+
 
 void S1gApWifiMac::TxOk(const WifiMacHeader &hdr) {
 	NS_LOG_FUNCTION(this);
@@ -946,6 +1001,35 @@ void S1gApWifiMac::DoInitialize(void) {
 
 	current_aid_start = 1;
 	current_aid_end = m_rawGroupInterval;
+
+
+	rawSlotsDCA = std::vector<Ptr<DcaTxop>>();
+	for(int i = 0; i < (m_nrOfTIMGroups * m_slotNum); i++) {
+
+		Ptr<DcaTxop> dca =  CreateObject<DcaTxop> ();
+		dca->SetLow (m_low);
+		dca->SetManager (m_dcfManager);
+		dca->SetTxMiddle (m_txMiddle);
+		dca->SetTxOkCallback (MakeCallback (&S1gApWifiMac::TxOk, this));
+		dca->SetTxFailedCallback (MakeCallback (&S1gApWifiMac::TxFailed, this));
+
+		dca->SetWifiRemoteStationManager(m_stationManager);
+
+		dca->GetQueue()->TraceConnect("PacketDropped", "", MakeCallback(&S1gApWifiMac::OnQueuePacketDropped, this));
+
+		dca->TraceConnect("Collision", "", MakeCallback(&S1gApWifiMac::OnCollision, this));
+
+		// ensure queues don't expire too fast
+		Time entireCycle = m_beaconInterval * m_nrOfTIMGroups * 10;
+		dca->GetQueue()->SetMaxDelay(entireCycle);
+		dca->Initialize();
+
+
+		ConfigureDcf (dca, 15, 1023, AC_BE_NQOS);
+
+		rawSlotsDCA.push_back(dca);
+	}
+
 
 	RegularWifiMac::DoInitialize();
 }
