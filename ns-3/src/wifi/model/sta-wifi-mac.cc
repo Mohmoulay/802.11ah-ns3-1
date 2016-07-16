@@ -567,6 +567,7 @@ StaWifiMac::Enqueue (Ptr<const Packet> packet, Mac48Address to)
   hdr.SetDsNotFrom ();
   hdr.SetDsTo ();
 
+
   if (m_qosSupported)
     {
       //Sanity check that the TID is valid

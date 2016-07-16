@@ -78,7 +78,7 @@ void configureTCPEchoServer();
 void onSTAAssociated(int i);
 void onSTADeassociated(int i);
 
-void onChannelTransmission(Time delay, Ptr<Object> dstNetDevice);
+void onChannelTransmission(Ptr<NetDevice> senderDevice, Ptr<Packet> packet);
 
 void updateNodesQueueLength();
 

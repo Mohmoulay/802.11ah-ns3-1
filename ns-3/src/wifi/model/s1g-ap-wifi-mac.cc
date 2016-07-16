@@ -24,7 +24,7 @@ NS_LOG_COMPONENT_DEFINE("S1gApWifiMac");
 
 NS_OBJECT_ENSURE_REGISTERED(S1gApWifiMac);
 
-#define LOG_TRAFFIC(msg)	if(true) std::cout << msg << std::endl;
+#define LOG_TRAFFIC(msg)	if(true) std::cout << Simulator::Now().GetMicroSeconds() << " " << msg << std::endl;
 
 TypeId S1gApWifiMac::GetTypeId(void) {
 	static TypeId tid =
@@ -456,7 +456,7 @@ void S1gApWifiMac::Enqueue(Ptr<const Packet> packet, Mac48Address to,
 			packetSendTime -= (Simulator::Now() - lastBeaconTime);
 
 			// choose a time between 0 and 50% of the slot time
-			packetSendTime = packetSendTime + MicroSeconds(rand() % (strategy->GetSlotDuration(m_slotDurationCount) / 2).GetMicroSeconds());
+			//packetSendTime = packetSendTime + MicroSeconds(rand() % (strategy->GetSlotDuration(m_slotDurationCount) / 2).GetMicroSeconds());
 
 			// transmit in second half of RAW window
 			//packetSendTime += MilliSeconds(m_beaconInterval/2);

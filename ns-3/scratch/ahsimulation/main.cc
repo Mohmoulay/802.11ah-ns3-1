@@ -95,7 +95,7 @@ void configureChannel() {
     channel->TraceConnectWithoutContext("Transmission", MakeCallback(&onChannelTransmission));
 }
 
-void onChannelTransmission(Time delay, Ptr<Object> dstNetDevice) {
+void onChannelTransmission(Ptr<NetDevice> senderDevice, Ptr<Packet> packet) {
 
 	int timGroup = (Simulator::Now().GetMicroSeconds() / config.BeaconInterval) % config.NGroup;
 
@@ -105,21 +105,16 @@ void onChannelTransmission(Time delay, Ptr<Object> dstNetDevice) {
 
 	//cout << "Transission during tim group " << timGroup << ", slot: " << slotIndex << endl;
 
-	if(dstNetDevice == 0) {
-		// broadcast
-	}
-	else  {
-		if(dstNetDevice->GetObject<NetDevice>()->GetAddress() == apDevices.Get(0)->GetAddress()) {
-			// to AP
-			transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval[timGroup * config.NRawSlotNum + slotIndex]++;
-		}
-		else {
-			// to STA
-			transmissionsPerTIMGroupAndSlotFromSTASinceLastInterval[timGroup * config.NRawSlotNum + slotIndex]++;
-		}
-	}
 
+	if(senderDevice->GetAddress() == apDevices.Get(0)->GetAddress()) {
+		// from AP
+		transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval[timGroup * config.NRawSlotNum + slotIndex]+= packet->GetSerializedSize();
+	}
+	else {
+		// from STA
+		transmissionsPerTIMGroupAndSlotFromSTASinceLastInterval[timGroup * config.NRawSlotNum + slotIndex]+= packet->GetSerializedSize();
 
+	}
 }
 
 void configureSTANodes(Ssid& ssid) {
@@ -170,11 +165,11 @@ void configureSTANodes(Ssid& ssid) {
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(staNodes);
 
-    //phy.EnablePcap("stafile", staNodes, 0);
+    phy.EnablePcap("stafile", staNodes, 0);
 }
 
 void OnAPPhyRxBegin(std::string context, Ptr<const Packet> packet) {
-	//cout << " AP RX Begin " << endl;
+//	cout << " AP RX Begin " << endl;
 }
 
 void OnAPPhyRxDrop(std::string context, Ptr<const Packet> packet, DropReason reason) {
