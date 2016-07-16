@@ -185,12 +185,22 @@ var EventManager = (function () {
                 case 'nodestats':
                     this.onStatsUpdated(ev.stream, ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]), parseInt(ev.parts[20]), parseInt(ev.parts[21]), parseInt(ev.parts[22]), parseInt(ev.parts[23]), parseInt(ev.parts[24]), ev.parts[25], ev.parts[26], parseInt(ev.parts[27]), parseInt(ev.parts[28]), parseInt(ev.parts[29]), parseFloat(ev.parts[30]), parseInt(ev.parts[31]), parseInt(ev.parts[32]));
                     break;
-                case 'slotstats':
-                    var values = [];
-                    for (var i = 2; i < ev.parts.length; i++)
-                        values.push(parseInt(ev.parts[i]));
-                    this.onSlotStats(ev.stream, values);
-                    break;
+                case 'slotstatsSTA':
+                    {
+                        var values = [];
+                        for (var i = 2; i < ev.parts.length; i++)
+                            values.push(parseInt(ev.parts[i]));
+                        this.onSlotStats(ev.stream, values, false);
+                        break;
+                    }
+                case 'slotstatsAP':
+                    {
+                        var values = [];
+                        for (var i = 2; i < ev.parts.length; i++)
+                            values.push(parseInt(ev.parts[i]));
+                        this.onSlotStats(ev.stream, values, true);
+                        break;
+                    }
                 default:
             }
             lastTime = ev.time;
@@ -221,8 +231,10 @@ var EventManager = (function () {
             this.sim.simulationContainer.setSimulation(stream, simulation);
         }
         simulation.nodes = [];
-        simulation.slotUsage = [];
-        simulation.totalSlotUsage = [];
+        simulation.slotUsageAP = [];
+        simulation.slotUsageSTA = [];
+        simulation.totalSlotUsageAP = [];
+        simulation.totalSlotUsageSTA = [];
         var config = simulation.config;
         config.AIDRAWRange = aidRAWRange;
         config.numberOfRAWGroups = numberOfRAWGroups;
@@ -242,16 +254,28 @@ var EventManager = (function () {
         config.minRTO = minRTO;
         config.simulationTime = simulationTime;
     };
-    EventManager.prototype.onSlotStats = function (stream, values) {
+    EventManager.prototype.onSlotStats = function (stream, values, isAP) {
         var sim = this.sim.simulationContainer.getSimulation(stream);
-        sim.slotUsage.push(values);
-        if (sim.totalSlotUsage.length == 0) {
-            sim.totalSlotUsage = values;
+        if (isAP)
+            sim.slotUsageAP.push(values);
+        else
+            sim.slotUsageSTA.push(values);
+        var arr;
+        if (isAP)
+            arr = sim.totalSlotUsageAP;
+        else
+            arr = sim.totalSlotUsageSTA;
+        if (arr.length == 0) {
+            if (isAP)
+                sim.totalSlotUsageAP = values;
+            else
+                sim.totalSlotUsageSTA = values;
+            arr = values;
         }
         else {
             var smoothingFactor = 0.8;
             for (var i = 0; i < values.length; i++) {
-                sim.totalSlotUsage[i] = sim.totalSlotUsage[i] * smoothingFactor + (1 - smoothingFactor) * values[i];
+                arr[i] = arr[i] * smoothingFactor + (1 - smoothingFactor) * values[i];
             }
         }
     };
@@ -461,13 +485,14 @@ var SimulationGUI = (function () {
         var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
         var groups = selectedSimulation.config.numberOfRAWGroups;
         var slots = selectedSimulation.config.numberOfRAWSlots;
-        if (selectedSimulation.slotUsage.length == 0)
+        if (selectedSimulation.slotUsageAP.length == 0 || selectedSimulation.slotUsageSTA.length == 0)
             return;
-        var lastValues = selectedSimulation.totalSlotUsage;
+        //let lastValues = selectedSimulation.totalSlotUsageAP;
         var max = Number.MIN_VALUE;
-        for (var i = 0; i < lastValues.length; i++) {
-            if (max < lastValues[i])
-                max = lastValues[i];
+        for (var i = 0; i < Math.min(selectedSimulation.totalSlotUsageAP.length, selectedSimulation.totalSlotUsageSTA.length); i++) {
+            var sum = selectedSimulation.totalSlotUsageAP[i] + selectedSimulation.totalSlotUsageSTA[i];
+            if (max < sum)
+                max = sum;
         }
         var width = canv.width;
         var height = canv.height;
@@ -485,9 +510,26 @@ var SimulationGUI = (function () {
             ctx.stroke();
             var slotWidth = groupWidth / slots;
             for (var s = 0; s < slots; s++) {
-                var value = lastValues[g * slots + s];
-                var y = (1 - value / max) * rectHeight;
-                ctx.fillRect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + y + 0.5, slotWidth, rectHeight - y);
+                var sum = selectedSimulation.totalSlotUsageAP[g * slots + s] + selectedSimulation.totalSlotUsageSTA[g * slots + s];
+                if (sum > 0) {
+                    var percAP = selectedSimulation.totalSlotUsageAP[g * slots + s] / sum;
+                    var percSTA = selectedSimulation.totalSlotUsageSTA[g * slots + s] / sum;
+                    var value = void 0;
+                    var y = void 0;
+                    value = selectedSimulation.totalSlotUsageAP[g * slots + s];
+                    y = (1 - sum / max) * rectHeight;
+                    var fullBarHeight = (rectHeight - y);
+                    var barHeight = fullBarHeight * percAP;
+                    ctx.fillStyle = "#ecb57c";
+                    ctx.fillRect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + y + 0.5, slotWidth, barHeight);
+                    ctx.beginPath();
+                    ctx.rect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + 0.5, slotWidth, height - 2 * padding);
+                    ctx.stroke();
+                    y += barHeight;
+                    barHeight = fullBarHeight * percSTA;
+                    ctx.fillStyle = "#7cb5ec";
+                    ctx.fillRect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + y + 0.5, slotWidth, barHeight);
+                }
                 ctx.beginPath();
                 ctx.rect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + 0.5, slotWidth, height - 2 * padding);
                 ctx.stroke();
