@@ -1067,7 +1067,8 @@ $(document).ready(function () {
 
 
     let hasConnected = false;
-    var sock: SocketIO.Socket = io.connect("http://" + window.location.host + "/");
+    var sock: SocketIO.Socket = (<any>io)("http://" + window.location.host + "/",opts);
+
     sock.on("connect", function (data) {
         if (hasConnected) // only connect once
             return;

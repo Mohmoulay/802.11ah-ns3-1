@@ -1277,7 +1277,7 @@ $(document).ready(function () {
         timeout: 1000000
     };
     var hasConnected = false;
-    var sock = io.connect("http://" + window.location.host + "/");
+    var sock = io("http://" + window.location.host + "/", opts);
     sock.on("connect", function (data) {
         if (hasConnected)
             return;

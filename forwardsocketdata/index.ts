@@ -116,6 +116,7 @@ export class Program {
 
         console.log("Listening for websocket requests...");
         let io = socket.listen(server);
+        
         io.on("connection", sock => {
 
             sock.on("close", () => {
