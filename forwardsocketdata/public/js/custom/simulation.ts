@@ -130,9 +130,11 @@ class Simulation {
 
     nodes: SimulationNode[] = [];
 
-    slotUsage:number[][] = [];
+    slotUsageSTA:number[][] = [];
+    slotUsageAP:number[][] = [];
 
-    totalSlotUsage:number[] = [];
+    totalSlotUsageAP:number[] = [];
+    totalSlotUsageSTA:number[] = [];
 
     config: SimulationConfiguration = new SimulationConfiguration();
 }

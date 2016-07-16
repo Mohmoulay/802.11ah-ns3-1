@@ -934,7 +934,7 @@ var SimulationGUI = (function () {
                             color: '#808080'
                         }]
                 },
-                legend: { enabled: false },
+                legend: { enabled: true },
                 series: series,
                 credits: false
             });
@@ -1093,47 +1093,88 @@ var SimulationGUI = (function () {
     SimulationGUI.prototype.updateAverageChart = function (selectedSimulation, showDeltas, full) {
         var self = this;
         var title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
-        var averages = [];
-        var ranges = [];
-        var nrOfValues = selectedSimulation.nodes[0].values.length - 1;
-        if (nrOfValues <= 0)
-            return;
-        var offset = (this.currentChart != null && !full) ? this.currentChart.series[0].data.length : 0;
-        for (var i = offset; i < nrOfValues; i++) {
-            var sum = 0;
-            var count = 0;
-            var timestamp = selectedSimulation.nodes[0].values[i].timestamp;
-            for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
-                var n = _a[_i];
-                var values = n.values;
-                if (i < values.length) {
-                    var value = values[i][this.selectedPropertyForChart];
-                    sum += value;
-                    count++;
+        var seriesAverages = [];
+        var seriesRanges = [];
+        var simulations = this.simulationContainer.getSimulations();
+        var canUpdateIncremental = this.currentChart != null && !full && simulations.length * 2 == this.currentChart.series.length;
+        var showAreas = simulations.length < 3;
+        for (var s = 0; s < simulations.length; s++) {
+            var averages = [];
+            var ranges = [];
+            var nrOfValues = simulations[simulations.length - 1].nodes[0].values.length - 1;
+            if (nrOfValues <= 0)
+                return;
+            var offset = (canUpdateIncremental) ? this.currentChart.series[showAreas ? s * 2 : s].data.length : 0;
+            for (var i = offset; i < nrOfValues; i++) {
+                var sum = 0;
+                var count = 0;
+                var max = Number.MIN_VALUE;
+                var min = Number.MAX_VALUE;
+                var timestamp = simulations[s].nodes[0].values[i].timestamp;
+                for (var _i = 0, _a = simulations[s].nodes; _i < _a.length; _i++) {
+                    var n = _a[_i];
+                    var values = n.values;
+                    if (i < values.length) {
+                        var value = values[i][this.selectedPropertyForChart];
+                        sum += value;
+                        count++;
+                        if (max < value)
+                            max = value;
+                        if (min > value)
+                            min = value;
+                    }
                 }
-            }
-            var avg = sum / count;
-            var sumSquares = 0;
-            for (var _b = 0, _c = selectedSimulation.nodes; _b < _c.length; _b++) {
-                var n = _c[_b];
-                var values = n.values;
-                if (i < values.length) {
-                    var val = (values[i][this.selectedPropertyForChart] - avg) * (values[i][this.selectedPropertyForChart] - avg);
-                    sumSquares += val;
+                var avg = sum / count;
+                if (showAreas) {
+                    var sumSquares = 0;
+                    for (var _b = 0, _c = simulations[s].nodes; _b < _c.length; _b++) {
+                        var n = _c[_b];
+                        var values = n.values;
+                        if (i < values.length) {
+                            var val = (values[i][this.selectedPropertyForChart] - avg) * (values[i][this.selectedPropertyForChart] - avg);
+                            sumSquares += val;
+                        }
+                    }
+                    var stddev = Math.sqrt(sumSquares / count);
+                    ranges.push([timestamp, Math.max(min, avg - stddev), Math.min(max, avg + stddev)]);
                 }
+                averages.push([timestamp, avg]);
             }
-            var stddev = Math.sqrt(sumSquares / count);
-            averages.push([timestamp, avg]);
-            ranges.push([timestamp, avg - stddev, avg + stddev]);
+            seriesAverages.push(averages);
+            seriesRanges.push(ranges);
         }
-        if (this.currentChart != null && !full) {
-            for (var i_5 = 0; i_5 < averages.length; i_5++) {
-                this.currentChart.series[0].addPoint(averages[i_5], false, false);
-                this.currentChart.series[1].addPoint(ranges[i_5], false, false);
+        if (canUpdateIncremental) {
+            for (var s = 0; s < simulations.length; s++) {
+                for (var i_5 = 0; i_5 < seriesAverages[s].length; i_5++) {
+                    this.currentChart.series[showAreas ? s * 2 : s].addPoint(seriesAverages[s][i_5], false, false);
+                    if (showAreas)
+                        this.currentChart.series[s * 2 + 1].addPoint(seriesRanges[s][i_5], false, false);
+                }
             }
             this.currentChart.redraw(false);
         }
         else {
+            var series = [];
+            for (var s = 0; s < simulations.length; s++) {
+                series.push({
+                    name: simulations[s].config.name,
+                    type: "spline",
+                    data: seriesAverages[s],
+                    zIndex: 1
+                });
+                if (showAreas) {
+                    series.push({
+                        name: 'Range',
+                        data: seriesRanges[s],
+                        type: 'arearange',
+                        zIndex: 0,
+                        lineWidth: 0,
+                        linkedTo: ':previous',
+                        color: Highcharts.getOptions().colors[s],
+                        fillOpacity: 0.3
+                    });
+                }
+            }
             $('#nodeChart').empty().highcharts({
                 chart: {
                     animation: "Highcharts.svg",
@@ -1164,22 +1205,8 @@ var SimulationGUI = (function () {
                             color: '#808080'
                         }]
                 },
-                legend: { enabled: false },
-                series: [{
-                        name: title,
-                        type: "spline",
-                        data: averages,
-                        zIndex: 1
-                    }, {
-                        name: 'Range',
-                        data: ranges,
-                        type: 'arearange',
-                        zIndex: 0,
-                        lineWidth: 0,
-                        linkedTo: ':previous',
-                        color: Highcharts.getOptions().colors[0],
-                        fillOpacity: 0.3
-                    }],
+                legend: { enabled: true },
+                series: series,
                 credits: false
             });
         }
@@ -1458,8 +1485,10 @@ var SimulationConfiguration = (function () {
 var Simulation = (function () {
     function Simulation() {
         this.nodes = [];
-        this.slotUsage = [];
-        this.totalSlotUsage = [];
+        this.slotUsageSTA = [];
+        this.slotUsageAP = [];
+        this.totalSlotUsageAP = [];
+        this.totalSlotUsageSTA = [];
         this.config = new SimulationConfiguration();
     }
     return Simulation;
