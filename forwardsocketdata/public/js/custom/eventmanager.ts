@@ -60,14 +60,26 @@ class EventManager {
                         parseInt(ev.parts[31]), parseInt(ev.parts[32]));
                     break;
 
-                case 'slotstats':
+                case 'slotstatsSTA':
+                {
                     let values:number[] = [];
                     for (var i = 2; i < ev.parts.length; i++)
                         values.push(parseInt(ev.parts[i]));  
 
-                    this.onSlotStats(ev.stream, values);
+                    this.onSlotStats(ev.stream, values, false);
 
                     break;
+                }
+                case 'slotstatsAP':
+                {
+                    let values:number[] = [];
+                    for (var i = 2; i < ev.parts.length; i++)
+                        values.push(parseInt(ev.parts[i]));  
+
+                    this.onSlotStats(ev.stream, values, true);
+
+                    break;      
+                }             
                 default:
             }
             lastTime = ev.time;
@@ -106,8 +118,10 @@ class EventManager {
         }
 
         simulation.nodes = [];
-        simulation.slotUsage = [];
-        simulation.totalSlotUsage = [];
+        simulation.slotUsageAP = [];
+        simulation.slotUsageSTA = [];
+        simulation.totalSlotUsageAP = [];
+        simulation.totalSlotUsageSTA = [];
 
         let config = simulation.config;
         config.AIDRAWRange = aidRAWRange;
@@ -132,19 +146,31 @@ class EventManager {
     }
 
 
-    onSlotStats(stream:string, values:number[]) {
+    onSlotStats(stream:string, values:number[], isAP:boolean) {
         let sim = this.sim.simulationContainer.getSimulation(stream);
-        sim.slotUsage.push(values);
 
-        if(sim.totalSlotUsage.length == 0) {
-            sim.totalSlotUsage = values;   
+        if(isAP)
+            sim.slotUsageAP.push(values);
+        else        
+            sim.slotUsageSTA.push(values);
+
+            let arr:number[];
+            if(isAP)
+                arr = sim.totalSlotUsageAP;
+            else
+                arr = sim.totalSlotUsageSTA;
+
+        if(arr.length == 0) {
+            if(isAP)
+                sim.totalSlotUsageAP = values;
+            else
+                sim.totalSlotUsageSTA = values;
+             arr = values;   
         }
         else {
             let smoothingFactor = 0.8;
             for(let i = 0; i < values.length; i++) {
-
-                sim.totalSlotUsage[i] = sim.totalSlotUsage[i] * smoothingFactor + (1-smoothingFactor) * values[i];
-
+                arr[i] = arr[i] * smoothingFactor + (1-smoothingFactor) * values[i];
             }
         }
     }

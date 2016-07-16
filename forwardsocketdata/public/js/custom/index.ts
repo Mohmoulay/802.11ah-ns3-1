@@ -107,51 +107,73 @@ class SimulationGUI {
         let groups = selectedSimulation.config.numberOfRAWGroups;
         let slots = selectedSimulation.config.numberOfRAWSlots;
 
-        if(selectedSimulation.slotUsage.length == 0)
+        if (selectedSimulation.slotUsageAP.length == 0 || selectedSimulation.slotUsageSTA.length == 0)
             return;
 
-        let lastValues = selectedSimulation.totalSlotUsage;
+        //let lastValues = selectedSimulation.totalSlotUsageAP;
 
         let max = Number.MIN_VALUE;
-        for(let i = 0; i < lastValues.length;i++) {
-            if(max < lastValues[i]) max = lastValues[i];
+        for (let i = 0; i < Math.min(selectedSimulation.totalSlotUsageAP.length, selectedSimulation.totalSlotUsageSTA.length); i++) {
+            let sum = selectedSimulation.totalSlotUsageAP[i] + selectedSimulation.totalSlotUsageSTA[i];
+            if (max < sum) max = sum;
         }
-        
+
         let width = canv.width;
         let height = canv.height;
 
         let padding = 5;
-        let groupWidth = Math.floor(width / groups) - 2 * padding; 
+        let groupWidth = Math.floor(width / groups) - 2 * padding;
 
         ctx.fillStyle = "white";
-        ctx.fillRect(0,0, width,height);
+        ctx.fillRect(0, 0, width, height);
 
         ctx.strokeStyle = "#CCC";
         ctx.fillStyle = "#7cb5ec";
 
-        let rectHeight  =height - 2 * padding;
+        let rectHeight = height - 2 * padding;
         ctx.lineWidth = 1;
         for (var g = 0; g < groups; g++) {
-            ctx.beginPath(); 
-            ctx.rect(padding + g * (padding+groupWidth) + 0.5, padding+ 0.5, groupWidth, rectHeight);
+            ctx.beginPath();
+            ctx.rect(padding + g * (padding + groupWidth) + 0.5, padding + 0.5, groupWidth, rectHeight);
             ctx.stroke();
 
             let slotWidth = groupWidth / slots;
-            for(let s = 0; s < slots; s++) {
+            for (let s = 0; s < slots; s++) {
 
 
-                let value = lastValues[g * slots + s];
-                let y = (1-value/max) * rectHeight; 
-                ctx.fillRect(padding + g * (padding+groupWidth) + s * slotWidth+ 0.5, padding + y+ 0.5, slotWidth, rectHeight - y);
+                let sum = selectedSimulation.totalSlotUsageAP[g * slots + s] + selectedSimulation.totalSlotUsageSTA[g * slots + s];
+                if (sum > 0) {
+                    let percAP = selectedSimulation.totalSlotUsageAP[g * slots + s] / sum;
+                    let percSTA = selectedSimulation.totalSlotUsageSTA[g * slots + s] / sum;
 
-                ctx.beginPath(); 
-                ctx.rect(padding + g * (padding+groupWidth) + s * slotWidth+ 0.5, padding+ 0.5, slotWidth, height - 2 * padding);
+                    let value;
+                    let y;
+                    value = selectedSimulation.totalSlotUsageAP[g * slots + s];
+                    y = (1 - sum / max) * rectHeight;
+
+                    let fullBarHeight = (rectHeight - y);
+                    let barHeight = fullBarHeight * percAP;
+                    ctx.fillStyle = "#ecb57c";
+                    ctx.fillRect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + y + 0.5, slotWidth, barHeight);
+
+                    ctx.beginPath();
+                    ctx.rect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + 0.5, slotWidth, height - 2 * padding);
+                    ctx.stroke();
+
+                    y += barHeight;
+                    barHeight = fullBarHeight * percSTA;
+                    ctx.fillStyle = "#7cb5ec";
+                    ctx.fillRect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + y + 0.5, slotWidth, barHeight);
+                }
+
+                ctx.beginPath();
+                ctx.rect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + 0.5, slotWidth, height - 2 * padding);
                 ctx.stroke();
             }
         }
 
-        
-            
+
+
     }
 
     private drawRange() {
