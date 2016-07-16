@@ -1101,7 +1101,7 @@ var SimulationGUI = (function () {
         for (var s = 0; s < simulations.length; s++) {
             var averages = [];
             var ranges = [];
-            var nrOfValues = simulations[simulations.length - 1].nodes[0].values.length - 1;
+            var nrOfValues = simulations[s].nodes[0].values.length - 1;
             if (nrOfValues <= 0)
                 return;
             var offset = (canUpdateIncremental) ? this.currentChart.series[showAreas ? s * 2 : s].data.length : 0;

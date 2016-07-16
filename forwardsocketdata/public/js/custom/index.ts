@@ -861,7 +861,7 @@ class SimulationGUI {
         for (let s = 0; s < simulations.length; s++) {
             let averages = [];
             let ranges = [];
-            let nrOfValues = simulations[simulations.length - 1].nodes[0].values.length - 1;
+            let nrOfValues = simulations[s].nodes[0].values.length - 1;
 
             if (nrOfValues <= 0)
                 return;
@@ -869,7 +869,6 @@ class SimulationGUI {
             let offset = (canUpdateIncremental) ? this.currentChart.series[showAreas ? s * 2 : s].data.length : 0;
 
             for (var i = offset; i < nrOfValues; i++) {
-
                 let sum = 0;
                 let count = 0;
                 let max = Number.MIN_VALUE;
