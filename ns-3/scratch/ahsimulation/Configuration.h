@@ -32,6 +32,7 @@ struct Configuration {
 	uint32_t BeaconInterval = 102400;
 
 	uint32_t MinRTO = 200000;
+	uint32_t TCPConnectionTimeout = 6000000;
 
 	double propagationLossExponent = 3.76;
 	double propagationLossReferenceLoss = 8;
@@ -51,6 +52,8 @@ struct Configuration {
 	string rho = "400.0";
 
 	string name = "";
+
+	string APPcapFile = "";
 
 	uint32_t trafficInterval = 10000;
 	uint32_t trafficIntervalDeviation = 1000;

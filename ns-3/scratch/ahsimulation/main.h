@@ -47,7 +47,9 @@ ApplicationContainer serverApp;
 
 vector<NodeEntry*> nodes;
 
-vector<long> transmissionsPerTIMGroupAndSlotSinceLastInterval;
+vector<long> transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval;
+vector<long> transmissionsPerTIMGroupAndSlotFromSTASinceLastInterval;
+
 
 void configureChannel();
 
@@ -76,7 +78,7 @@ void configureTCPEchoServer();
 void onSTAAssociated(int i);
 void onSTADeassociated(int i);
 
-void onChannelTransmission(Time delay);
+void onChannelTransmission(Time delay, Ptr<Object> dstNetDevice);
 
 void updateNodesQueueLength();
 

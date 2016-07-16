@@ -12,6 +12,7 @@
 " --TrafficInterval=9876"\
 " --BeaconInterval=102400"\
 " --MinRTO=6576800"\
+" --TCPConnectionTimeout=60000000"\
 " --APAlwaysSchedulesForNextSlot=false"\
 " --APScheduleTransmissionForNextSlotIfLessThan=5000"\
 " --NRawSta=96"\

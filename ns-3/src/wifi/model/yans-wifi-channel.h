@@ -55,7 +55,7 @@ class YansWifiChannel : public WifiChannel
 public:
   static TypeId GetTypeId (void);
 
-  typedef void (* TransmissionCallback)(Time delay);
+  typedef void (* TransmissionCallback)(Time delay, Ptr<Object> dstNetDevice);
 
   YansWifiChannel ();
   virtual ~YansWifiChannel ();
@@ -133,7 +133,7 @@ private:
   Ptr<PropagationLossModel> m_loss;    //!< Propagation loss model
   Ptr<PropagationDelayModel> m_delay;  //!< Propagation delay model
 
-  TracedCallback<Time> m_channelTransmission;
+  TracedCallback<Time, Ptr<Object>> m_channelTransmission;
 };
 
 } //namespace ns3

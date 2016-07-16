@@ -12,7 +12,8 @@ int main(int argc, char** argv) {
     config = Configuration(argc, argv);
     stats = Statistics(config.Nsta);
 
-    transmissionsPerTIMGroupAndSlotSinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
+    transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
+    transmissionsPerTIMGroupAndSlotFromSTASinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
 
     eventManager = SimulationEventManager(config.visualizerIP, config.visualizerPort);
 
@@ -21,7 +22,7 @@ int main(int argc, char** argv) {
     if(config.trafficType == "tcpecho") {
     	Config::SetDefault ("ns3::TcpSocketBase::MinRto",TimeValue(MicroSeconds(config.MinRTO)));
     	Config::SetDefault ("ns3::TcpSocket::DelAckTimeout",TimeValue(MicroSeconds(config.MinRTO)));
-    	Config::SetDefault ("ns3::TcpSocket::ConnTimeout",TimeValue(MicroSeconds(config.MinRTO)));
+    	Config::SetDefault ("ns3::TcpSocket::ConnTimeout",TimeValue(MicroSeconds(config.TCPConnectionTimeout)));
     }
 
     configureChannel();
@@ -94,7 +95,7 @@ void configureChannel() {
     channel->TraceConnectWithoutContext("Transmission", MakeCallback(&onChannelTransmission));
 }
 
-void onChannelTransmission(Time delay) {
+void onChannelTransmission(Time delay, Ptr<Object> dstNetDevice) {
 
 	int timGroup = (Simulator::Now().GetMicroSeconds() / config.BeaconInterval) % config.NGroup;
 
@@ -103,7 +104,22 @@ void onChannelTransmission(Time delay) {
 	int slotIndex = (Simulator::Now().GetMicroSeconds() % config.BeaconInterval) / slotDuration.GetMicroSeconds();
 
 	//cout << "Transission during tim group " << timGroup << ", slot: " << slotIndex << endl;
-	transmissionsPerTIMGroupAndSlotSinceLastInterval[timGroup * config.NRawSlotNum + slotIndex]++;
+
+	if(dstNetDevice == 0) {
+		// broadcast
+	}
+	else  {
+		if(dstNetDevice->GetObject<NetDevice>()->GetAddress() == apDevices.Get(0)->GetAddress()) {
+			// to AP
+			transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval[timGroup * config.NRawSlotNum + slotIndex]++;
+		}
+		else {
+			// to STA
+			transmissionsPerTIMGroupAndSlotFromSTASinceLastInterval[timGroup * config.NRawSlotNum + slotIndex]++;
+		}
+	}
+
+
 }
 
 void configureSTANodes(Ssid& ssid) {
@@ -276,8 +292,10 @@ void configureAPNode(Ssid& ssid) {
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDropWithReason", MakeCallback(&OnAPPhyRxDrop));
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::S1gApWifiMac/PacketToTransmitReceivedFromUpperLayer", MakeCallback(&OnAPPacketToTransmitReceived));
 
-	phy.EnablePcap("apfile", apNodes, 0);
 
+	if(config.APPcapFile != "") {
+		phy.EnablePcap(config.APPcapFile, apNodes, 0);
+	}
 }
 
 void configureIPStack() {
@@ -565,9 +583,10 @@ void printStatistics() {
 void sendStatistics() {
 	eventManager.onUpdateStatistics(stats);
 
-	eventManager.onUpdateSlotStatistics(transmissionsPerTIMGroupAndSlotSinceLastInterval, config);
+	eventManager.onUpdateSlotStatistics(transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval, transmissionsPerTIMGroupAndSlotFromSTASinceLastInterval);
 	// reset
-    transmissionsPerTIMGroupAndSlotSinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
+	transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
+	transmissionsPerTIMGroupAndSlotFromSTASinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
 
 	Simulator::Schedule(Seconds(config.visualizerSamplingInterval), &sendStatistics);
 }

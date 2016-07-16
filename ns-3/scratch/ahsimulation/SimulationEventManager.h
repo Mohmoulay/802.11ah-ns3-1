@@ -40,7 +40,7 @@ public:
 
 	string SerializeDropReason(map<DropReason, long>& map);
 
-	void onUpdateSlotStatistics(vector<long>& transmissionsPerSlot, Configuration& config);
+	void onUpdateSlotStatistics(vector<long>& transmissionsPerSlotFromAP, vector<long>& transmissionsPerSlotFromSTA);
 
 	void onUpdateStatistics(Statistics& stats);
 

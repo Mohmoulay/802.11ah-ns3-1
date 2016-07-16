@@ -70,13 +70,21 @@ string SimulationEventManager::SerializeDropReason(map<DropReason, long>& map) {
 	return s.str();
 }
 
-void SimulationEventManager::onUpdateSlotStatistics(vector<long>& transmissionsPerSlot, Configuration& config) {
+void SimulationEventManager::onUpdateSlotStatistics(vector<long>& transmissionsPerSlotFromAP, vector<long>& transmissionsPerSlotFromSTA) {
 
 	vector<string> values;
 
-	values.push_back("slotstats");
-	for(int i = 0; i < transmissionsPerSlot.size(); i++) {
-		values.push_back(std::to_string(transmissionsPerSlot[i]));
+	values.push_back("slotstatsAP");
+	for(int i = 0; i < transmissionsPerSlotFromAP.size(); i++) {
+		values.push_back(std::to_string(transmissionsPerSlotFromAP[i]));
+	}
+	send(values);
+
+	values.clear();
+
+	values.push_back("slotstatsSTA");
+	for(int i = 0; i < transmissionsPerSlotFromSTA.size(); i++) {
+		values.push_back(std::to_string(transmissionsPerSlotFromSTA[i]));
 	}
 	send(values);
 }

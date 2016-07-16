@@ -27,6 +27,8 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("TrafficType", "Kind of traffic (udp, udpecho, tcpecho)", trafficType);
 
     cmd.AddValue("MinRTO", "Minimum retransmission timeout for TCP sockets in microseconds", MinRTO);
+    cmd.AddValue("TCPConnectionTimeout", "TCP Connection timeout to use for all Tcp Sockets", TCPConnectionTimeout);
+
 
     cmd.AddValue("DataMode", "Date mode", DataMode);
     cmd.AddValue("Datarate", "data rate in Mbps", datarate);
@@ -39,10 +41,13 @@ Configuration::Configuration(int argc, char** argv) {
 
     cmd.AddValue("VisualizerIP", "IP or hostname for the visualizer server, leave empty to not send data", visualizerIP);
     cmd.AddValue("VisualizerPort", "Port for the visualizer server", visualizerPort);
+    cmd.AddValue("VisualizerSamplingInterval", "Sampling interval of statistics in seconds", visualizerSamplingInterval);
 
+
+    cmd.AddValue("APPcapFile", "Name of the pcap file to generate at the AP, leave empty to omit generation", APPcapFile);
     cmd.AddValue("Name", "Name of the simulation", name);
 
-    cmd.AddValue("VisualizerSamplingInterval", "Sampling interval of statistics in seconds", visualizerSamplingInterval);
+
 
     cmd.Parse(argc, argv);
 }

@@ -121,7 +121,7 @@ YansWifiChannel::Send (Ptr<YansWifiPhy> sender, Ptr<const Packet> packet, double
           *(atts + 1) = packetType;
           *(atts + 2) = duration.GetNanoSeconds ();
 
-          m_channelTransmission(NanoSeconds(delay.GetNanoSeconds()));
+          m_channelTransmission(NanoSeconds(delay.GetNanoSeconds()), dstNetDevice);
 
           Simulator::ScheduleWithContext (dstNode,
                                           delay, &YansWifiChannel::Receive, this,

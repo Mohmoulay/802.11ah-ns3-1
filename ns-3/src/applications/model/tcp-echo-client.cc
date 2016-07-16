@@ -152,15 +152,15 @@ TcpEchoClient::StartApplication (void)
       m_socket->TraceConnectWithoutContext("Retransmission", MakeCallback(&TcpEchoClient::OnRetransmission, this));
       m_socket->TraceConnectWithoutContext("RTO", MakeCallback(&TcpEchoClient::OnRTOChanged, this));
 
-
-
       m_socket->Bind ();
       m_socket->Connect (InetSocketAddress (m_peerAddress, m_peerPort));
     }
 
-  m_socket->SetRecvCallback (MakeCallback (&TcpEchoClient::ReceivePacket, this));
+    m_socket->SetRecvCallback (MakeCallback (&TcpEchoClient::ReceivePacket, this));
 
-  ScheduleTransmit (Seconds (0.));
+    // ensure randomization of transmissions
+    double deviation = (rand() % 1000) / (double)1000 - 0.5;
+    ScheduleTransmit (m_interval + m_intervalDeviation * deviation);
 }
 
 void TcpEchoClient::OnRetransmission(Address a) {
@@ -338,7 +338,6 @@ TcpEchoClient::Send (void)
     seqTs.SetSeq (m_sent);
 
     p->AddHeader (seqTs);
-
 
   // call to the trace sinks before the packet is actually sent,
   // so that tags added to the packet can be sent as well
