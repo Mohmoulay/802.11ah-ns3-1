@@ -61,25 +61,25 @@ class EventManager {
                     break;
 
                 case 'slotstatsSTA':
-                {
-                    let values:number[] = [];
-                    for (var i = 2; i < ev.parts.length; i++)
-                        values.push(parseInt(ev.parts[i]));  
+                    {
+                        let values: number[] = [];
+                        for (var i = 2; i < ev.parts.length; i++)
+                            values.push(parseInt(ev.parts[i]));
 
-                    this.onSlotStats(ev.stream, values, false);
+                        this.onSlotStats(ev.stream, ev.time, values, false);
 
-                    break;
-                }
+                        break;
+                    }
                 case 'slotstatsAP':
-                {
-                    let values:number[] = [];
-                    for (var i = 2; i < ev.parts.length; i++)
-                        values.push(parseInt(ev.parts[i]));  
+                    {
+                        let values: number[] = [];
+                        for (var i = 2; i < ev.parts.length; i++)
+                            values.push(parseInt(ev.parts[i]));
 
-                    this.onSlotStats(ev.stream, values, true);
+                        this.onSlotStats(ev.stream, ev.time, values, true);
 
-                    break;      
-                }             
+                        break;
+                    }
                 default:
             }
             lastTime = ev.time;
@@ -109,7 +109,7 @@ class EventManager {
 
     onStart(stream: string, aidRAWRange: number, numberOfRAWGroups: number, RAWSlotFormat: string, RAWSlotDuration: number, numberOfRAWSlots: number,
         dataMode: string, dataRate: number, bandwidth: number, trafficInterval: number, trafficPacketsize: number, beaconInterval: number,
-        name: string, propagationLossExponent:number, propagationLossReferenceLoss:number, apAlwaysSchedulesForNextSlot:string, minRTO:number, simulationTime:number) {
+        name: string, propagationLossExponent: number, propagationLossReferenceLoss: number, apAlwaysSchedulesForNextSlot: string, minRTO: number, simulationTime: number) {
 
         let simulation = this.sim.simulationContainer.getSimulation(stream);
         if (typeof simulation == "undefined") {
@@ -122,6 +122,7 @@ class EventManager {
         simulation.slotUsageSTA = [];
         simulation.totalSlotUsageAP = [];
         simulation.totalSlotUsageSTA = [];
+        simulation.totalTraffic = 0;
 
         let config = simulation.config;
         config.AIDRAWRange = aidRAWRange;
@@ -146,31 +147,36 @@ class EventManager {
     }
 
 
-    onSlotStats(stream:string, values:number[], isAP:boolean) {
+    onSlotStats(stream: string, timestamp: number, values: number[], isAP: boolean) {
         let sim = this.sim.simulationContainer.getSimulation(stream);
 
-        if(isAP)
+        if (isAP)
             sim.slotUsageAP.push(values);
-        else        
+        else
             sim.slotUsageSTA.push(values);
 
-            let arr:number[];
-            if(isAP)
-                arr = sim.totalSlotUsageAP;
-            else
-                arr = sim.totalSlotUsageSTA;
+        let arr: number[];
+        if (isAP)
+            arr = sim.totalSlotUsageAP;
+        else
+            arr = sim.totalSlotUsageSTA;
 
-        if(arr.length == 0) {
-            if(isAP)
+        for (let i = 0; i < values.length; i++)
+            sim.totalTraffic += values[i];
+
+        sim.currentTime = timestamp;
+
+        if (arr.length == 0) {
+            if (isAP)
                 sim.totalSlotUsageAP = values;
             else
                 sim.totalSlotUsageSTA = values;
-             arr = values;   
+            arr = values;
         }
         else {
             let smoothingFactor = 0.8;
-            for(let i = 0; i < values.length; i++) {
-                arr[i] = arr[i] * smoothingFactor + (1-smoothingFactor) * values[i];
+            for (let i = 0; i < values.length; i++) {
+                arr[i] = arr[i] * smoothingFactor + (1 - smoothingFactor) * values[i];
             }
         }
     }
@@ -211,7 +217,7 @@ class EventManager {
         this.sim.onNodeAssociated(stream, id);
     }
 
-    hasIncreased(n:SimulationNode, prop:string): boolean {
+    hasIncreased(n: SimulationNode, prop: string): boolean {
         if (n.values.length >= 2) {
             let oldVal = n.values[n.values.length - 2];
             let newVal = n.values[n.values.length - 1];
@@ -230,8 +236,8 @@ class EventManager {
         edcaQueueLength: number, nrOfSuccessfulRoundtripPackets: number, avgRoundTripTime: number, tcpCongestionWindow: number,
         numberOfTCPRetransmissions: number, numberOfTCPRetransmissionsFromAP: number, nrOfReceivesDroppedByDestination: number,
         numberOfMACTxRTSFailed: number, numberOfMACTxMissedACK: number, numberOfDropsByReason: string, numberOfDropsByReasonAtAP: string,
-        tcpRtoValue: number, numberOfAPScheduledPacketForNodeInNextSlot:number, numberOfAPSentPacketForNodeImmediately:number, avgRemainingSlotTimeWhenAPSendingInSameSlot:number,
-        numberOfCollisions:number, numberofMACTxMissedACKAndDroppedPacket:number) {
+        tcpRtoValue: number, numberOfAPScheduledPacketForNodeInNextSlot: number, numberOfAPSentPacketForNodeImmediately: number, avgRemainingSlotTimeWhenAPSendingInSameSlot: number,
+        numberOfCollisions: number, numberofMACTxMissedACKAndDroppedPacket: number) {
 
         let simulation = this.sim.simulationContainer.getSimulation(stream);
 
@@ -240,7 +246,7 @@ class EventManager {
 
         let n = simulation.nodes[id];
 
-        let nodeVal:NodeValue = new NodeValue();
+        let nodeVal: NodeValue = new NodeValue();
         n.values.push(nodeVal);
 
         nodeVal.timestamp = timestamp;
@@ -248,9 +254,9 @@ class EventManager {
 
         nodeVal.totalReceiveTime = totalReceiveTime
         nodeVal.totalDozeTime = totalDozeTime;
-        nodeVal.totalActiveTime =  totalActiveTime;
+        nodeVal.totalActiveTime = totalActiveTime;
 
-        nodeVal.nrOfTransmissions =  nrOfTransmissions;
+        nodeVal.nrOfTransmissions = nrOfTransmissions;
         nodeVal.nrOfTransmissionsDropped = nrOfTransmissionsDropped;
         nodeVal.nrOfReceives = nrOfReceives;
         nodeVal.nrOfReceivesDropped = nrOfReceivesDropped;
@@ -316,7 +322,7 @@ class EventManager {
         nodeVal.numberOfAPScheduledPacketForNodeInNextSlot = numberOfAPScheduledPacketForNodeInNextSlot;
         nodeVal.numberOfAPSentPacketForNodeImmediately = numberOfAPSentPacketForNodeImmediately;
         nodeVal.avgRemainingSlotTimeWhenAPSendingInSameSlot = avgRemainingSlotTimeWhenAPSendingInSameSlot;
-        
+
         nodeVal.numberOfCollisions = numberOfCollisions;
 
         if (this.updateGUI && stream == this.sim.selectedStream) {

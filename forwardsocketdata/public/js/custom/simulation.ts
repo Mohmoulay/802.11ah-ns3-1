@@ -136,5 +136,8 @@ class Simulation {
     totalSlotUsageAP:number[] = [];
     totalSlotUsageSTA:number[] = [];
 
+    totalTraffic:number = 0;
+    currentTime:number = 0;
+    
     config: SimulationConfiguration = new SimulationConfiguration();
 }

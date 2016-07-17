@@ -190,7 +190,7 @@ var EventManager = (function () {
                         var values = [];
                         for (var i = 2; i < ev.parts.length; i++)
                             values.push(parseInt(ev.parts[i]));
-                        this.onSlotStats(ev.stream, values, false);
+                        this.onSlotStats(ev.stream, ev.time, values, false);
                         break;
                     }
                 case 'slotstatsAP':
@@ -198,7 +198,7 @@ var EventManager = (function () {
                         var values = [];
                         for (var i = 2; i < ev.parts.length; i++)
                             values.push(parseInt(ev.parts[i]));
-                        this.onSlotStats(ev.stream, values, true);
+                        this.onSlotStats(ev.stream, ev.time, values, true);
                         break;
                     }
                 default:
@@ -235,6 +235,7 @@ var EventManager = (function () {
         simulation.slotUsageSTA = [];
         simulation.totalSlotUsageAP = [];
         simulation.totalSlotUsageSTA = [];
+        simulation.totalTraffic = 0;
         var config = simulation.config;
         config.AIDRAWRange = aidRAWRange;
         config.numberOfRAWGroups = numberOfRAWGroups;
@@ -254,7 +255,7 @@ var EventManager = (function () {
         config.minRTO = minRTO;
         config.simulationTime = simulationTime;
     };
-    EventManager.prototype.onSlotStats = function (stream, values, isAP) {
+    EventManager.prototype.onSlotStats = function (stream, timestamp, values, isAP) {
         var sim = this.sim.simulationContainer.getSimulation(stream);
         if (isAP)
             sim.slotUsageAP.push(values);
@@ -265,6 +266,9 @@ var EventManager = (function () {
             arr = sim.totalSlotUsageAP;
         else
             arr = sim.totalSlotUsageSTA;
+        for (var i = 0; i < values.length; i++)
+            sim.totalTraffic += values[i];
+        sim.currentTime = timestamp;
         if (arr.length == 0) {
             if (isAP)
                 sim.totalSlotUsageAP = values;
@@ -699,6 +703,7 @@ var SimulationGUI = (function () {
         if (typeof selectedSimulation == "undefined")
             return;
         this.updateConfigGUI(selectedSimulation);
+        $("#simChannelTraffic").text(selectedSimulation.totalTraffic + "B (" + (selectedSimulation.totalTraffic / selectedSimulation.currentTime * 1000).toFixed(2) + "B/s)");
         if (this.selectedNode < 0 || this.selectedNode >= selectedSimulation.nodes.length)
             this.updateGUIForAll(simulations, selectedSimulation, full);
         else
@@ -1102,46 +1107,46 @@ var SimulationGUI = (function () {
             var averages = [];
             var ranges = [];
             var nrOfValues = simulations[s].nodes[0].values.length - 1;
-            if (nrOfValues <= 0)
-                return;
-            var offset = (canUpdateIncremental) ? this.currentChart.series[showAreas ? s * 2 : s].data.length : 0;
-            for (var i = offset; i < nrOfValues; i++) {
-                var sum = 0;
-                var count = 0;
-                var max = Number.MIN_VALUE;
-                var min = Number.MAX_VALUE;
-                var timestamp = simulations[s].nodes[0].values[i].timestamp;
-                for (var _i = 0, _a = simulations[s].nodes; _i < _a.length; _i++) {
-                    var n = _a[_i];
-                    var values = n.values;
-                    if (i < values.length) {
-                        var value = values[i][this.selectedPropertyForChart];
-                        sum += value;
-                        count++;
-                        if (max < value)
-                            max = value;
-                        if (min > value)
-                            min = value;
-                    }
-                }
-                var avg = sum / count;
-                if (showAreas) {
-                    var sumSquares = 0;
-                    for (var _b = 0, _c = simulations[s].nodes; _b < _c.length; _b++) {
-                        var n = _c[_b];
+            if (nrOfValues > 0) {
+                var offset = (canUpdateIncremental) ? this.currentChart.series[showAreas ? s * 2 : s].data.length : 0;
+                for (var i = offset; i < nrOfValues; i++) {
+                    var sum = 0;
+                    var count = 0;
+                    var max = Number.MIN_VALUE;
+                    var min = Number.MAX_VALUE;
+                    var timestamp = simulations[s].nodes[0].values[i].timestamp;
+                    for (var _i = 0, _a = simulations[s].nodes; _i < _a.length; _i++) {
+                        var n = _a[_i];
                         var values = n.values;
                         if (i < values.length) {
-                            var val = (values[i][this.selectedPropertyForChart] - avg) * (values[i][this.selectedPropertyForChart] - avg);
-                            sumSquares += val;
+                            var value = values[i][this.selectedPropertyForChart];
+                            sum += value;
+                            count++;
+                            if (max < value)
+                                max = value;
+                            if (min > value)
+                                min = value;
                         }
                     }
-                    var stddev = Math.sqrt(sumSquares / count);
-                    ranges.push([timestamp, Math.max(min, avg - stddev), Math.min(max, avg + stddev)]);
+                    var avg = sum / count;
+                    if (showAreas) {
+                        var sumSquares = 0;
+                        for (var _b = 0, _c = simulations[s].nodes; _b < _c.length; _b++) {
+                            var n = _c[_b];
+                            var values = n.values;
+                            if (i < values.length) {
+                                var val = (values[i][this.selectedPropertyForChart] - avg) * (values[i][this.selectedPropertyForChart] - avg);
+                                sumSquares += val;
+                            }
+                        }
+                        var stddev = Math.sqrt(sumSquares / count);
+                        ranges.push([timestamp, Math.max(min, avg - stddev), Math.min(max, avg + stddev)]);
+                    }
+                    averages.push([timestamp, avg]);
                 }
-                averages.push([timestamp, avg]);
+                seriesAverages.push(averages);
+                seriesRanges.push(ranges);
             }
-            seriesAverages.push(averages);
-            seriesRanges.push(ranges);
         }
         if (canUpdateIncremental) {
             for (var s = 0; s < simulations.length; s++) {
@@ -1489,6 +1494,8 @@ var Simulation = (function () {
         this.slotUsageAP = [];
         this.totalSlotUsageAP = [];
         this.totalSlotUsageSTA = [];
+        this.totalTraffic = 0;
+        this.currentTime = 0;
         this.config = new SimulationConfiguration();
     }
     return Simulation;

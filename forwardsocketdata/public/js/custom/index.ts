@@ -362,6 +362,8 @@ class SimulationGUI {
 
         this.updateConfigGUI(selectedSimulation);
 
+        $("#simChannelTraffic").text(`${selectedSimulation.totalTraffic}B (${(selectedSimulation.totalTraffic / selectedSimulation.currentTime * 1000).toFixed(2)}B/s)`);
+
         if (this.selectedNode < 0 || this.selectedNode >= selectedSimulation.nodes.length)
             this.updateGUIForAll(simulations, selectedSimulation, full);
         else
@@ -863,51 +865,52 @@ class SimulationGUI {
             let ranges = [];
             let nrOfValues = simulations[s].nodes[0].values.length - 1;
 
-            if (nrOfValues <= 0)
-                return;
+            if (nrOfValues > 0) {
 
-            let offset = (canUpdateIncremental) ? this.currentChart.series[showAreas ? s * 2 : s].data.length : 0;
 
-            for (var i = offset; i < nrOfValues; i++) {
-                let sum = 0;
-                let count = 0;
-                let max = Number.MIN_VALUE;
-                let min = Number.MAX_VALUE;
+                let offset = (canUpdateIncremental) ? this.currentChart.series[showAreas ? s * 2 : s].data.length : 0;
 
-                let timestamp = simulations[s].nodes[0].values[i].timestamp;
-                for (let n of simulations[s].nodes) {
-                    let values = n.values;
-                    if (i < values.length) {
-                        let value = values[i][this.selectedPropertyForChart];
-                        sum += value;
-                        count++;
-                        if (max < value) max = value;
-                        if (min > value) min = value;
-                    }
-                }
+                for (var i = offset; i < nrOfValues; i++) {
+                    let sum = 0;
+                    let count = 0;
+                    let max = Number.MIN_VALUE;
+                    let min = Number.MAX_VALUE;
 
-                let avg = sum / count;
-
-                if (showAreas) {
-                    let sumSquares = 0;
+                    let timestamp = simulations[s].nodes[0].values[i].timestamp;
                     for (let n of simulations[s].nodes) {
                         let values = n.values;
                         if (i < values.length) {
-                            let val = (values[i][this.selectedPropertyForChart] - avg) * (values[i][this.selectedPropertyForChart] - avg);
-                            sumSquares += val;
+                            let value = values[i][this.selectedPropertyForChart];
+                            sum += value;
+                            count++;
+                            if (max < value) max = value;
+                            if (min > value) min = value;
                         }
                     }
 
-                    let stddev = Math.sqrt(sumSquares / count);
+                    let avg = sum / count;
+
+                    if (showAreas) {
+                        let sumSquares = 0;
+                        for (let n of simulations[s].nodes) {
+                            let values = n.values;
+                            if (i < values.length) {
+                                let val = (values[i][this.selectedPropertyForChart] - avg) * (values[i][this.selectedPropertyForChart] - avg);
+                                sumSquares += val;
+                            }
+                        }
+
+                        let stddev = Math.sqrt(sumSquares / count);
 
 
-                    ranges.push([timestamp, Math.max(min, avg - stddev), Math.min(max, avg + stddev)]);
+                        ranges.push([timestamp, Math.max(min, avg - stddev), Math.min(max, avg + stddev)]);
+                    }
+                    averages.push([timestamp, avg]);
                 }
-                averages.push([timestamp, avg]);
-            }
 
-            seriesAverages.push(averages);
-            seriesRanges.push(ranges);
+                seriesAverages.push(averages);
+                seriesRanges.push(ranges);
+            }
         }
 
 
@@ -1067,7 +1070,7 @@ $(document).ready(function () {
 
 
     let hasConnected = false;
-    var sock: SocketIO.Socket = (<any>io)("http://" + window.location.host + "/",opts);
+    var sock: SocketIO.Socket = (<any>io)("http://" + window.location.host + "/", opts);
 
     sock.on("connect", function (data) {
         if (hasConnected) // only connect once
