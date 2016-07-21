@@ -1,5 +1,5 @@
 ./waf --run "scratch/ahsimulation/ahsimulation"\
-" --NGroup=4"\
+" --NGroup=1"\
 " --SlotFormat=0"\
 " --NRawSlotCount=162"\
 " --NRawSlotNum=5"\
@@ -9,7 +9,8 @@
 " --Rho=\"500\""\
 " --SimulationTime=100"\
 " --TrafficPacketSize=100"\
-" --TrafficInterval=9876"\
+" --TrafficInterval=10000"\
+" --TrafficIntervalDeviation=1000"\
 " --BeaconInterval=102400"\
 " --MinRTO=819200000"\
 " --TCPConnectionTimeout=60000000"\

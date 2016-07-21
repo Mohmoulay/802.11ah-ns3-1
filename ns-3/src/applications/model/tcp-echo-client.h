@@ -26,7 +26,7 @@
 #include "ns3/ipv4-address.h"
 #include "ns3/traced-callback.h"
 #include "ns3/traced-value.h"
-
+#include "ns3/random-variable-stream.h"
 namespace ns3 {
 
 class Socket;
@@ -173,6 +173,8 @@ private:
   EventId m_sendEvent;
 
   TracedCallback<uint32_t,uint32_t>          m_cWnd;
+
+  Ptr<UniformRandomVariable> m_rv;
 
   /// Callbacks for tracing the packet Tx events
   TracedCallback<Ptr<const Packet> > m_txTrace;

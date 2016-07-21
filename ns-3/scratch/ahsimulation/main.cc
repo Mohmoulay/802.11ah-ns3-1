@@ -442,7 +442,9 @@ void configureTCPEchoClients() {
 		clientApp.Get(0)->TraceConnectWithoutContext("RTO", MakeCallback(&NodeEntry::OnTcpRTOChanged, nodes[i]));
 		clientApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&NodeEntry::OnTcpRetransmission, nodes[i]));
 
-		double random = (rand() % (config.trafficInterval));
+		Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable> ();
+
+		double random = m_rv->GetValue(0, config.trafficInterval);
 		clientApp.Start(MilliSeconds(0+random));
 		//clientApp.Stop(Seconds(simulationTime + 1));
 	}

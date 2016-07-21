@@ -111,6 +111,8 @@ TcpEchoClient::TcpEchoClient ()
   m_sendEvent = EventId ();
   m_data = 0;
   m_dataSize = 0;
+
+  m_rv = CreateObject<UniformRandomVariable> ();
 }
 
 TcpEchoClient::~TcpEchoClient()
@@ -134,6 +136,7 @@ void
 TcpEchoClient::DoDispose (void)
 {
   NS_LOG_FUNCTION_NOARGS ();
+  m_rv = 0;
   Application::DoDispose ();
 }
 
@@ -159,8 +162,8 @@ TcpEchoClient::StartApplication (void)
     m_socket->SetRecvCallback (MakeCallback (&TcpEchoClient::ReceivePacket, this));
 
     // ensure randomization of transmissions
-    double deviation = (rand() % 1000) / (double)1000 - 0.5;
-    ScheduleTransmit (m_interval + m_intervalDeviation * deviation);
+    double deviation = m_rv->GetValue(-m_intervalDeviation.GetMicroSeconds(), m_intervalDeviation.GetMicroSeconds());
+    ScheduleTransmit (m_interval + MicroSeconds(deviation));
 }
 
 void TcpEchoClient::OnRetransmission(Address a) {
@@ -294,6 +297,7 @@ TcpEchoClient::SetFill (uint8_t *fill, uint32_t fillSize, uint32_t dataSize)
 void
 TcpEchoClient::ScheduleTransmit (Time dt)
 {
+	std::cout << "scheduling transmit " << dt.GetMicroSeconds() << std::endl;
   NS_LOG_FUNCTION_NOARGS ();
   m_sendEvent = Simulator::Schedule (dt, &TcpEchoClient::Send, this);
 }
@@ -351,8 +355,8 @@ TcpEchoClient::Send (void)
 
   if (m_sent < m_count)
     {
-	  double deviation = (rand() % 1000) / (double)1000 - 0.5;
-      ScheduleTransmit (m_interval + m_intervalDeviation * deviation);
+	  double deviation = m_rv->GetValue(-m_intervalDeviation.GetMicroSeconds(), m_intervalDeviation.GetMicroSeconds());
+	  ScheduleTransmit (m_interval + MicroSeconds(deviation));
     }
 }
 
