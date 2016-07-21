@@ -11,13 +11,13 @@
 " --TrafficPacketSize=100"\
 " --TrafficInterval=9876"\
 " --BeaconInterval=102400"\
-" --MinRTO=20000"\
+" --MinRTO=819200000"\
 " --TCPConnectionTimeout=60000000"\
 " --APAlwaysSchedulesForNextSlot=true"\
 " --APScheduleTransmissionForNextSlotIfLessThan=5000"\
 " --NRawSta=96"\
-" --Nsta=96"\
-" --VisualizerIP=\"192.168.0.247\""\
+" --Nsta=1"\
+" --VisualizerIP=\"localhost\""\
 " --VisualizerPort=7707"\
 " --VisualizerSamplingInterval=1"\
 " --APPcapFile=\"appcap\""\

@@ -49,7 +49,7 @@ struct Configuration {
 	int visualizerPort = 7707;
 	double visualizerSamplingInterval = 1;
 
-	string rho = "400.0";
+	string rho = "500.0";
 
 	string name = "";
 
