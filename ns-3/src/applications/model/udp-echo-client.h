@@ -24,6 +24,7 @@
 #include "ns3/ptr.h"
 #include "ns3/ipv4-address.h"
 #include "ns3/traced-callback.h"
+#include "ns3/random-variable-stream.h"
 
 namespace ns3 {
 
@@ -171,6 +172,9 @@ private:
 
   uint32_t m_count; //!< Maximum number of packets the application will send
   Time m_interval; //!< Packet inter-send time
+  Time m_intervalDeviation;
+
+
   uint32_t m_size; //!< Size of the sent packet
 
   uint32_t m_dataSize; //!< packet payload size (must be equal to m_size)
@@ -181,6 +185,9 @@ private:
   Address m_peerAddress; //!< Remote peer address
   uint16_t m_peerPort; //!< Remote peer port
   EventId m_sendEvent; //!< Event to send the next packet
+
+  Ptr<UniformRandomVariable> m_rv;
+
 
   /// Callbacks for tracing the packet Tx events
   TracedCallback<Ptr<const Packet> > m_txTrace;

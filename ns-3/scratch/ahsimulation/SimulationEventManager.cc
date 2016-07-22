@@ -39,7 +39,9 @@ void SimulationEventManager::onStart(Configuration& config) {
 		  std::to_string(config.propagationLossReferenceLoss),
 		  std::to_string(config.APAlwaysSchedulesForNextSlot),
 		  std::to_string(config.MinRTO),
-		  std::to_string(config.simulationTime)
+		  std::to_string(config.simulationTime),
+		  config.trafficType,
+		  std::to_string(config.trafficIntervalDeviation)
 	});
 }
 

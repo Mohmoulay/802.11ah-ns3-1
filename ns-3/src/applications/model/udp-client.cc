@@ -82,6 +82,8 @@ UdpClient::UdpClient ()
   m_sent = 0;
   m_socket = 0;
   m_sendEvent = EventId ();
+
+  m_rv = CreateObject<UniformRandomVariable> ();
 }
 
 UdpClient::~UdpClient ()
@@ -117,6 +119,7 @@ void
 UdpClient::DoDispose (void)
 {
   NS_LOG_FUNCTION (this);
+  m_rv = 0;
   Application::DoDispose ();
 }
 
@@ -142,7 +145,10 @@ UdpClient::StartApplication (void)
     }
 
   m_socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
-  m_sendEvent = Simulator::Schedule (Seconds (0.0), &UdpClient::Send, this);
+
+  double deviation = m_rv->GetValue(-m_intervalDeviation.GetMicroSeconds(), m_intervalDeviation.GetMicroSeconds());
+  m_sendEvent = Simulator::Schedule (m_interval + MicroSeconds(deviation), &UdpClient::Send, this);
+
 }
 
 void
@@ -192,7 +198,8 @@ UdpClient::Send (void)
 
   if (m_sent < m_count)
     {
-      m_sendEvent = Simulator::Schedule (m_interval, &UdpClient::Send, this);
+      double deviation = m_rv->GetValue(-m_intervalDeviation.GetMicroSeconds(), m_intervalDeviation.GetMicroSeconds());
+      m_sendEvent = Simulator::Schedule (m_interval + MicroSeconds(deviation), &UdpClient::Send, this);
     }
 }
 

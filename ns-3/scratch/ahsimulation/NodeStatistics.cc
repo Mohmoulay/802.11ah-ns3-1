@@ -16,7 +16,10 @@ Time NodeStatistics::getAveragePacketRoundTripTime() {
 }
 
 long NodeStatistics::getNumberOfDroppedPackets() {
-	return NumberOfSentPackets - NumberOfSuccessfulPackets;
+	if(NumberOfSentPackets == 0)
+		return -1;
+	else
+		return NumberOfSentPackets - NumberOfSuccessfulPackets;
 }
 
 double NodeStatistics::getGoodputKbit() {

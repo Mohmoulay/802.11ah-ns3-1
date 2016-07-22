@@ -68,6 +68,13 @@ UdpEchoClient::GetTypeId (void)
                    MakeUintegerAccessor (&UdpEchoClient::SetDataSize,
                                          &UdpEchoClient::GetDataSize),
                    MakeUintegerChecker<uint32_t> ())
+
+	.AddAttribute ("IntervalDeviation",
+				   "The possible deviation from the interval to send packets",
+				   TimeValue (Seconds (0)),
+				   MakeTimeAccessor (&UdpEchoClient::m_intervalDeviation),
+				   MakeTimeChecker ())
+
     .AddTraceSource ("Tx", "A new packet is created and is sent",
                      MakeTraceSourceAccessor (&UdpEchoClient::m_txTrace),
                      "ns3::Packet::TracedCallback")
@@ -87,6 +94,8 @@ UdpEchoClient::UdpEchoClient ()
   m_sendEvent = EventId ();
   m_data = 0;
   m_dataSize = 0;
+
+  m_rv = CreateObject<UniformRandomVariable> ();
 }
 
 UdpEchoClient::~UdpEchoClient()
@@ -127,6 +136,8 @@ void
 UdpEchoClient::DoDispose (void)
 {
   NS_LOG_FUNCTION (this);
+  m_rv = 0;
+
   Application::DoDispose ();
 }
 
@@ -153,7 +164,9 @@ UdpEchoClient::StartApplication (void)
 
   m_socket->SetRecvCallback (MakeCallback (&UdpEchoClient::HandleRead, this));
 
-  ScheduleTransmit (Seconds (0.));
+  double deviation = m_rv->GetValue(-m_intervalDeviation.GetMicroSeconds(), m_intervalDeviation.GetMicroSeconds());
+  ScheduleTransmit (m_interval + MicroSeconds(deviation));
+
 }
 
 void 
@@ -338,7 +351,8 @@ UdpEchoClient::Send (void)
 
   if (m_sent < m_count) 
     {
-      ScheduleTransmit (m_interval);
+	  double deviation = m_rv->GetValue(-m_intervalDeviation.GetMicroSeconds(), m_intervalDeviation.GetMicroSeconds());
+	  ScheduleTransmit (m_interval + MicroSeconds(deviation));
     }
 }
 

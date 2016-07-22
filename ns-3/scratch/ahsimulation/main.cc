@@ -433,6 +433,9 @@ void configureTCPEchoClients() {
 	clientHelper.SetAttribute("Interval", TimeValue(MilliSeconds(config.trafficInterval)));
 	clientHelper.SetAttribute("IntervalDeviation", TimeValue(MilliSeconds(config.trafficIntervalDeviation)));
 	clientHelper.SetAttribute("PacketSize", UintegerValue(config.trafficPacketSize));
+
+	Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable> ();
+
 	for (uint16_t i = 0; i < config.Nsta; i++) {
 		ApplicationContainer clientApp = clientHelper.Install(staNodes.Get(i));
 		clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnTcpPacketSent, nodes[i]));
@@ -441,8 +444,6 @@ void configureTCPEchoClients() {
 		clientApp.Get(0)->TraceConnectWithoutContext("CongestionWindow", MakeCallback(&NodeEntry::OnTcpCongestionWindowChanged, nodes[i]));
 		clientApp.Get(0)->TraceConnectWithoutContext("RTO", MakeCallback(&NodeEntry::OnTcpRTOChanged, nodes[i]));
 		clientApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&NodeEntry::OnTcpRetransmission, nodes[i]));
-
-		Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable> ();
 
 		double random = m_rv->GetValue(0, config.trafficInterval);
 		clientApp.Start(MilliSeconds(0+random));
@@ -455,13 +456,15 @@ void configureUDPClients() {
     clientHelper.SetAttribute("MaxPackets", UintegerValue(4294967295u));
     clientHelper.SetAttribute("Interval", TimeValue(MilliSeconds(config.trafficInterval)));
     clientHelper.SetAttribute("PacketSize", UintegerValue(config.trafficPacketSize));
+
+    Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable> ();
+
     for (uint16_t i = 0; i < config.Nsta; i++) {
         ApplicationContainer clientApp = clientHelper.Install(staNodes.Get(i));
         clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnUdpPacketSent, nodes[i]));
 
-
-        double random = (rand() % (config.trafficInterval));
-        clientApp.Start(Seconds(0+random));
+		double random = m_rv->GetValue(0, config.trafficInterval);
+		clientApp.Start(MilliSeconds(0+random));
         //clientApp.Stop(Seconds(simulationTime + 1));
     }
 }
@@ -470,14 +473,18 @@ void configureUDPEchoClients() {
 	UdpEchoClientHelper clientHelper(apNodeInterfaces.GetAddress(0), 9); //address of remote node
 	clientHelper.SetAttribute("MaxPackets", UintegerValue(4294967295u));
 	clientHelper.SetAttribute("Interval", TimeValue(MilliSeconds(config.trafficInterval)));
+	clientHelper.SetAttribute("IntervalDeviation", TimeValue(MilliSeconds(config.trafficIntervalDeviation)));
 	clientHelper.SetAttribute("PacketSize", UintegerValue(config.trafficPacketSize));
+
+	Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable> ();
+
 	for (uint16_t i = 0; i < config.Nsta; i++) {
 		ApplicationContainer clientApp = clientHelper.Install(staNodes.Get(i));
 		clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnUdpPacketSent, nodes[i]));
 		clientApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&NodeEntry::OnUdpEchoPacketReceived, nodes[i]));
 
-		double random = (rand() % (config.trafficInterval));
-		clientApp.Start(Seconds(0+random));
+		double random = m_rv->GetValue(0, config.trafficInterval);
+		clientApp.Start(MilliSeconds(0+random));
 		//clientApp.Stop(Seconds(simulationTime + 1));
 	}
 }
