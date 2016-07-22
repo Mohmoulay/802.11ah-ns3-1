@@ -14,6 +14,7 @@
 #include <functional>
 #include "Statistics.h"
 #include "ns3/drop-reason.h"
+#include "ns3/tcp-socket.h"
 
 using namespace ns3;
 
@@ -85,7 +86,7 @@ public:
     void OnTcpPacketReceivedAtAP(Ptr<const Packet> packet);
     void OnTcpCongestionWindowChanged(uint32_t oldval, uint32_t newval);
     void OnTcpRTOChanged(Time oldval, Time newval);
-
+    void OnTcpStateChanged(TcpStates_t oldval, TcpStates_t newval);
 
     void OnTcpRetransmission(Address to);
     void OnTcpRetransmissionAtAP();

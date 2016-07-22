@@ -49,6 +49,7 @@ public:
 
     long TCPCongestionWindow = 0;
     Time TCPRTOValue = Time();
+    bool TCPConnected = false;
 
     long NumberOfTCPRetransmissions = 0;
     long NumberOfTCPRetransmissionsFromAP = 0;

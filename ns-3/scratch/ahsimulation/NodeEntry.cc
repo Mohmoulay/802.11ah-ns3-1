@@ -325,6 +325,10 @@ void NodeEntry::OnTcpRTOChanged(Time oldval, Time newval) {
 	stats->get(this->id).TCPRTOValue = newval;
 }
 
+void NodeEntry::OnTcpStateChanged(TcpStates_t oldval, TcpStates_t newval) {
+	stats->get(this->id).TCPConnected = (newval == TcpStates_t::ESTABLISHED);
+}
+
 void NodeEntry::OnTcpRetransmission(Address to) {
 	stats->get(this->id).NumberOfTCPRetransmissions++;
 }

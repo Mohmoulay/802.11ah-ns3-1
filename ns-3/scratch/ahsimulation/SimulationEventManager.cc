@@ -124,6 +124,7 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 			std::to_string(stats.get(i).getAverageRemainingWhenAPSendingPacketInSameSlot().GetMicroSeconds()),
 			std::to_string(stats.get(i).NumberOfCollisions),
 			std::to_string(stats.get(i).NumberOfMACTxMissedACKAndDroppedPacket),
+			(stats.get(i).TCPConnected ? "1" : "0")
 		});
 	}
 }

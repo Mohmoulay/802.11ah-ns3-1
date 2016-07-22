@@ -96,6 +96,11 @@ TcpEchoClient::GetTypeId (void)
 						  MakeTraceSourceAccessor (&TcpEchoClient::m_retransmission),
 						  "ns3::TcpEchoClient::RetransmissionCallBack")
 
+	.AddTraceSource ("TCPStateChanged",
+					 "TCP state changed",
+					 MakeTraceSourceAccessor (&TcpEchoClient::m_tcpStateChanged),
+					 "ns3::TcpStatesTracedValueCallback")
+
   ;
   return tid;
 }
@@ -154,6 +159,7 @@ TcpEchoClient::StartApplication (void)
       m_socket->TraceConnectWithoutContext("CongestionWindow", MakeCallback(&TcpEchoClient::OnCongestionWindowChanged, this));
       m_socket->TraceConnectWithoutContext("Retransmission", MakeCallback(&TcpEchoClient::OnRetransmission, this));
       m_socket->TraceConnectWithoutContext("RTO", MakeCallback(&TcpEchoClient::OnRTOChanged, this));
+      m_socket->TraceConnectWithoutContext("State", MakeCallback(&TcpEchoClient::OnTCPStateChanged, this));
 
       m_socket->Bind ();
       m_socket->Connect (InetSocketAddress (m_peerAddress, m_peerPort));
@@ -178,6 +184,9 @@ void TcpEchoClient::OnRTOChanged(Time oldval, Time newval) {
 	m_rtoChanged(oldval, newval);
 }
 
+void TcpEchoClient::OnTCPStateChanged(TcpStates_t oldVal,TcpStates_t newVal) {
+	m_tcpStateChanged(oldVal, newVal);
+}
 
 void
 TcpEchoClient::StopApplication ()

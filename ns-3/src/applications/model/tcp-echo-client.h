@@ -27,6 +27,7 @@
 #include "ns3/traced-callback.h"
 #include "ns3/traced-value.h"
 #include "ns3/random-variable-stream.h"
+#include "ns3/tcp-socket.h"
 namespace ns3 {
 
 class Socket;
@@ -135,7 +136,6 @@ public:
   		            (Address);
 
 
-
 protected:
   virtual void DoDispose (void);
 
@@ -151,6 +151,7 @@ private:
 
   void OnCongestionWindowChanged(uint32_t oldval, uint32_t newval);
   void OnRTOChanged(Time oldval, Time newval);
+  void OnTCPStateChanged(TcpStates_t oldVal,TcpStates_t newVal);
 
   void OnRetransmission(Address a);
 
@@ -183,6 +184,8 @@ private:
   TracedCallback<Address> m_retransmission;
 
   TracedCallback<Time,Time>  m_rtoChanged;
+
+  TracedCallback<TcpStates_t,TcpStates_t> m_tcpStateChanged;
 
 
 
