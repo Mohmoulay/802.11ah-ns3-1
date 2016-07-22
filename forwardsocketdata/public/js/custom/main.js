@@ -168,7 +168,7 @@ var EventManager = (function () {
             var ev = this.events[0];
             switch (ev.parts[1]) {
                 case 'start':
-                    this.onStart(ev.stream, parseInt(ev.parts[2]), parseInt(ev.parts[3]), ev.parts[4], parseInt(ev.parts[5]), parseInt(ev.parts[6]), ev.parts[7], parseFloat(ev.parts[8]), parseFloat(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), ev.parts[13], parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), ev.parts[16], parseInt(ev.parts[17]), parseInt(ev.parts[18]));
+                    this.onStart(ev.stream, parseInt(ev.parts[2]), parseInt(ev.parts[3]), ev.parts[4], parseInt(ev.parts[5]), parseInt(ev.parts[6]), ev.parts[7], parseFloat(ev.parts[8]), parseFloat(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), ev.parts[13], parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), ev.parts[16], parseInt(ev.parts[17]), parseInt(ev.parts[18]), ev.parts[19], parseInt(ev.parts[20]));
                     break;
                 case 'stanodeadd':
                     this.onNodeAdded(ev.stream, true, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseInt(ev.parts[5]));
@@ -183,7 +183,7 @@ var EventManager = (function () {
                     this.onNodeAdded(ev.stream, false, -1, parseFloat(ev.parts[2]), parseFloat(ev.parts[3]), -1);
                     break;
                 case 'nodestats':
-                    this.onStatsUpdated(ev.stream, ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]), parseInt(ev.parts[20]), parseInt(ev.parts[21]), parseInt(ev.parts[22]), parseInt(ev.parts[23]), parseInt(ev.parts[24]), ev.parts[25], ev.parts[26], parseInt(ev.parts[27]), parseInt(ev.parts[28]), parseInt(ev.parts[29]), parseFloat(ev.parts[30]), parseInt(ev.parts[31]), parseInt(ev.parts[32]));
+                    this.onStatsUpdated(ev.stream, ev.time, parseInt(ev.parts[2]), parseFloat(ev.parts[3]), parseFloat(ev.parts[4]), parseFloat(ev.parts[5]), parseFloat(ev.parts[6]), parseInt(ev.parts[7]), parseInt(ev.parts[8]), parseInt(ev.parts[9]), parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), parseInt(ev.parts[13]), parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), parseInt(ev.parts[16]), parseInt(ev.parts[17]), parseFloat(ev.parts[18]), parseInt(ev.parts[19]), parseInt(ev.parts[20]), parseInt(ev.parts[21]), parseInt(ev.parts[22]), parseInt(ev.parts[23]), parseInt(ev.parts[24]), ev.parts[25], ev.parts[26], parseInt(ev.parts[27]), parseInt(ev.parts[28]), parseInt(ev.parts[29]), parseFloat(ev.parts[30]), parseInt(ev.parts[31]), parseInt(ev.parts[32]), parseInt(ev.parts[33]));
                     break;
                 case 'slotstatsSTA':
                     {
@@ -226,7 +226,7 @@ var EventManager = (function () {
         var ev = new SimulationEvent(entry.stream, time, parts);
         this.events.push(ev);
     };
-    EventManager.prototype.onStart = function (stream, aidRAWRange, numberOfRAWGroups, RAWSlotFormat, RAWSlotDuration, numberOfRAWSlots, dataMode, dataRate, bandwidth, trafficInterval, trafficPacketsize, beaconInterval, name, propagationLossExponent, propagationLossReferenceLoss, apAlwaysSchedulesForNextSlot, minRTO, simulationTime) {
+    EventManager.prototype.onStart = function (stream, aidRAWRange, numberOfRAWGroups, RAWSlotFormat, RAWSlotDuration, numberOfRAWSlots, dataMode, dataRate, bandwidth, trafficInterval, trafficPacketsize, beaconInterval, name, propagationLossExponent, propagationLossReferenceLoss, apAlwaysSchedulesForNextSlot, minRTO, simulationTime, trafficType, trafficIntervalDeviation) {
         var simulation = this.sim.simulationContainer.getSimulation(stream);
         if (typeof simulation == "undefined") {
             simulation = new Simulation();
@@ -256,6 +256,8 @@ var EventManager = (function () {
         config.apAlwaysSchedulesForNextSlot = apAlwaysSchedulesForNextSlot;
         config.minRTO = minRTO;
         config.simulationTime = simulationTime;
+        config.trafficType = trafficType;
+        config.trafficIntervalDeviation = trafficIntervalDeviation;
     };
     EventManager.prototype.onSlotStats = function (stream, timestamp, values, isAP) {
         var sim = this.sim.simulationContainer.getSimulation(stream);
@@ -324,7 +326,7 @@ var EventManager = (function () {
         else
             return false;
     };
-    EventManager.prototype.onStatsUpdated = function (stream, timestamp, id, totalTransmitTime, totalReceiveTime, totalDozeTime, totalActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTime, tcpCongestionWindow, numberOfTCPRetransmissions, numberOfTCPRetransmissionsFromAP, nrOfReceivesDroppedByDestination, numberOfMACTxRTSFailed, numberOfMACTxMissedACK, numberOfDropsByReason, numberOfDropsByReasonAtAP, tcpRtoValue, numberOfAPScheduledPacketForNodeInNextSlot, numberOfAPSentPacketForNodeImmediately, avgRemainingSlotTimeWhenAPSendingInSameSlot, numberOfCollisions, numberofMACTxMissedACKAndDroppedPacket) {
+    EventManager.prototype.onStatsUpdated = function (stream, timestamp, id, totalTransmitTime, totalReceiveTime, totalDozeTime, totalActiveTime, nrOfTransmissions, nrOfTransmissionsDropped, nrOfReceives, nrOfReceivesDropped, nrOfSentPackets, nrOfSuccessfulPackets, nrOfDroppedPackets, avgPacketTimeOfFlight, goodputKbit, edcaQueueLength, nrOfSuccessfulRoundtripPackets, avgRoundTripTime, tcpCongestionWindow, numberOfTCPRetransmissions, numberOfTCPRetransmissionsFromAP, nrOfReceivesDroppedByDestination, numberOfMACTxRTSFailed, numberOfMACTxMissedACK, numberOfDropsByReason, numberOfDropsByReasonAtAP, tcpRtoValue, numberOfAPScheduledPacketForNodeInNextSlot, numberOfAPSentPacketForNodeImmediately, avgRemainingSlotTimeWhenAPSendingInSameSlot, numberOfCollisions, numberofMACTxMissedACKAndDroppedPacket, tcpConnected) {
         var simulation = this.sim.simulationContainer.getSimulation(stream);
         if (id < 0 || id >= simulation.nodes.length)
             return;
@@ -397,6 +399,7 @@ var EventManager = (function () {
                 this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));
             }
         }
+        nodeVal.tcpConnected = tcpConnected;
         //if(this.hasIncreased(n.totalReceiveActiveTime))
         //   this.sim.addAnimation(new ReceivedAnimation(n.x, n.y));
         // this.sim.onNodeUpdated(stream, id);
@@ -696,6 +699,9 @@ var SimulationGUI = (function () {
         $("#simCurrentTime").text(time);
     };
     SimulationGUI.prototype.changeNodeSelection = function (id) {
+        // don't change the node if channel traffic is selected
+        if (id != -1 && this.selectedPropertyForChart == "channelTraffic")
+            return;
         this.selectedNode = id;
         this.updateGUI(true);
     };
@@ -800,8 +806,10 @@ var SimulationGUI = (function () {
             var node = simulation.nodes[i];
             var values = node.values;
             if (values.length > 0) {
-                sum += values[values.length - 1][prop];
-                count++;
+                if (values[values.length - 1][prop] != -1) {
+                    sum += values[values.length - 1][prop];
+                    count++;
+                }
             }
         }
         if (count == 0)
@@ -812,8 +820,10 @@ var SimulationGUI = (function () {
             var node = simulation.nodes[i];
             var values = node.values;
             if (values.length > 0) {
-                var val = (values[values.length - 1][prop] - avg) * (values[values.length - 1][prop] - avg);
-                sumSquares += val;
+                if (values[values.length - 1][prop] != -1) {
+                    var val = (values[values.length - 1][prop] - avg) * (values[values.length - 1][prop] - avg);
+                    sumSquares += val;
+                }
             }
         }
         var stddev = Math.sqrt(sumSquares / count);
@@ -1128,28 +1138,35 @@ var SimulationGUI = (function () {
                         var n = _a[_i];
                         var values = n.values;
                         if (i < values.length) {
-                            var value = values[i][this.selectedPropertyForChart];
-                            sum += value;
-                            count++;
-                            if (max < value)
-                                max = value;
-                            if (min > value)
-                                min = value;
+                            if (values[i][this.selectedPropertyForChart] != -1) {
+                                var value = values[i][this.selectedPropertyForChart];
+                                sum += value;
+                                count++;
+                                if (max < value)
+                                    max = value;
+                                if (min > value)
+                                    min = value;
+                            }
                         }
                     }
-                    var avg = sum / count;
+                    var avg = count == 0 ? -1 : sum / count;
                     if (showAreas) {
                         var sumSquares = 0;
                         for (var _b = 0, _c = simulations[s].nodes; _b < _c.length; _b++) {
                             var n = _c[_b];
                             var values = n.values;
                             if (i < values.length) {
-                                var val = (values[i][this.selectedPropertyForChart] - avg) * (values[i][this.selectedPropertyForChart] - avg);
-                                sumSquares += val;
+                                if (values[i][this.selectedPropertyForChart] != -1) {
+                                    var val = (values[i][this.selectedPropertyForChart] - avg) * (values[i][this.selectedPropertyForChart] - avg);
+                                    sumSquares += val;
+                                }
                             }
                         }
-                        var stddev = Math.sqrt(sumSquares / count);
-                        ranges.push([timestamp, Math.max(min, avg - stddev), Math.min(max, avg + stddev)]);
+                        var stddev = count == 0 ? 0 : Math.sqrt(sumSquares / count);
+                        if (count > 0)
+                            ranges.push([timestamp, Math.max(min, avg - stddev), Math.min(max, avg + stddev)]);
+                        else
+                            ranges.push([timestamp, avg, avg]);
                     }
                     averages.push([timestamp, avg]);
                 }
@@ -1533,6 +1550,7 @@ var NodeValue = (function () {
         this.numberOfAPSentPacketForNodeImmediately = 0;
         this.avgRemainingSlotTimeWhenAPSendingInSameSlot = 0;
         this.numberOfCollisions = 0;
+        this.tcpConnected = 0;
     }
     return NodeValue;
 })();

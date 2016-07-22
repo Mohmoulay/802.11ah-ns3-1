@@ -342,7 +342,13 @@ class SimulationGUI {
     }
 
     changeNodeSelection(id: number) {
+
+        // don't change the node if channel traffic is selected
+        if (id != -1 && this.selectedPropertyForChart == "channelTraffic")
+            return;
+
         this.selectedNode = id;
+
         this.updateGUI(true);
     }
 
@@ -479,8 +485,11 @@ class SimulationGUI {
             var node = simulation.nodes[i];
             let values = node.values;
             if (values.length > 0) {
-                sum += values[values.length - 1][prop];
-                count++;
+
+                if (values[values.length - 1][prop] != -1) {
+                    sum += values[values.length - 1][prop];
+                    count++;
+                }
             }
         }
         if (count == 0) return [];
@@ -492,8 +501,10 @@ class SimulationGUI {
             var node = simulation.nodes[i];
             let values = node.values;
             if (values.length > 0) {
-                let val = (values[values.length - 1][prop] - avg) * (values[values.length - 1][prop] - avg);
-                sumSquares += val;
+                if (values[values.length - 1][prop] != -1) {
+                    let val = (values[values.length - 1][prop] - avg) * (values[values.length - 1][prop] - avg);
+                    sumSquares += val;
+                }
             }
         }
         let stddev = Math.sqrt(sumSquares / count);
@@ -885,30 +896,37 @@ class SimulationGUI {
                     for (let n of simulations[s].nodes) {
                         let values = n.values;
                         if (i < values.length) {
-                            let value = values[i][this.selectedPropertyForChart];
-                            sum += value;
-                            count++;
-                            if (max < value) max = value;
-                            if (min > value) min = value;
+
+                            if (values[i][this.selectedPropertyForChart] != -1) {
+                                let value = values[i][this.selectedPropertyForChart];
+                                sum += value;
+                                count++;
+                                if (max < value) max = value;
+                                if (min > value) min = value;
+                            }
                         }
                     }
 
-                    let avg = sum / count;
+                    let avg = count == 0 ? -1 : sum / count;
 
                     if (showAreas) {
                         let sumSquares = 0;
                         for (let n of simulations[s].nodes) {
                             let values = n.values;
                             if (i < values.length) {
-                                let val = (values[i][this.selectedPropertyForChart] - avg) * (values[i][this.selectedPropertyForChart] - avg);
-                                sumSquares += val;
+                                if (values[i][this.selectedPropertyForChart] != -1) {
+                                    let val = (values[i][this.selectedPropertyForChart] - avg) * (values[i][this.selectedPropertyForChart] - avg);
+                                    sumSquares += val;
+                                }
                             }
                         }
 
-                        let stddev = Math.sqrt(sumSquares / count);
+                        let stddev = count == 0 ? 0 : Math.sqrt(sumSquares / count);
 
-
-                        ranges.push([timestamp, Math.max(min, avg - stddev), Math.min(max, avg + stddev)]);
+                        if (count > 0)
+                            ranges.push([timestamp, Math.max(min, avg - stddev), Math.min(max, avg + stddev)]);
+                        else
+                            ranges.push([timestamp, avg, avg]);
                     }
                     averages.push([timestamp, avg]);
                 }
