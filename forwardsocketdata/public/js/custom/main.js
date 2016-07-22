@@ -216,6 +216,8 @@ var EventManager = (function () {
             var l = _a[_i];
             this.onReceive({ stream: entry.stream, line: l });
         }
+        if (entry.lines.length > 10000)
+            this.processEvents();
     };
     EventManager.prototype.onReceive = function (entry) {
         var parts = entry.line.split(';');
@@ -257,8 +259,10 @@ var EventManager = (function () {
     };
     EventManager.prototype.onSlotStats = function (stream, timestamp, values, isAP) {
         var sim = this.sim.simulationContainer.getSimulation(stream);
-        if (isAP)
+        if (isAP) {
             sim.slotUsageAP.push(values);
+            sim.totalSlotUsageTimestamps.push(timestamp);
+        }
         else
             sim.slotUsageSTA.push(values);
         var arr;
@@ -878,8 +882,9 @@ var SimulationGUI = (function () {
         var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
         if (selectedSimulation.nodes.length <= 0)
             return;
-        if (this.selectedNode == -1 || this.selectedNode >= selectedSimulation.nodes.length)
+        if (this.selectedNode == -1 || this.selectedNode >= selectedSimulation.nodes.length) {
             this.updateChartsForAll(selectedSimulation, simulations, full, showDeltas);
+        }
         else
             this.updateChartsForNode(selectedSimulation, simulations, full, showDeltas);
     };
@@ -978,10 +983,14 @@ var SimulationGUI = (function () {
         this.createPieChart("#nodeChartPacketSuccessDropped", 'Packets OK/dropped', activePacketsSuccessDroppedData);
     };
     SimulationGUI.prototype.updateChartsForAll = function (selectedSimulation, simulations, full, showDeltas) {
-        if ($("#chkShowDistribution").prop("checked"))
-            this.updateDistributionChart(selectedSimulation, showDeltas);
-        else
-            this.updateAverageChart(selectedSimulation, showDeltas, full);
+        if (this.selectedPropertyForChart == "channelTraffic")
+            this.updateChartsForTraffic(simulations, full, showDeltas);
+        else {
+            if ($("#chkShowDistribution").prop("checked"))
+                this.updateDistributionChart(selectedSimulation, showDeltas);
+            else
+                this.updateAverageChart(selectedSimulation, showDeltas, full);
+        }
         var totalReceiveActiveTime = this.getAverageAndStdDevValue(selectedSimulation, "totalActiveTime");
         var totalReceiveDozeTime = this.getAverageAndStdDevValue(selectedSimulation, "totalDozeTime");
         if (totalReceiveActiveTime.length > 0 && totalReceiveDozeTime.length > 0) {
@@ -1216,6 +1225,67 @@ var SimulationGUI = (function () {
             });
         }
     };
+    SimulationGUI.prototype.updateChartsForTraffic = function (simulations, full, showDeltas) {
+        var self = this;
+        var series = [];
+        var lastSums = [];
+        for (var s = 0; s < simulations.length; s++)
+            lastSums.push(0);
+        for (var s = 0; s < simulations.length; s++) {
+            var data = [];
+            for (var i = 0; i < simulations[s].totalSlotUsageTimestamps.length; i++) {
+                var sum = 0;
+                for (var j = 0; j < simulations[s].slotUsageAP[i].length; j++)
+                    sum += simulations[s].slotUsageAP[i][j];
+                for (var j = 0; j < simulations[s].slotUsageSTA[j].length; j++)
+                    sum += simulations[s].slotUsageSTA[i][j];
+                data.push([
+                    simulations[s].totalSlotUsageTimestamps[i],
+                    showDeltas ? sum - lastSums[s] : sum]);
+                lastSums[s] = sum;
+            }
+            series.push({
+                name: simulations[s].config.name,
+                type: "spline",
+                data: data,
+                zIndex: 1
+            });
+        }
+        $('#nodeChart').empty().highcharts({
+            chart: {
+                animation: "Highcharts.svg",
+                marginRight: 10,
+                events: {
+                    load: function () {
+                        self.currentChart = this;
+                    }
+                },
+                zoomType: "x"
+            },
+            plotOptions: {
+                series: {
+                    animation: false,
+                    marker: { enabled: false }
+                }
+            },
+            title: { text: 'Channel traffic' },
+            xAxis: {
+                type: 'linear',
+                tickPixelInterval: 100
+            },
+            yAxis: {
+                title: { text: 'Value' },
+                plotLines: [{
+                        value: 0,
+                        width: 1,
+                        color: '#808080'
+                    }]
+            },
+            legend: { enabled: true },
+            series: series,
+            credits: false
+        });
+    };
     SimulationGUI.prototype.createPieChart = function (selector, title, data) {
         $(selector).empty().highcharts({
             chart: {
@@ -1347,9 +1417,11 @@ $(document).ready(function () {
             sim.changeNodeSelection(-1);
         }
     });
-    $(".nodeProperty").click(function (ev) {
-        $(".nodeProperty").removeClass("selected");
+    $(".chartProperty").click(function (ev) {
+        $(".chartProperty").removeClass("selected");
         $(this).addClass("selected");
+        if (!$(this).hasClass("nodeProperty"))
+            sim.selectedNode = -1;
         sim.selectedPropertyForChart = $(this).attr("data-property");
         sim.updateGUI(true);
     });
@@ -1494,6 +1566,7 @@ var Simulation = (function () {
         this.slotUsageAP = [];
         this.totalSlotUsageAP = [];
         this.totalSlotUsageSTA = [];
+        this.totalSlotUsageTimestamps = [];
         this.totalTraffic = 0;
         this.currentTime = 0;
         this.config = new SimulationConfiguration();

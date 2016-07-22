@@ -125,7 +125,6 @@ class SimulationConfiguration {
     simulationTime:number;
 }
  
- 
 class Simulation {
 
     nodes: SimulationNode[] = [];
@@ -135,7 +134,8 @@ class Simulation {
 
     totalSlotUsageAP:number[] = [];
     totalSlotUsageSTA:number[] = [];
-
+    totalSlotUsageTimestamps:number[] = [];
+    
     totalTraffic:number = 0;
     currentTime:number = 0;
     

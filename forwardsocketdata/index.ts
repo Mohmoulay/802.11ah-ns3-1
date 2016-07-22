@@ -100,6 +100,15 @@ export class Program {
         var app = express();
         app.use("/", express.static(path.join(__dirname, 'public')));
 
+        // binding to fetch the simulation nss files directly
+        app.get("/simulations/:name", (req,res) => {
+            var file = req.params.name;
+            let path = this.getPathForSimulationName(file);
+            res.sendFile(path, {
+
+            });
+        });
+
         let server;
         if(BIND_ADDRESS == "")
             server = app.listen(HTTP_PORT);

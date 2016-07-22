@@ -96,6 +96,9 @@ class EventManager {
         for (let l of entry.lines) {
             this.onReceive({ stream: entry.stream, line: l });
         }
+
+        if(entry.lines.length > 10000) // prevent epic memory build up
+            this.processEvents();
     }
 
     onReceive(entry: IEntry) {
@@ -150,8 +153,10 @@ class EventManager {
     onSlotStats(stream: string, timestamp: number, values: number[], isAP: boolean) {
         let sim = this.sim.simulationContainer.getSimulation(stream);
 
-        if (isAP)
+        if (isAP) {
             sim.slotUsageAP.push(values);
+            sim.totalSlotUsageTimestamps.push(timestamp);
+        }
         else
             sim.slotUsageSTA.push(values);
 
