@@ -13,7 +13,7 @@ body{
      outline: none !important; /*remove focus border */
 }
 
-.nodeProperty {
+.chartProperty {
     cursor: pointer;
 }
 

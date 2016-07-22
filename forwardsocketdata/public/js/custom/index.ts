@@ -583,8 +583,9 @@ class SimulationGUI {
         if (selectedSimulation.nodes.length <= 0)
             return;
 
-        if (this.selectedNode == -1 || this.selectedNode >= selectedSimulation.nodes.length)
+        if (this.selectedNode == -1 || this.selectedNode >= selectedSimulation.nodes.length) {
             this.updateChartsForAll(selectedSimulation, simulations, full, showDeltas);
+        }
         else
             this.updateChartsForNode(selectedSimulation, simulations, full, showDeltas);
     }
@@ -713,10 +714,15 @@ class SimulationGUI {
 
     private updateChartsForAll(selectedSimulation: Simulation, simulations: Simulation[], full: boolean, showDeltas: boolean) {
 
-        if ($("#chkShowDistribution").prop("checked"))
-            this.updateDistributionChart(selectedSimulation, showDeltas);
-        else
-            this.updateAverageChart(selectedSimulation, showDeltas, full);
+
+        if (this.selectedPropertyForChart == "channelTraffic")
+            this.updateChartsForTraffic(simulations, full, showDeltas);
+        else {
+            if ($("#chkShowDistribution").prop("checked"))
+                this.updateDistributionChart(selectedSimulation, showDeltas);
+            else
+                this.updateAverageChart(selectedSimulation, showDeltas, full);
+        }
 
         let totalReceiveActiveTime = this.getAverageAndStdDevValue(selectedSimulation, "totalActiveTime");
         let totalReceiveDozeTime = this.getAverageAndStdDevValue(selectedSimulation, "totalDozeTime");
@@ -845,7 +851,6 @@ class SimulationGUI {
             credits: false
         });
     }
-
 
     private updateAverageChart(selectedSimulation: Simulation, showDeltas: boolean, full: boolean) {
 
@@ -985,6 +990,77 @@ class SimulationGUI {
                 credits: false
             });
         }
+    }
+
+    private updateChartsForTraffic(simulations: Simulation[], full: boolean, showDeltas: boolean) {
+        let self = this;
+        let series = [];
+
+        let lastSums: number[] = [];
+        for (let s = 0; s < simulations.length; s++)
+            lastSums.push(0);
+
+        for (let s = 0; s < simulations.length; s++) {
+            let data = [];
+            for (let i = 0; i < simulations[s].totalSlotUsageTimestamps.length; i++) {
+
+                let sum = 0;
+                for (let j = 0; j < simulations[s].slotUsageAP[i].length; j++)
+                    sum += simulations[s].slotUsageAP[i][j];
+
+                for (let j = 0; j < simulations[s].slotUsageSTA[j].length; j++)
+                    sum += simulations[s].slotUsageSTA[i][j];
+
+                data.push([
+                    simulations[s].totalSlotUsageTimestamps[i],
+                    showDeltas ? sum - lastSums[s] : sum]
+                );
+
+                lastSums[s] = sum;
+            }
+
+            series.push({
+                name: simulations[s].config.name,
+                type: "spline",
+                data: data,
+                zIndex: 1,
+            });
+        }
+
+        $('#nodeChart').empty().highcharts({
+            chart: {
+                animation: "Highcharts.svg", // don't animate in old IE
+                marginRight: 10,
+                events: {
+                    load: function () {
+                        self.currentChart = (<HighchartsChartObject>this);
+                    }
+                },
+                zoomType: "x"
+            },
+            plotOptions: {
+                series: {
+                    animation: false,
+                    marker: { enabled: false }
+                }
+            },
+            title: { text: 'Channel traffic' },
+            xAxis: {
+                type: 'linear',
+                tickPixelInterval: 100,
+            },
+            yAxis: {
+                title: { text: 'Value' },
+                plotLines: [{
+                    value: 0,
+                    width: 1,
+                    color: '#808080'
+                }]
+            },
+            legend: { enabled: true },
+            series: series,
+            credits: false
+        });
     }
 
     createPieChart(selector: string, title: string, data: any) {
@@ -1150,9 +1226,13 @@ $(document).ready(function () {
             sim.changeNodeSelection(-1);
         }
     })
-    $(".nodeProperty").click(function (ev) {
-        $(".nodeProperty").removeClass("selected");
+    $(".chartProperty").click(function (ev) {
+        $(".chartProperty").removeClass("selected");
         $(this).addClass("selected");
+
+        if (!$(this).hasClass("nodeProperty"))
+            sim.selectedNode = -1;
+
         sim.selectedPropertyForChart = $(this).attr("data-property");
         sim.updateGUI(true);
     });

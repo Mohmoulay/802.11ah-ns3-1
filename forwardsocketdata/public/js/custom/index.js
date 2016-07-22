@@ -63,6 +63,10 @@ var SimulationGUI = (function () {
     SimulationGUI.prototype.draw = function () {
         this.ctx.fillStyle = "white";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        if (typeof selectedSimulation == "undefined")
+            return;
+        this.drawSlotStats();
         this.drawRange();
         this.drawNodes();
         for (var _i = 0, _a = this.animations; _i < _a.length; _i++) {
@@ -70,11 +74,70 @@ var SimulationGUI = (function () {
             a.draw(this.canvas, this.ctx, this.area);
         }
     };
+    SimulationGUI.prototype.drawSlotStats = function () {
+        var canv = document.getElementById("canvSlots");
+        var ctx = canv.getContext("2d");
+        var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        var groups = selectedSimulation.config.numberOfRAWGroups;
+        var slots = selectedSimulation.config.numberOfRAWSlots;
+        if (selectedSimulation.slotUsageAP.length == 0 || selectedSimulation.slotUsageSTA.length == 0)
+            return;
+        //let lastValues = selectedSimulation.totalSlotUsageAP;
+        var max = Number.MIN_VALUE;
+        for (var i = 0; i < Math.min(selectedSimulation.totalSlotUsageAP.length, selectedSimulation.totalSlotUsageSTA.length); i++) {
+            var sum = selectedSimulation.totalSlotUsageAP[i] + selectedSimulation.totalSlotUsageSTA[i];
+            if (max < sum)
+                max = sum;
+        }
+        var width = canv.width;
+        var height = canv.height;
+        var padding = 5;
+        var groupWidth = Math.floor(width / groups) - 2 * padding;
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, width, height);
+        ctx.strokeStyle = "#CCC";
+        ctx.fillStyle = "#7cb5ec";
+        var rectHeight = height - 2 * padding;
+        ctx.lineWidth = 1;
+        for (var g = 0; g < groups; g++) {
+            ctx.beginPath();
+            ctx.rect(padding + g * (padding + groupWidth) + 0.5, padding + 0.5, groupWidth, rectHeight);
+            ctx.stroke();
+            var slotWidth = groupWidth / slots;
+            for (var s = 0; s < slots; s++) {
+                var sum = selectedSimulation.totalSlotUsageAP[g * slots + s] + selectedSimulation.totalSlotUsageSTA[g * slots + s];
+                if (sum > 0) {
+                    var percAP = selectedSimulation.totalSlotUsageAP[g * slots + s] / sum;
+                    var percSTA = selectedSimulation.totalSlotUsageSTA[g * slots + s] / sum;
+                    var value = void 0;
+                    var y = void 0;
+                    value = selectedSimulation.totalSlotUsageAP[g * slots + s];
+                    y = (1 - sum / max) * rectHeight;
+                    var fullBarHeight = (rectHeight - y);
+                    var barHeight = fullBarHeight * percAP;
+                    ctx.fillStyle = "#ecb57c";
+                    ctx.fillRect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + y + 0.5, slotWidth, barHeight);
+                    ctx.beginPath();
+                    ctx.rect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + 0.5, slotWidth, height - 2 * padding);
+                    ctx.stroke();
+                    y += barHeight;
+                    barHeight = fullBarHeight * percSTA;
+                    ctx.fillStyle = "#7cb5ec";
+                    ctx.fillRect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + y + 0.5, slotWidth, barHeight);
+                }
+                ctx.beginPath();
+                ctx.rect(padding + g * (padding + groupWidth) + s * slotWidth + 0.5, padding + 0.5, slotWidth, height - 2 * padding);
+                ctx.stroke();
+            }
+        }
+    };
     SimulationGUI.prototype.drawRange = function () {
         if (!this.simulationContainer.hasSimulations())
             return;
         this.ctx.strokeStyle = "#CCC";
         var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        if (typeof selectedSimulation == "undefined")
+            return;
         for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
             var n = _a[_i];
             if (n.type == "AP") {
@@ -96,10 +159,10 @@ var SimulationGUI = (function () {
             var selectedSimulation = this.simulationContainer.getSimulation(stream);
             for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
                 var n = _a[_i];
-                var values = n[this.selectedPropertyForChart];
+                var values = n.values;
                 if (deltas && values.length > 1) {
-                    var curVal = values[values.length - 1].value;
-                    var beforeVal = values[values.length - 2].value;
+                    var curVal = values[values.length - 1][prop];
+                    var beforeVal = values[values.length - 2][prop];
                     var value = curVal - beforeVal;
                     if (curMax < value)
                         curMax = value;
@@ -107,7 +170,7 @@ var SimulationGUI = (function () {
                         curMin = value;
                 }
                 else if (values.length > 0) {
-                    var value = values[values.length - 1].value;
+                    var value = values[values.length - 1][prop];
                     if (curMax < value)
                         curMax = value;
                     if (curMin > value)
@@ -119,9 +182,8 @@ var SimulationGUI = (function () {
         else
             return [0, 0];
     };
-    SimulationGUI.prototype.getColorForNode = function (n, curMax, curMin) {
+    SimulationGUI.prototype.getColorForNode = function (n, curMax, curMin, el) {
         if (this.selectedPropertyForChart != "") {
-            var el = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "']").get(0));
             var type = el.attr("data-type");
             if (typeof type != "undefined" && type != "") {
                 var min;
@@ -134,10 +196,14 @@ var SimulationGUI = (function () {
                     max = curMax;
                 else
                     max = parseInt(el.attr("data-max"));
-                var values = n[this.selectedPropertyForChart];
+                var values = n.values;
                 if (values.length > 0) {
-                    var value = values[values.length - 1];
-                    var alpha = (value.value - min) / (max - min);
+                    var value = values[values.length - 1][this.selectedPropertyForChart];
+                    var alpha;
+                    if (max - min != 0)
+                        alpha = (value - min) / (max - min);
+                    else
+                        alpha = 1;
                     if (type == "LOWER_IS_BETTER")
                         return this.heatMapPalette.getColorAt(1 - alpha).toString();
                     else
@@ -157,6 +223,7 @@ var SimulationGUI = (function () {
         var curMax = minmax[1];
         var curMin = minmax[0];
         var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
+        var el = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "']").get(0));
         for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
             var n = _a[_i];
             this.ctx.beginPath();
@@ -165,7 +232,7 @@ var SimulationGUI = (function () {
                 this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 6, 0, Math.PI * 2, false);
             }
             else {
-                this.ctx.fillStyle = this.getColorForNode(n, curMax, curMin);
+                this.ctx.fillStyle = this.getColorForNode(n, curMax, curMin, el);
                 this.ctx.arc(n.x * (this.canvas.width / this.area), n.y * (this.canvas.width / this.area), 3, 0, Math.PI * 2, false);
             }
             this.ctx.fill();
@@ -227,6 +294,7 @@ var SimulationGUI = (function () {
         if (typeof selectedSimulation == "undefined")
             return;
         this.updateConfigGUI(selectedSimulation);
+        $("#simChannelTraffic").text(selectedSimulation.totalTraffic + "B (" + (selectedSimulation.totalTraffic / selectedSimulation.currentTime * 1000).toFixed(2) + "B/s)");
         if (this.selectedNode < 0 || this.selectedNode >= selectedSimulation.nodes.length)
             this.updateGUIForAll(simulations, selectedSimulation, full);
         else
@@ -255,33 +323,54 @@ var SimulationGUI = (function () {
         var propertyElements = $(".nodeProperty");
         for (var i = 0; i < propertyElements.length; i++) {
             var prop = $(propertyElements[i]).attr("data-property");
-            var values = node[prop];
+            var values = node.values;
             if (typeof values != "undefined") {
                 var el = "";
                 if (values.length > 0) {
+                    var avgStdDev = this.getAverageAndStdDevValue(selectedSimulation, prop);
                     if (simulations.length > 1) {
                         // compare with avg of others
                         var sumVal = 0;
                         var nrVals = 0;
                         for (var j = 0; j < simulations.length; j++) {
                             if (simulations[j] != selectedSimulation && this.selectedNode < simulations[j].nodes.length) {
-                                var vals = simulations[j].nodes[this.selectedNode][prop];
+                                var vals = simulations[j].nodes[this.selectedNode].values;
                                 if (vals.length > 0) {
-                                    sumVal += vals[vals.length - 1].value;
+                                    sumVal += vals[vals.length - 1][prop];
                                     nrVals++;
                                 }
                             }
                         }
                         var avg = sumVal / nrVals;
-                        if (values[values.length - 1].value > avg)
-                            el = "<div class='valueup' title='Value has increased compared to average (" + avg.toFixed(2) + ") of other simulations'>" + values[values.length - 1].value + "</div>";
-                        else if (values[values.length - 1].value < avg)
-                            el = "<div class='valuedown' title='Value has decreased compared to average (" + avg.toFixed(2) + ") of other simulations'>" + values[values.length - 1].value + "</div>";
+                        if (values[values.length - 1][prop] > avg)
+                            el = "<div class='valueup' title='Value has increased compared to average (" + avg.toFixed(2) + ") of other simulations'>" + values[values.length - 1][prop] + "</div>";
+                        else if (values[values.length - 1][prop] < avg)
+                            el = "<div class='valuedown' title='Value has decreased compared to average (" + avg.toFixed(2) + ") of other simulations'>" + values[values.length - 1][prop] + "</div>";
                         else
-                            el = values[values.length - 1].value + "";
+                            el = values[values.length - 1][prop] + "";
                     }
                     else {
-                        el = values[values.length - 1].value + "";
+                        el = values[values.length - 1][prop] + "";
+                    }
+                    var propType = $(propertyElements[i]).attr("data-type");
+                    var zScore = avgStdDev[1] == 0 ? 0 : ((values[values.length - 1][prop] - avgStdDev[0]) / avgStdDev[1]);
+                    if (!isNaN(avgStdDev[0]) && !isNaN(avgStdDev[1])) {
+                        // scale zscore to [0-1]
+                        var alpha = zScore / 2;
+                        if (alpha > 1)
+                            alpha = 1;
+                        else if (alpha < -1)
+                            alpha = -1;
+                        alpha = (alpha + 1) / 2;
+                        var color = void 0;
+                        if (propType == "LOWER_IS_BETTER")
+                            color = this.heatMapPalette.getColorAt(1 - alpha).toString();
+                        else if (propType == "HIGHER_IS_BETTER")
+                            color = this.heatMapPalette.getColorAt(alpha).toString();
+                        else
+                            color = "black";
+                        // prefix z-score
+                        el = ("<div class=\"zscore\" title=\"Z-score: " + zScore + "\" style=\"background-color: " + color + "\" />") + el;
                     }
                     $($(propertyElements[i]).find("td").get(1)).empty().append(el);
                 }
@@ -296,9 +385,9 @@ var SimulationGUI = (function () {
         var count = 0;
         for (var i = 0; i < simulation.nodes.length; i++) {
             var node = simulation.nodes[i];
-            var values = node[prop];
+            var values = node.values;
             if (values.length > 0) {
-                sum += values[values.length - 1].value;
+                sum += values[values.length - 1][prop];
                 count++;
             }
         }
@@ -308,9 +397,9 @@ var SimulationGUI = (function () {
         var sumSquares = 0;
         for (var i = 0; i < simulation.nodes.length; i++) {
             var node = simulation.nodes[i];
-            var values = node[prop];
+            var values = node.values;
             if (values.length > 0) {
-                var val = (values[values.length - 1].value - avg) * (values[values.length - 1].value - avg);
+                var val = (values[values.length - 1][prop] - avg) * (values[values.length - 1][prop] - avg);
                 sumSquares += val;
             }
         }
@@ -378,117 +467,114 @@ var SimulationGUI = (function () {
     SimulationGUI.prototype.updateCharts = function (simulations, full) {
         var showDeltas = $("#chkShowDeltas").prop("checked");
         var selectedSimulation = this.simulationContainer.getSimulation(this.selectedStream);
-        if (this.selectedNode == -1)
+        if (selectedSimulation.nodes.length <= 0)
+            return;
+        if (this.selectedNode == -1 || this.selectedNode >= selectedSimulation.nodes.length)
             this.updateChartsForAll(selectedSimulation, simulations, full, showDeltas);
         else
             this.updateChartsForNode(selectedSimulation, simulations, full, showDeltas);
     };
     SimulationGUI.prototype.updateChartsForNode = function (selectedSimulation, simulations, full, showDeltas) {
         var firstNode = selectedSimulation.nodes[this.selectedNode];
-        if (firstNode[this.selectedPropertyForChart].length > 0) {
-            if (this.currentChart == null || full) {
-                var series = [];
-                for (var i = 0; i < simulations.length; i++) {
-                    var values = simulations[i].nodes[this.selectedNode][this.selectedPropertyForChart];
-                    var selectedData = [];
-                    if (!showDeltas) {
-                        for (var i_1 = 0; i_1 < values.length; i_1++)
-                            selectedData.push({ x: values[i_1].timestamp, y: values[i_1].value });
-                    }
-                    else {
-                        selectedData.push({ x: values[0].timestamp, y: values[0].value });
-                        for (var i_2 = 1; i_2 < values.length; i_2++)
-                            selectedData.push({ x: values[i_2].timestamp, y: values[i_2].value - values[i_2 - 1].value });
-                    }
-                    series.push({
-                        name: this.simulationContainer.getStream(i),
-                        data: selectedData
-                    });
+        if (firstNode.values.length <= 0)
+            return;
+        if (this.currentChart == null || full) {
+            var series = [];
+            for (var i = 0; i < simulations.length; i++) {
+                var values = simulations[i].nodes[this.selectedNode].values;
+                var selectedData = [];
+                if (!showDeltas) {
+                    for (var i_1 = 0; i_1 < values.length; i_1++)
+                        selectedData.push([values[i_1].timestamp, values[i_1][this.selectedPropertyForChart]]);
                 }
-                var self_1 = this;
-                var title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
-                $('#nodeChart').empty().highcharts({
-                    chart: {
-                        type: 'spline',
-                        animation: "Highcharts.svg",
-                        marginRight: 10,
-                        events: {
-                            load: function () {
-                                self_1.currentChart = this;
-                            }
-                        },
-                        zoomType: "x"
-                    },
-                    plotOptions: {
-                        series: {
-                            animation: false,
-                            marker: { enabled: false }
-                        }
-                    },
-                    title: { text: title },
-                    xAxis: {
-                        type: 'linear',
-                        tickPixelInterval: 100,
-                    },
-                    yAxis: {
-                        title: { text: 'Value' },
-                        plotLines: [{
-                                value: 0,
-                                width: 1,
-                                color: '#808080'
-                            }]
-                    },
-                    legend: { enabled: false },
-                    series: series,
-                    credits: false
+                else {
+                    selectedData.push([values[0].timestamp, values[0][this.selectedPropertyForChart]]);
+                    for (var i_2 = 1; i_2 < values.length; i_2++)
+                        selectedData.push([values[i_2].timestamp, values[i_2][this.selectedPropertyForChart] - values[i_2 - 1][this.selectedPropertyForChart]]);
+                }
+                series.push({
+                    name: this.simulationContainer.getStream(i),
+                    data: selectedData
                 });
             }
-            else {
-                for (var s = 0; s < simulations.length; s++) {
-                    var values = simulations[s].nodes[this.selectedNode][this.selectedPropertyForChart];
-                    if (!showDeltas || values.length < 2) {
-                        for (var i = this.currentChart.series[s].data.length; i < values.length; i++) {
-                            var val = values[i];
-                            this.currentChart.series[s].addPoint([val.timestamp, val.value], false, false);
+            var self_1 = this;
+            var title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
+            $('#nodeChart').empty().highcharts({
+                chart: {
+                    type: 'spline',
+                    animation: "Highcharts.svg",
+                    marginRight: 10,
+                    events: {
+                        load: function () {
+                            self_1.currentChart = this;
                         }
+                    },
+                    zoomType: "x"
+                },
+                plotOptions: {
+                    series: {
+                        animation: false,
+                        marker: { enabled: false }
                     }
-                    else {
-                        for (var i = this.currentChart.series[s].data.length; i < values.length; i++) {
-                            var beforeVal = values[i - 1];
-                            var val = values[i];
-                            this.currentChart.series[s].addPoint([val.timestamp, val.value - beforeVal.value], false, false);
-                        }
+                },
+                title: { text: title },
+                xAxis: {
+                    type: 'linear',
+                    tickPixelInterval: 100,
+                },
+                yAxis: {
+                    title: { text: 'Value' },
+                    plotLines: [{
+                            value: 0,
+                            width: 1,
+                            color: '#808080'
+                        }]
+                },
+                legend: { enabled: true },
+                series: series,
+                credits: false
+            });
+        }
+        else {
+            for (var s = 0; s < simulations.length; s++) {
+                var values = simulations[s].nodes[this.selectedNode].values;
+                if (!showDeltas || values.length < 2) {
+                    for (var i = this.currentChart.series[s].data.length; i < values.length; i++) {
+                        var val = values[i];
+                        this.currentChart.series[s].addPoint([val.timestamp, val[this.selectedPropertyForChart]], false, false);
                     }
                 }
-                this.currentChart.redraw(false);
+                else {
+                    for (var i = this.currentChart.series[s].data.length; i < values.length; i++) {
+                        var beforeVal = values[i - 1];
+                        var val = values[i];
+                        this.currentChart.series[s].addPoint([val.timestamp, val[this.selectedPropertyForChart] - beforeVal[this.selectedPropertyForChart]], false, false);
+                    }
+                }
             }
+            this.currentChart.redraw(false);
         }
-        if (firstNode.totalReceiveActiveTime.length > 0 && firstNode.totalReceiveDozeTime.length > 0) {
-            var activeDozePieData = [{ name: "Active", y: firstNode.totalReceiveActiveTime[firstNode.totalReceiveActiveTime.length - 1].value },
-                { name: "Doze", y: firstNode.totalReceiveDozeTime[firstNode.totalReceiveDozeTime.length - 1].value }];
-            this.createPieChart("#nodeChartActiveDoze", 'Active/doze time', activeDozePieData);
-        }
-        if (firstNode.nrOfTransmissions.length > 0 && firstNode.nrOfTransmissionsDropped.length > 0) {
-            var activeTransmissionsSuccessDroppedData = [{ name: "OK", y: firstNode.nrOfTransmissions[firstNode.nrOfTransmissions.length - 1].value - firstNode.nrOfTransmissionsDropped[firstNode.nrOfTransmissionsDropped.length - 1].value },
-                { name: "Dropped", y: firstNode.nrOfTransmissionsDropped[firstNode.nrOfTransmissionsDropped.length - 1].value }];
-            this.createPieChart("#nodeChartTxSuccessDropped", 'TX OK/dropped', activeTransmissionsSuccessDroppedData);
-        }
-        if (firstNode.nrOfReceives.length > 0 && firstNode.nrOfReceivesDropped.length > 0) {
-            var activeReceivesSuccessDroppedData = [{ name: "OK", y: firstNode.nrOfReceives[firstNode.nrOfReceives.length - 1].value - firstNode.nrOfReceivesDropped[firstNode.nrOfReceivesDropped.length - 1].value },
-                { name: "Dropped", y: firstNode.nrOfReceivesDropped[firstNode.nrOfReceivesDropped.length - 1].value }];
-            this.createPieChart("#nodeChartRxSuccessDropped", 'RX OK/dropped', activeReceivesSuccessDroppedData);
-        }
-        if (firstNode.nrOfSuccessfulPackets.length > 0 && firstNode.nrOfDroppedPackets.length > 0) {
-            var activePacketsSuccessDroppedData = [{ name: "OK", y: firstNode.nrOfSuccessfulPackets[firstNode.nrOfSuccessfulPackets.length - 1].value },
-                { name: "Dropped", y: firstNode.nrOfDroppedPackets[firstNode.nrOfDroppedPackets.length - 1].value }];
-            this.createPieChart("#nodeChartPacketSuccessDropped", 'Packets OK/dropped', activePacketsSuccessDroppedData);
-        }
+        var lastValue = firstNode.values[firstNode.values.length - 1];
+        var activeDozePieData = [{ name: "Active", y: lastValue.totalActiveTime },
+            { name: "Doze", y: lastValue.totalDozeTime }];
+        this.createPieChart("#nodeChartActiveDoze", 'Active/doze time', activeDozePieData);
+        var activeTransmissionsSuccessDroppedData = [{ name: "OK", y: lastValue.nrOfTransmissions - lastValue.nrOfTransmissionsDropped },
+            { name: "Dropped", y: lastValue.nrOfTransmissionsDropped }];
+        this.createPieChart("#nodeChartTxSuccessDropped", 'TX OK/dropped', activeTransmissionsSuccessDroppedData);
+        var activeReceivesSuccessDroppedData = [{ name: "OK", y: lastValue.nrOfReceives - lastValue.nrOfReceivesDropped },
+            { name: "Dropped", y: lastValue.nrOfReceivesDropped }];
+        this.createPieChart("#nodeChartRxSuccessDropped", 'RX OK/dropped', activeReceivesSuccessDroppedData);
+        var activePacketsSuccessDroppedData = [{ name: "OK", y: lastValue.nrOfSuccessfulPackets },
+            { name: "Dropped", y: lastValue.nrOfDroppedPackets }];
+        this.createPieChart("#nodeChartPacketSuccessDropped", 'Packets OK/dropped', activePacketsSuccessDroppedData);
     };
     SimulationGUI.prototype.updateChartsForAll = function (selectedSimulation, simulations, full, showDeltas) {
-        this.updateDistributionChart(selectedSimulation, showDeltas);
-        //this.updateAverageChart(selectedSimulation, showDeltas);
-        var totalReceiveActiveTime = this.getAverageAndStdDevValue(selectedSimulation, "totalReceiveActiveTime");
-        var totalReceiveDozeTime = this.getAverageAndStdDevValue(selectedSimulation, "totalReceiveDozeTime");
+        if ($("#chkShowDistribution").prop("checked"))
+            this.updateDistributionChart(selectedSimulation, showDeltas);
+        else
+            this.updateAverageChart(selectedSimulation, showDeltas, full);
+        var totalReceiveActiveTime = this.getAverageAndStdDevValue(selectedSimulation, "totalActiveTime");
+        var totalReceiveDozeTime = this.getAverageAndStdDevValue(selectedSimulation, "totalDozeTime");
         if (totalReceiveActiveTime.length > 0 && totalReceiveDozeTime.length > 0) {
             var activeDozePieData = [{ name: "Active", y: totalReceiveActiveTime[0] },
                 { name: "Doze", y: totalReceiveDozeTime[0] }];
@@ -540,16 +626,16 @@ var SimulationGUI = (function () {
         for (var i_3 = 0; i_3 <= nrOfClasses; i_3++)
             seriesValues[i_3] = 0;
         for (var i = 0; i < selectedSimulation.nodes.length; i++) {
-            var values = selectedSimulation.nodes[i][this.selectedPropertyForChart];
+            var values = selectedSimulation.nodes[i].values;
             if (showDeltas && values.length > 1) {
-                var curVal = values[values.length - 1].value;
-                var beforeVal = values[values.length - 2].value;
+                var curVal = values[values.length - 1][this.selectedPropertyForChart];
+                var beforeVal = values[values.length - 2][this.selectedPropertyForChart];
                 var val = curVal - beforeVal;
                 var alpha = (val - minMax[0]) / (minMax[1] - minMax[0]);
                 seriesValues[Math.round(alpha * nrOfClasses)]++;
             }
             else if (values.length > 0) {
-                var val = values[values.length - 1].value;
+                var val = values[values.length - 1][this.selectedPropertyForChart];
                 var alpha = (val - minMax[0]) / (minMax[1] - minMax[0]);
                 seriesValues[Math.round(alpha * nrOfClasses)]++;
             }
@@ -600,83 +686,126 @@ var SimulationGUI = (function () {
             credits: false
         });
     };
-    SimulationGUI.prototype.updateAverageChart = function (selectedSimulation, showDeltas) {
+    SimulationGUI.prototype.updateAverageChart = function (selectedSimulation, showDeltas, full) {
         var self = this;
         var title = $($(".nodeProperty[data-property='" + this.selectedPropertyForChart + "'] td").get(0)).text();
-        var averages = [];
-        var ranges = [];
-        var nrOfValues = selectedSimulation.nodes[0][this.selectedPropertyForChart].length;
-        for (var i = 0; i < nrOfValues; i++) {
-            var minVal = Number.MAX_VALUE;
-            var maxVal = Number.MIN_VALUE;
-            var sum = 0;
-            var count = 0;
-            var timestamp = selectedSimulation.nodes[0][this.selectedPropertyForChart][i].timestamp;
-            for (var _i = 0, _a = selectedSimulation.nodes; _i < _a.length; _i++) {
-                var n = _a[_i];
-                var values = n[this.selectedPropertyForChart];
-                if (i < values.length) {
-                    var value = values[i].value;
-                    sum += value;
-                    count++;
-                    if (minVal > value)
-                        minVal = value;
-                    if (maxVal < value)
-                        maxVal = value;
+        var seriesAverages = [];
+        var seriesRanges = [];
+        var simulations = this.simulationContainer.getSimulations();
+        var canUpdateIncremental = this.currentChart != null && !full && simulations.length * 2 == this.currentChart.series.length;
+        var showAreas = simulations.length < 3;
+        for (var s = 0; s < simulations.length; s++) {
+            var averages = [];
+            var ranges = [];
+            var nrOfValues = simulations[s].nodes[0].values.length - 1;
+            if (nrOfValues > 0) {
+                var offset = (canUpdateIncremental) ? this.currentChart.series[showAreas ? s * 2 : s].data.length : 0;
+                for (var i = offset; i < nrOfValues; i++) {
+                    var sum = 0;
+                    var count = 0;
+                    var max = Number.MIN_VALUE;
+                    var min = Number.MAX_VALUE;
+                    var timestamp = simulations[s].nodes[0].values[i].timestamp;
+                    for (var _i = 0, _a = simulations[s].nodes; _i < _a.length; _i++) {
+                        var n = _a[_i];
+                        var values = n.values;
+                        if (i < values.length) {
+                            var value = values[i][this.selectedPropertyForChart];
+                            sum += value;
+                            count++;
+                            if (max < value)
+                                max = value;
+                            if (min > value)
+                                min = value;
+                        }
+                    }
+                    var avg = sum / count;
+                    if (showAreas) {
+                        var sumSquares = 0;
+                        for (var _b = 0, _c = simulations[s].nodes; _b < _c.length; _b++) {
+                            var n = _c[_b];
+                            var values = n.values;
+                            if (i < values.length) {
+                                var val = (values[i][this.selectedPropertyForChart] - avg) * (values[i][this.selectedPropertyForChart] - avg);
+                                sumSquares += val;
+                            }
+                        }
+                        var stddev = Math.sqrt(sumSquares / count);
+                        ranges.push([timestamp, Math.max(min, avg - stddev), Math.min(max, avg + stddev)]);
+                    }
+                    averages.push([timestamp, avg]);
+                }
+                seriesAverages.push(averages);
+                seriesRanges.push(ranges);
+            }
+        }
+        if (canUpdateIncremental) {
+            for (var s = 0; s < simulations.length; s++) {
+                for (var i_5 = 0; i_5 < seriesAverages[s].length; i_5++) {
+                    this.currentChart.series[showAreas ? s * 2 : s].addPoint(seriesAverages[s][i_5], false, false);
+                    if (showAreas)
+                        this.currentChart.series[s * 2 + 1].addPoint(seriesRanges[s][i_5], false, false);
                 }
             }
-            var avg = sum / count;
-            averages.push([timestamp, avg]);
-            ranges.push([timestamp, minVal, maxVal]);
+            this.currentChart.redraw(false);
         }
-        $('#nodeChart').empty().highcharts({
-            chart: {
-                animation: "Highcharts.svg",
-                marginRight: 10,
-                events: {
-                    load: function () {
-                        self.currentChart = this;
+        else {
+            var series = [];
+            for (var s = 0; s < simulations.length; s++) {
+                series.push({
+                    name: simulations[s].config.name,
+                    type: "spline",
+                    data: seriesAverages[s],
+                    zIndex: 1,
+                });
+                if (showAreas) {
+                    series.push({
+                        name: 'Range',
+                        data: seriesRanges[s],
+                        type: 'arearange',
+                        zIndex: 0,
+                        lineWidth: 0,
+                        linkedTo: ':previous',
+                        color: Highcharts.getOptions().colors[s],
+                        fillOpacity: 0.3,
+                    });
+                }
+            }
+            $('#nodeChart').empty().highcharts({
+                chart: {
+                    animation: "Highcharts.svg",
+                    marginRight: 10,
+                    events: {
+                        load: function () {
+                            self.currentChart = this;
+                        }
+                    },
+                    zoomType: "x"
+                },
+                plotOptions: {
+                    series: {
+                        animation: false,
+                        marker: { enabled: false }
                     }
                 },
-                zoomType: "x"
-            },
-            plotOptions: {
-                series: {
-                    animation: false,
-                    marker: { enabled: false }
-                }
-            },
-            title: { text: title },
-            xAxis: {
-                type: 'linear',
-                tickPixelInterval: 100,
-            },
-            yAxis: {
-                title: { text: 'Value' },
-                plotLines: [{
-                        value: 0,
-                        width: 1,
-                        color: '#808080'
-                    }]
-            },
-            legend: { enabled: false },
-            series: [{
-                    name: title,
-                    type: "spline",
-                    data: averages,
-                    zIndex: 1,
-                }, {
-                    name: 'Range',
-                    data: ranges,
-                    type: 'arearange',
-                    zIndex: 0,
-                    lineWidth: 0,
-                    linkedTo: ':previous',
-                    color: Highcharts.getOptions().colors[0],
-                    fillOpacity: 0.3,
-                }],
-            credits: false
-        });
+                title: { text: title },
+                xAxis: {
+                    type: 'linear',
+                    tickPixelInterval: 100,
+                },
+                yAxis: {
+                    title: { text: 'Value' },
+                    plotLines: [{
+                            value: 0,
+                            width: 1,
+                            color: '#808080'
+                        }]
+                },
+                legend: { enabled: true },
+                series: series,
+                credits: false
+            });
+        }
     };
     SimulationGUI.prototype.createPieChart = function (selector, title, data) {
         $(selector).empty().highcharts({
@@ -744,7 +873,7 @@ $(document).ready(function () {
         timeout: 1000000
     };
     var hasConnected = false;
-    var sock = io.connect("http://" + window.location.host + "/");
+    var sock = io("http://" + window.location.host + "/", opts);
     sock.on("connect", function (data) {
         if (hasConnected)
             return;
@@ -800,15 +929,22 @@ $(document).ready(function () {
                 break;
             }
         }
-        if (selectedNode != null)
+        if (selectedNode != null) {
+            $("#pnlDistribution").hide();
             sim.changeNodeSelection(selectedNode.id);
-        else
+        }
+        else {
+            $("#pnlDistribution").show();
             sim.changeNodeSelection(-1);
+        }
     });
     $(".nodeProperty").click(function (ev) {
         $(".nodeProperty").removeClass("selected");
         $(this).addClass("selected");
         sim.selectedPropertyForChart = $(this).attr("data-property");
+        sim.updateGUI(true);
+    });
+    $("#chkShowDistribution").change(function (ev) {
         sim.updateGUI(true);
     });
     $("#chkShowDeltas").change(function (ev) {

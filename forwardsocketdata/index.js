@@ -82,9 +82,16 @@ var Program = (function () {
      * Sets up the express stack, returns the http server that it creates
      */
     Program.prototype.setupExpress = function () {
+        var _this = this;
         console.log("Initializing express on port " + HTTP_PORT);
         var app = express();
         app.use("/", express.static(path.join(__dirname, 'public')));
+        // binding to fetch the simulation nss files directly
+        app.get("/simulations/:name", function (req, res) {
+            var file = req.params.name;
+            var path = _this.getPathForSimulationName(file);
+            res.sendFile(path, {});
+        });
         var server;
         if (BIND_ADDRESS == "")
             server = app.listen(HTTP_PORT);
