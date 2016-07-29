@@ -84,6 +84,8 @@ class NodeValue {
     avgRemainingSlotTimeWhenAPSendingInSameSlot:number = 0;
 
     numberOfCollisions:number = 0;
+
+    tcpConnected:number = 0;
 }
 
 class APNode extends SimulationNode {
@@ -123,6 +125,10 @@ class SimulationConfiguration {
     apAlwaysSchedulesForNextSlot:string;
     minRTO:number;
     simulationTime:number;
+
+    trafficType:string;
+    trafficIntervalDeviation:number;
+
 }
  
 class Simulation {
@@ -135,7 +141,7 @@ class Simulation {
     totalSlotUsageAP:number[] = [];
     totalSlotUsageSTA:number[] = [];
     totalSlotUsageTimestamps:number[] = [];
-    
+
     totalTraffic:number = 0;
     currentTime:number = 0;
     

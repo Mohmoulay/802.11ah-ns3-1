@@ -53,8 +53,16 @@
                                                     <td>Traffic interval (in ms)</td>
                                                     <td>---</td>
                                                 </tr>
+                                                <tr class="configProperty" data-property="trafficIntervalDeviation">
+                                                    <td>Traffic interval deviation (in ms)</td>
+                                                    <td>---</td>
+                                                </tr>
                                                 <tr class="configProperty" data-property="trafficPacketsize">
                                                     <td>Traffic Packet size (in bytes)</td>
+                                                    <td>---</td>
+                                                </tr>
+                                                <tr class="configProperty" data-property="trafficType">
+                                                    <td>Traffic Type</td>
                                                     <td>---</td>
                                                 </tr>
                                                 <tr class="configProperty" data-property="dataMode">
@@ -247,6 +255,11 @@
                                                 <tr class="header">
                                                     <th colspan="2"><span>-</span> TCP</th>
                                                 </tr>
+                                                <tr class="chartProperty nodeProperty" data-property="tcpConnected" data-max="1" data-min="0" data-type="HIGHER_IS_BETTER">
+                                                    <td>TCP Socket is connected</td>
+                                                    <td>---</td>
+                                                </tr>
+                                                
                                                 <tr class="chartProperty nodeProperty" data-property="tcpCongestionWindow" data-max="*" data-min="0" data-type="HIGHER_IS_BETTER">
                                                     <td>TCP Congestion window (segments)</td>
                                                     <td>---</td>
@@ -263,6 +276,8 @@
                                                     <td>Number of TCP Retransmissions from AP</td>
                                                     <td>---</td>
                                                 </tr>
+
+                                                
 
                                                 <tr class="header">
                                                     <th colspan="2"><span>-</span> AP Packet scheduling</th>
@@ -282,14 +297,6 @@
                                                     <td>---</td>
                                                 </tr>
                                             </table>
-                                        </div>
-                                        <div>
-                                            <div style="float:left">
-                                                <label>Show delta's <input id="chkShowDeltas" type="checkbox"></label>
-                                            </div>
-                                            <div id="pnlDistribution" style="float:left; display:none">
-                                                <label>Show distribution<input id="chkShowDistribution" type="checkbox"></label>
-                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -420,6 +427,14 @@
                                 <div class="row">
                                     <div class="col-md-12">
                                         <div id="nodeChart" style="min-width: 310px; height: 300px; margin: 0 auto"></div>
+                                        <div>
+                                            <div style="float:left">
+                                                <label>Show delta's <input id="chkShowDeltas" type="checkbox"></label>
+                                            </div>
+                                            <div id="pnlDistribution" style="float:left; display:none">
+                                                <label>Show distribution<input id="chkShowDistribution" type="checkbox"></label>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
