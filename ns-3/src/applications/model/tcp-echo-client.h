@@ -151,9 +151,14 @@ private:
 
   void OnCongestionWindowChanged(uint32_t oldval, uint32_t newval);
   void OnRTOChanged(Time oldval, Time newval);
+  void OnRTTChanged(Time oldval, Time newval);
+
   void OnTCPStateChanged(TcpStates_t oldVal,TcpStates_t newVal);
 
   void OnRetransmission(Address a);
+
+  void OnTCPSlowStartThresholdChanged(uint32_t oldVal,uint32_t newVal);
+  void OnTCPEstimatedBWChanged(double oldVal, double newVal);
 
   uint32_t m_count;
   Time m_interval;
@@ -184,10 +189,14 @@ private:
   TracedCallback<Address> m_retransmission;
 
   TracedCallback<Time,Time>  m_rtoChanged;
+  TracedCallback<Time,Time>  m_rttChanged;
 
   TracedCallback<TcpStates_t,TcpStates_t> m_tcpStateChanged;
 
 
+  TracedCallback<uint32_t,uint32_t> m_slowStartThresholdChanged;
+
+  TracedCallback<double,double>  m_currentEstimatedBandwidthChanged;
 
 };
 

@@ -1939,15 +1939,10 @@ TcpSocketBase::ConnectionSucceeded ()
 /* Extract at most maxSize bytes from the TxBuffer at sequence seq, add the
     TCP header, and send to TcpL4Protocol */
 uint32_t
-TcpSocketBase::SendDataPacket (SequenceNumber32 seq, uint32_t maxSize, bool withAck)
+TcpSocketBase::SendDataPacket (SequenceNumber32 seq, uint32_t maxSize, bool withAck, bool isRetransmission)
 {
   NS_LOG_FUNCTION (this << seq << maxSize << withAck);
 
-  bool isRetransmission = false;
-  if ( seq == m_txBuffer->HeadSequence () )
-    {
-      isRetransmission = true;
-    }
 
   Ptr<Packet> p = m_txBuffer->CopyFromSequence (maxSize, seq);
   uint32_t sz = p->GetSize (); // Size of packet
@@ -2055,10 +2050,13 @@ TcpSocketBase::SendDataPacket (SequenceNumber32 seq, uint32_t maxSize, bool with
   // update the history of sequence numbers used to calculate the RTT
   if (isRetransmission == false)
     { // This is the next expected one, just log at end
+	  std::cout << "adding rtt history, seq " << seq << std::endl;
       m_history.push_back (RttHistory (seq, sz, Simulator::Now () ));
     }
   else
-    { // This is a retransmit, find in list and mark as re-tx
+    {
+	  std::cout << "retransmit, search rtt history" << std::endl;
+	  // This is a retransmit, find in list and mark as re-tx
       for (RttHistory_t::iterator i = m_history.begin (); i != m_history.end (); ++i)
         {
           if ((seq >= i->seq) && (seq < (i->seq + SequenceNumber32 (i->count))))
@@ -2123,7 +2121,7 @@ TcpSocketBase::SendPendingData (bool withAck)
                     " pd->Size " << m_txBuffer->Size () <<
                     " pd->SFS " << m_txBuffer->SizeFromSequence (m_nextTxSequence));
       uint32_t s = std::min (w, m_segmentSize);  // Send no more than window
-      uint32_t sz = SendDataPacket (m_nextTxSequence, s, withAck);
+      uint32_t sz = SendDataPacket (m_nextTxSequence, s, withAck, false);
       nPacketsSent++;                             // Count sent this loop
       m_nextTxSequence += sz;                     // Advance next tx sequence
     }
@@ -2249,17 +2247,28 @@ TcpSocketBase::EstimateRtt (const TcpHeader& tcpHeader)
       RttHistory& h = m_history.front ();
       if (!h.retx && ackSeq >= (h.seq + SequenceNumber32 (h.count)))
         { // Ok to use this sample
+
+    	  std::cout << "OK TO USE SAMPLE " << std::endl;
           if (m_timestampEnabled && tcpHeader.HasOption (TcpOption::TS))
             {
               Ptr<TcpOptionTS> ts;
               ts = DynamicCast<TcpOptionTS> (tcpHeader.GetOption (TcpOption::TS));
               m = TcpOptionTS::ElapsedTimeFromTsValue (ts->GetEcho ());
+
+              std::cout << "ELAPSED TIME FROM TS " << m.GetMicroSeconds() << std::endl;
             }
           else
             {
               m = Simulator::Now () - h.time; // Elapsed time
+
+              std::cout << "ELAPSED TIME FROM " << h.time.GetMicroSeconds() << " to " << Simulator::Now().GetMicroSeconds() << std::endl;
             }
         }
+      else {
+
+    	  std::cout << "Cant use sample because ackSeq " << ackSeq << " is smaller than h.seq " << h.seq << " + h.count " << h.count << std::endl;
+      }
+
     }
 
   // Now delete all ack history with seq <= ack
@@ -2267,6 +2276,8 @@ TcpSocketBase::EstimateRtt (const TcpHeader& tcpHeader)
     {
       RttHistory& h = m_history.front ();
       if ((h.seq + SequenceNumber32 (h.count)) > ackSeq) break;               // Done removing
+
+      std::cout << "Removing rtt with seq " << h.seq << " from history" << std::endl;
       m_history.pop_front (); // Remove
     }
 
@@ -2468,7 +2479,7 @@ TcpSocketBase::DoRetransmit ()
     }
   // Retransmit a data packet: Call SendDataPacket
   NS_LOG_LOGIC ("TcpSocketBase " << this << " retxing seq " << m_txBuffer->HeadSequence ());
-  uint32_t sz = SendDataPacket (m_txBuffer->HeadSequence (), m_segmentSize, true);
+  uint32_t sz = SendDataPacket (m_txBuffer->HeadSequence (), m_segmentSize, true, true);
   // In case of RTO, advance m_nextTxSequence
   m_nextTxSequence = std::max (m_nextTxSequence.Get (), m_txBuffer->HeadSequence () + sz);
 

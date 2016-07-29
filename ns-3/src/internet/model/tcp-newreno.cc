@@ -191,7 +191,7 @@ TcpNewReno::DupAck (const TcpHeader& t, uint32_t count)
   else if (!m_inFastRec && m_limitedTx && m_txBuffer->SizeFromSequence (m_nextTxSequence) > 0)
     { // RFC3042 Limited transmit: Send a new packet for each duplicated ACK before fast retransmit
       NS_LOG_INFO ("Limited transmit");
-      uint32_t sz = SendDataPacket (m_nextTxSequence, m_segmentSize, true);
+      uint32_t sz = SendDataPacket (m_nextTxSequence, m_segmentSize, true, false);
       m_nextTxSequence += sz;                    // Advance next tx sequence
     };
 }

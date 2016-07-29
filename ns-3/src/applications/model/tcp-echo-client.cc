@@ -91,6 +91,11 @@ TcpEchoClient::GetTypeId (void)
 					 MakeTraceSourceAccessor (&TcpEchoClient::m_rtoChanged),
 					 "ns3::Time::TracedValueCallback")
 
+	.AddTraceSource ("RTT",
+					 "Last sample of the RTT",
+					 MakeTraceSourceAccessor (&TcpEchoClient::m_rttChanged),
+					 "ns3::Time::TracedValueCallback")
+
 	.AddTraceSource ("Retransmission",
 						  "Occurs when a packet has to be scheduled for retransmission",
 						  MakeTraceSourceAccessor (&TcpEchoClient::m_retransmission),
@@ -100,6 +105,15 @@ TcpEchoClient::GetTypeId (void)
 					 "TCP state changed",
 					 MakeTraceSourceAccessor (&TcpEchoClient::m_tcpStateChanged),
 					 "ns3::TcpStatesTracedValueCallback")
+
+	 .AddTraceSource ("SlowStartThreshold",
+							"TCP slow start threshold (bytes)",
+							MakeTraceSourceAccessor (&TcpEchoClient::m_slowStartThresholdChanged),
+							"ns3::TracedValue::Uint32Callback")
+
+     .AddTraceSource("EstimatedBW", "The estimated bandwidth (in segments)",
+					MakeTraceSourceAccessor(&TcpEchoClient::m_currentEstimatedBandwidthChanged),
+					  "ns3::TracedValue::DoubleCallback");
 
   ;
   return tid;
@@ -159,7 +173,11 @@ TcpEchoClient::StartApplication (void)
       m_socket->TraceConnectWithoutContext("CongestionWindow", MakeCallback(&TcpEchoClient::OnCongestionWindowChanged, this));
       m_socket->TraceConnectWithoutContext("Retransmission", MakeCallback(&TcpEchoClient::OnRetransmission, this));
       m_socket->TraceConnectWithoutContext("RTO", MakeCallback(&TcpEchoClient::OnRTOChanged, this));
+      m_socket->TraceConnectWithoutContext("RTT", MakeCallback(&TcpEchoClient::OnRTTChanged, this));
       m_socket->TraceConnectWithoutContext("State", MakeCallback(&TcpEchoClient::OnTCPStateChanged, this));
+      m_socket->TraceConnectWithoutContext("SlowStartThreshold", MakeCallback(&TcpEchoClient::OnTCPSlowStartThresholdChanged, this));
+      m_socket->TraceConnectWithoutContext("EstimatedBW", MakeCallback(&TcpEchoClient::OnTCPEstimatedBWChanged, this));
+
 
       m_socket->Bind ();
       m_socket->Connect (InetSocketAddress (m_peerAddress, m_peerPort));
@@ -184,9 +202,23 @@ void TcpEchoClient::OnRTOChanged(Time oldval, Time newval) {
 	m_rtoChanged(oldval, newval);
 }
 
+void TcpEchoClient::OnRTTChanged(Time oldval, Time newval) {
+	m_rttChanged(oldval, newval);
+}
+
+
 void TcpEchoClient::OnTCPStateChanged(TcpStates_t oldVal,TcpStates_t newVal) {
 	m_tcpStateChanged(oldVal, newVal);
 }
+
+void TcpEchoClient::OnTCPSlowStartThresholdChanged(uint32_t oldVal,uint32_t newVal) {
+	m_slowStartThresholdChanged(oldVal, newVal);
+}
+
+void TcpEchoClient::OnTCPEstimatedBWChanged(double oldVal, double newVal) {
+	m_currentEstimatedBandwidthChanged(oldVal, newVal);
+}
+
 
 void
 TcpEchoClient::StopApplication ()

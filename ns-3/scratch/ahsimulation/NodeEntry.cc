@@ -38,8 +38,8 @@ void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 }
 
 void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
-	cout << "[" << this->aId << "] " << Simulator::Now().GetMicroSeconds()
-			<< "µs " << "Begin Tx " << packet->GetUid() << endl;
+	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+	<< "Begin Tx " << packet->GetUid() << endl;
 	txMap.emplace(packet->GetUid(), Simulator::Now());
 
 	if (txMap.size() > 1)
@@ -325,6 +325,10 @@ void NodeEntry::OnTcpRTOChanged(Time oldval, Time newval) {
 	stats->get(this->id).TCPRTOValue = newval;
 }
 
+void NodeEntry::OnTcpRTTChanged(Time oldval, Time newval) {
+	stats->get(this->id).TCPRTTValue = newval;
+}
+
 void NodeEntry::OnTcpStateChanged(TcpStates_t oldval, TcpStates_t newval) {
 	stats->get(this->id).TCPConnected = (newval == TcpStates_t::ESTABLISHED);
 }
@@ -337,6 +341,17 @@ void NodeEntry::OnTcpRetransmissionAtAP() {
 	//cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds() << " RETRANSMISSION SCHEDULED FROM AP " << std::endl;
 	stats->get(this->id).NumberOfTCPRetransmissionsFromAP++;
 }
+
+
+void NodeEntry::OnTcpSlowStartThresholdChanged(uint32_t oldVal,uint32_t newVal) {
+	stats->get(this->id).TCPSlowStartThreshold = newVal;
+}
+
+void NodeEntry::OnTcpEstimatedBWChanged(double oldVal, double newVal) {
+	stats->get(this->id).TCPEstimatedBandwidth = newVal;
+}
+
+
 
 void NodeEntry::OnUdpPacketSent(Ptr<const Packet> packet) {
 //cout << "[" << this->id << "] " << "UDP packet sent " << endl;

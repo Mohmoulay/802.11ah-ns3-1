@@ -29,6 +29,10 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("MinRTO", "Minimum retransmission timeout for TCP sockets in microseconds", MinRTO);
     cmd.AddValue("TCPConnectionTimeout", "TCP Connection timeout to use for all Tcp Sockets", TCPConnectionTimeout);
 
+    cmd.AddValue("TCPSegmentSize", "TCP Segment size in bytes", TCPSegmentSize);
+    cmd.AddValue("TCPInitialSlowStartThreshold", "TCP Initial slow start threshold in segments", TCPInitialSlowStartThreshold);
+    cmd.AddValue("TCPInitialCwnd", "TCP Initial congestion window in segments", TCPInitialCwnd);
+
 
     cmd.AddValue("DataMode", "Date mode", DataMode);
     cmd.AddValue("Datarate", "data rate in Mbps", datarate);

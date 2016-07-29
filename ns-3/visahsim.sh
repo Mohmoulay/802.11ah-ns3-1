@@ -11,7 +11,7 @@
 " --TrafficPacketSize=100"\
 " --TrafficInterval=10000"\
 " --TrafficIntervalDeviation=1000"\
-" --TrafficType=\"udpecho\""\
+" --TrafficType=\"tcpecho\""\
 " --BeaconInterval=102400"\
 " --MinRTO=819200000"\
 " --TCPConnectionTimeout=60000000"\

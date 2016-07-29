@@ -41,7 +41,10 @@ void SimulationEventManager::onStart(Configuration& config) {
 		  std::to_string(config.MinRTO),
 		  std::to_string(config.simulationTime),
 		  config.trafficType,
-		  std::to_string(config.trafficIntervalDeviation)
+		  std::to_string(config.trafficIntervalDeviation),
+		  std::to_string(config.TCPSegmentSize),
+		  std::to_string(config.TCPInitialSlowStartThreshold),
+		  std::to_string(config.TCPInitialCwnd)
 	});
 }
 
@@ -118,13 +121,16 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 			std::to_string(stats.get(i).NumberOfMACTxMissedACK),
 			this->SerializeDropReason(stats.get(i).NumberOfDropsByReason),
 			this->SerializeDropReason(stats.get(i).NumberOfDropsByReasonAtAP),
-			std::to_string(stats.get(i).TCPRTOValue.GetMicroSeconds()),
+			std::to_string(stats.get(i).TCPRTOValue.GetMicroSeconds() == 0 ? -1 : stats.get(i).TCPRTOValue.GetMicroSeconds()),
 			std::to_string(stats.get(i).NumberOfAPScheduledPacketForNodeInNextSlot),
 			std::to_string(stats.get(i).NumberOfAPSentPacketForNodeImmediately),
 			std::to_string(stats.get(i).getAverageRemainingWhenAPSendingPacketInSameSlot().GetMicroSeconds()),
 			std::to_string(stats.get(i).NumberOfCollisions),
 			std::to_string(stats.get(i).NumberOfMACTxMissedACKAndDroppedPacket),
-			(stats.get(i).TCPConnected ? "1" : "0")
+			(stats.get(i).TCPConnected ? "1" : "0"),
+			std::to_string(stats.get(i).TCPSlowStartThreshold),
+			std::to_string(stats.get(i).TCPEstimatedBandwidth),
+			std::to_string(stats.get(i).TCPRTTValue.GetMicroSeconds() == 0 ? -1 : stats.get(i).TCPRTTValue.GetMicroSeconds())
 		});
 	}
 }
