@@ -67,6 +67,13 @@ public:
     long NumberOfCollisions = 0;
 
     long TotalNumberOfBackedOffSlots = 0;
+
+    uint32_t TCPSlowStartThreshold = -1;
+
+    double TCPEstimatedBandwidth = -1;
+
+    Time TCPRTTValue = Time();
+
 };
 
 #endif /* NODESTATISTICS_H */

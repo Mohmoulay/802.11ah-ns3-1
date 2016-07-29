@@ -33,6 +33,9 @@ struct Configuration {
 
 	uint32_t MinRTO = 200000;
 	uint32_t TCPConnectionTimeout = 6000000;
+	uint32_t TCPSegmentSize = 536;
+	uint32_t TCPInitialSlowStartThreshold = 0xffff;
+	uint32_t TCPInitialCwnd = 1;
 
 	double propagationLossExponent = 3.76;
 	double propagationLossReferenceLoss = 8;
