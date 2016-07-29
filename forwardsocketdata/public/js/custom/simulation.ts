@@ -10,12 +10,12 @@ abstract class SimulationNode {
 
     type: string = "";
 
-    values:NodeValue[] = [];
+    values: NodeValue[] = [];
 }
 
 class NodeValue {
 
-    timestamp:number;
+    timestamp: number;
 
     totalTransmitTime: number = 0;
     totalReceiveTime: number = 0;
@@ -34,7 +34,7 @@ class NodeValue {
     avgSentReceiveTime: number = 0;
     goodputKbit: number = 0;
 
-    edcaQueueLength:number = 0;
+    edcaQueueLength: number = 0;
     nrOfSuccessfulRoundtripPackets: number = 0;
     avgRoundtripTime: number = 0;
 
@@ -43,49 +43,53 @@ class NodeValue {
 
     nrOfReceivesDroppedByDestination: number = 0;
 
-    numberOfTCPRetransmissionsFromAP : number = 0;
-    numberOfMACTxRTSFailed : number = 0;
-    numberofMACTxMissedACKAndDroppedPacket : number = 0;
-    numberOfMACTxMissedACK : number = 0;
+    numberOfTCPRetransmissionsFromAP: number = 0;
+    numberOfMACTxRTSFailed: number = 0;
+    numberofMACTxMissedACKAndDroppedPacket: number = 0;
+    numberOfMACTxMissedACK: number = 0;
 
-    numberOfDropsByReasonUnknown:number = 0;
-    numberOfDropsByReasonPhyInSleepMode:number = 0;
-    numberOfDropsByReasonPhyNotEnoughSignalPower:number = 0;
-    numberOfDropsByReasonPhyUnsupportedMode:number = 0;
-    numberOfDropsByReasonPhyPreambleHeaderReceptionFailed:number = 0;
-    numberOfDropsByReasonPhyRxDuringChannelSwitching:number = 0;
-    numberOfDropsByReasonPhyAlreadyReceiving:number = 0;
-    numberOfDropsByReasonPhyAlreadyTransmitting:number = 0;
-    numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed:number = 0;
-    numberOfDropsByReasonMacNotForAP:number = 0;
-    numberOfDropsByReasonMacAPToAPFrame:number = 0;
-    numberOfDropsByReasonMacQueueDelayExceeded:number = 0;
-    numberOfDropsByReasonMacQeueuSizeExceeded:number = 0;
+    numberOfDropsByReasonUnknown: number = 0;
+    numberOfDropsByReasonPhyInSleepMode: number = 0;
+    numberOfDropsByReasonPhyNotEnoughSignalPower: number = 0;
+    numberOfDropsByReasonPhyUnsupportedMode: number = 0;
+    numberOfDropsByReasonPhyPreambleHeaderReceptionFailed: number = 0;
+    numberOfDropsByReasonPhyRxDuringChannelSwitching: number = 0;
+    numberOfDropsByReasonPhyAlreadyReceiving: number = 0;
+    numberOfDropsByReasonPhyAlreadyTransmitting: number = 0;
+    numberOfDropsByReasonPhyAlreadyPlcpReceptionFailed: number = 0;
+    numberOfDropsByReasonMacNotForAP: number = 0;
+    numberOfDropsByReasonMacAPToAPFrame: number = 0;
+    numberOfDropsByReasonMacQueueDelayExceeded: number = 0;
+    numberOfDropsByReasonMacQeueuSizeExceeded: number = 0;
 
-    numberOfDropsFromAPByReasonUnknown:number = 0;
-    numberOfDropsFromAPByReasonPhyInSleepMode:number = 0;
-    numberOfDropsFromAPByReasonPhyNotEnoughSignalPower:number = 0;
-    numberOfDropsFromAPByReasonPhyUnsupportedMode:number = 0;
-    numberOfDropsFromAPByReasonPhyPreambleHeaderReceptionFailed:number = 0;
-    numberOfDropsFromAPByReasonPhyRxDuringChannelSwitching:number = 0;
-    numberOfDropsFromAPByReasonPhyAlreadyReceiving:number = 0;
-    numberOfDropsFromAPByReasonPhyAlreadyTransmitting:number = 0;
-    numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed:number = 0;
-    numberOfDropsFromAPByReasonMacNotForAP:number = 0;
-    numberOfDropsFromAPByReasonMacAPToAPFrame:number = 0;
+    numberOfDropsFromAPByReasonUnknown: number = 0;
+    numberOfDropsFromAPByReasonPhyInSleepMode: number = 0;
+    numberOfDropsFromAPByReasonPhyNotEnoughSignalPower: number = 0;
+    numberOfDropsFromAPByReasonPhyUnsupportedMode: number = 0;
+    numberOfDropsFromAPByReasonPhyPreambleHeaderReceptionFailed: number = 0;
+    numberOfDropsFromAPByReasonPhyRxDuringChannelSwitching: number = 0;
+    numberOfDropsFromAPByReasonPhyAlreadyReceiving: number = 0;
+    numberOfDropsFromAPByReasonPhyAlreadyTransmitting: number = 0;
+    numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed: number = 0;
+    numberOfDropsFromAPByReasonMacNotForAP: number = 0;
+    numberOfDropsFromAPByReasonMacAPToAPFrame: number = 0;
 
     //numberOfDropsFromAPByReasonMacQueueDelayExceeded:number = 0;
     //numberOfDropsFromAPByReasonMacQeueuSizeExceeded:number = 0;
 
     tcpRTO: number = 0;
 
-    numberOfAPScheduledPacketForNodeInNextSlot:number = 0;
-    numberOfAPSentPacketForNodeImmediately:number = 0;
-    avgRemainingSlotTimeWhenAPSendingInSameSlot:number = 0;
+    numberOfAPScheduledPacketForNodeInNextSlot: number = 0;
+    numberOfAPSentPacketForNodeImmediately: number = 0;
+    avgRemainingSlotTimeWhenAPSendingInSameSlot: number = 0;
 
-    numberOfCollisions:number = 0;
+    numberOfCollisions: number = 0;
 
-    tcpConnected:number = 0;
+    tcpConnected: number = 0;
+
+    tcpSlowStartThreshold: number = 0;
+    tcpEstimatedBandwidth: number = 0;
+    tcpRTT: number = 0;
 }
 
 class APNode extends SimulationNode {
@@ -117,33 +121,37 @@ class SimulationConfiguration {
 
     beaconInterval: number;
 
-    name:string = "";
+    name: string = "";
 
 
-    propagationLossExponent:number;
-    propagationLossReferenceLoss:number;
-    apAlwaysSchedulesForNextSlot:string;
-    minRTO:number;
-    simulationTime:number;
+    propagationLossExponent: number;
+    propagationLossReferenceLoss: number;
+    apAlwaysSchedulesForNextSlot: string;
+    minRTO: number;
+    simulationTime: number;
 
-    trafficType:string;
-    trafficIntervalDeviation:number;
+    trafficType: string;
+    trafficIntervalDeviation: number;
+
+    tcpSegmentSize: number;
+    tcpInitialSlowStartThreshold: number;
+    tcpInitialCWnd: number;
 
 }
- 
+
 class Simulation {
 
     nodes: SimulationNode[] = [];
 
-    slotUsageSTA:number[][] = [];
-    slotUsageAP:number[][] = [];
+    slotUsageSTA: number[][] = [];
+    slotUsageAP: number[][] = [];
 
-    totalSlotUsageAP:number[] = [];
-    totalSlotUsageSTA:number[] = [];
-    totalSlotUsageTimestamps:number[] = [];
+    totalSlotUsageAP: number[] = [];
+    totalSlotUsageSTA: number[] = [];
+    totalSlotUsageTimestamps: number[] = [];
 
-    totalTraffic:number = 0;
-    currentTime:number = 0;
-    
+    totalTraffic: number = 0;
+    currentTime: number = 0;
+
     config: SimulationConfiguration = new SimulationConfiguration();
 }

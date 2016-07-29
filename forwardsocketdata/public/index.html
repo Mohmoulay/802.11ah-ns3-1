@@ -124,6 +124,18 @@
                                                     <td>Minimum TCP retransmission timeout (RTO)</td>
                                                     <td>---</td>
                                                 </tr>
+                                                <tr class="configProperty" data-property="tcpSegmentSize">
+                                                    <td>TCP Segment size (bytes)</td>
+                                                    <td>---</td>
+                                                </tr>
+                                                <tr class="configProperty" data-property="tcpInitialSlowStartThreshold">
+                                                    <td>TCP Initial slow start threshold (segments)</td>
+                                                    <td>---</td>
+                                                </tr>
+                                                <tr class="configProperty" data-property="tcpInitialCWnd">
+                                                    <td>TCP Initial Congestion window (segments)</td>
+                                                    <td>---</td>
+                                                </tr>
                                             </table>
                                         </div>
                                     </div>
@@ -240,15 +252,15 @@
                                                     <td>---</td>
                                                 </tr>
                                                 <tr class="chartProperty nodeProperty" data-property="nrOfReceives">
-                                                    <td>Number of receives</td>
+                                                    <td>Number of RX</td>
                                                     <td>---</td>
                                                 </tr>
                                                 <tr class="chartProperty nodeProperty" data-property="nrOfReceivesDropped" data-max="*" data-min="*" data-type="LOWER_IS_BETTER">
-                                                    <td>Number of receives dropped</td>
+                                                    <td>Number of RX dropped</td>
                                                     <td>---</td>
                                                 </tr>
                                                 <tr class="chartProperty nodeProperty" data-property="nrOfReceivesDroppedByDestination" data-max="*" data-min="0" data-type="LOWER_IS_BETTER">
-                                                    <td>Number of receives dropped by destination</td>
+                                                    <td>Number of RX dropped by destination</td>
                                                     <td>---</td>
                                                 </tr>
 
@@ -261,11 +273,11 @@
                                                 </tr>
                                                 
                                                 <tr class="chartProperty nodeProperty" data-property="tcpCongestionWindow" data-max="*" data-min="0" data-type="HIGHER_IS_BETTER">
-                                                    <td>TCP Congestion window (segments)</td>
+                                                    <td>Congestion window (segments)</td>
                                                     <td>---</td>
                                                 </tr>
                                                 <tr class="chartProperty nodeProperty" data-property="tcpRTO" data-max="*" data-min="0" data-type="HIGHER_IS_BETTER">
-                                                    <td>TCP RTO (µs)</td>
+                                                    <td>Retransmission timeout (RTO) (µs)</td>
                                                     <td>---</td>
                                                 </tr>
                                                 <tr class="chartProperty nodeProperty" data-property="numberOfTCPRetransmissions" data-max="*" data-min="0" data-type="LOWER_IS_BETTER">
@@ -276,9 +288,19 @@
                                                     <td>Number of TCP Retransmissions from AP</td>
                                                     <td>---</td>
                                                 </tr>
-
+                                                <tr class="chartProperty nodeProperty" data-property="tcpSlowStartThreshold" data-max="*" data-min="0" data-type="LOWER_IS_BETTER">
+                                                    <td>Slow start threshold (segments)</td>
+                                                    <td>---</td>
+                                                </tr>
+                                                <tr class="chartProperty nodeProperty" data-property="tcpEstimatedBandwidth" data-max="*" data-min="0" data-type="HIGHER_IS_BETTER">
+                                                    <td>Estimated bandwidth (segments)</td>
+                                                    <td>---</td>
+                                                </tr>
+                                                <tr class="chartProperty nodeProperty" data-property="tcpRTT" data-max="*" data-min="0" data-type="LOWER_IS_BETTER">
+                                                    <td>Round trip time (RTT) (µs)</td>
+                                                    <td>---</td>
+                                                </tr>                                                                                                
                                                 
-
                                                 <tr class="header">
                                                     <th colspan="2"><span>-</span> AP Packet scheduling</th>
                                                 </tr>
