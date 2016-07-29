@@ -7,7 +7,7 @@ using namespace ns3;
 int main(int argc, char** argv) {
 
 	PacketMetadata::Enable();
-	Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpNewReno"));
+	Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpWestwood"));
 
     config = Configuration(argc, argv);
     stats = Statistics(config.Nsta);

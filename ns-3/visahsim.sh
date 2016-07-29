@@ -11,7 +11,7 @@
 " --TrafficPacketSize=100"\
 " --TrafficInterval=10000"\
 " --TrafficIntervalDeviation=1000"\
-" --TrafficType=\"udpecho\""\
+" --TrafficType=\"tcpecho\""\
 " --BeaconInterval=102400"\
 " --MinRTO=819200000"\
 " --TCPConnectionTimeout=60000000"\
@@ -19,7 +19,7 @@
 " --APScheduleTransmissionForNextSlotIfLessThan=5000"\
 " --NRawSta=96"\
 " --Nsta=96"\
-" --VisualizerIP=\"192.168.0.247\""\
+" --VisualizerIP=\"localhost\""\
 " --VisualizerPort=7707"\
 " --VisualizerSamplingInterval=1"\
 " --APPcapFile=\"appcap\""\
