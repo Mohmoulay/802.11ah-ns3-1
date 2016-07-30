@@ -2050,12 +2050,12 @@ TcpSocketBase::SendDataPacket (SequenceNumber32 seq, uint32_t maxSize, bool with
   // update the history of sequence numbers used to calculate the RTT
   if (isRetransmission == false)
     { // This is the next expected one, just log at end
-	  std::cout << "adding rtt history, seq " << seq << std::endl;
+	  //std::cout << "adding rtt history, seq " << seq << std::endl;
       m_history.push_back (RttHistory (seq, sz, Simulator::Now () ));
     }
   else
     {
-	  std::cout << "retransmit, search rtt history" << std::endl;
+	  //std::cout << "retransmit, search rtt history" << std::endl;
 	  // This is a retransmit, find in list and mark as re-tx
       for (RttHistory_t::iterator i = m_history.begin (); i != m_history.end (); ++i)
         {
@@ -2248,25 +2248,25 @@ TcpSocketBase::EstimateRtt (const TcpHeader& tcpHeader)
       if (!h.retx && ackSeq >= (h.seq + SequenceNumber32 (h.count)))
         { // Ok to use this sample
 
-    	  std::cout << "OK TO USE SAMPLE " << std::endl;
+    	  //std::cout << "OK TO USE SAMPLE " << std::endl;
           if (m_timestampEnabled && tcpHeader.HasOption (TcpOption::TS))
             {
               Ptr<TcpOptionTS> ts;
               ts = DynamicCast<TcpOptionTS> (tcpHeader.GetOption (TcpOption::TS));
               m = TcpOptionTS::ElapsedTimeFromTsValue (ts->GetEcho ());
 
-              std::cout << "ELAPSED TIME FROM TS " << m.GetMicroSeconds() << std::endl;
+              //std::cout << "ELAPSED TIME FROM TS " << m.GetMicroSeconds() << std::endl;
             }
           else
             {
               m = Simulator::Now () - h.time; // Elapsed time
 
-              std::cout << "ELAPSED TIME FROM " << h.time.GetMicroSeconds() << " to " << Simulator::Now().GetMicroSeconds() << std::endl;
+              //std::cout << "ELAPSED TIME FROM " << h.time.GetMicroSeconds() << " to " << Simulator::Now().GetMicroSeconds() << std::endl;
             }
         }
       else {
 
-    	  std::cout << "Cant use sample because ackSeq " << ackSeq << " is smaller than h.seq " << h.seq << " + h.count " << h.count << std::endl;
+    	  //std::cout << "Cant use sample because ackSeq " << ackSeq << " is smaller than h.seq " << h.seq << " + h.count " << h.count << std::endl;
       }
 
     }
@@ -2277,7 +2277,7 @@ TcpSocketBase::EstimateRtt (const TcpHeader& tcpHeader)
       RttHistory& h = m_history.front ();
       if ((h.seq + SequenceNumber32 (h.count)) > ackSeq) break;               // Done removing
 
-      std::cout << "Removing rtt with seq " << h.seq << " from history" << std::endl;
+      //std::cout << "Removing rtt with seq " << h.seq << " from history" << std::endl;
       m_history.pop_front (); // Remove
     }
 

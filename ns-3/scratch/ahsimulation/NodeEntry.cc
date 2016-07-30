@@ -264,6 +264,23 @@ void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
 	cout << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
 			<< "TCP packet sent " << endl;
 
+	auto pCopy = packet->Copy();
+	SeqTsHeader seqTs;
+	pCopy->RemoveHeader(seqTs);
+
+	// the packet is just sent, so track if it's received by a list of booleans
+	// with the sequence number as index
+	if(seqTs.GetSeq() >= seqNrReceived.size()) {
+		for(int i = seqNrReceived.size(); i <= seqTs.GetSeq(); i++) {
+			seqNrReceived.push_back(false);
+		}
+	}
+	if(seqTs.GetSeq() >= seqNrReceivedAtAP.size()) {
+		for(int i = seqNrReceivedAtAP.size(); i <= seqTs.GetSeq(); i++) {
+			seqNrReceivedAtAP.push_back(false);
+		}
+	}
+
 	stats->get(this->id).NumberOfSentPackets++;
 }
 
@@ -274,6 +291,16 @@ void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
 	try {
 		SeqTsHeader seqTs;
 		pCopy->RemoveHeader(seqTs);
+
+
+		// check if the packet wasn't already received to prevent counting them double
+		if(seqNrReceived[seqTs.GetSeq()]){
+			// but the packet was already received ?
+			// probably a fragment?
+			return;
+		}
+
+		seqNrReceived[seqTs.GetSeq()] = true;
 
 		auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
@@ -300,6 +327,16 @@ void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 	try {
 		SeqTsHeader seqTs;
 		pCopy->RemoveHeader(seqTs);
+
+		// check if the packet wasn't already received to prevent counting them double
+		if(seqNrReceivedAtAP[seqTs.GetSeq()]){
+			// but the packet was already received ?
+			// probably a fragment?
+			return;
+		}
+
+		seqNrReceivedAtAP[seqTs.GetSeq()] = true;
+
 		auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
 		/*cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "] "

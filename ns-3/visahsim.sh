@@ -8,7 +8,7 @@
 " --BandWidth=2"\
 " --Rho=\"500\""\
 " --SimulationTime=100"\
-" --TrafficPacketSize=100"\
+" --TrafficPacketSize=1000"\
 " --TrafficInterval=10000"\
 " --TrafficIntervalDeviation=1000"\
 " --TrafficType=\"tcpecho\""\
