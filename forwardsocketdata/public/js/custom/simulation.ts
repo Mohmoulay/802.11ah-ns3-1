@@ -90,6 +90,8 @@ class NodeValue {
     tcpSlowStartThreshold: number = 0;
     tcpEstimatedBandwidth: number = 0;
     tcpRTT: number = 0;
+
+    numberOfBeaconsMissed:number = 0;
 }
 
 class APNode extends SimulationNode {

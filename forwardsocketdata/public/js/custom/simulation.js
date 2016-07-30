@@ -72,6 +72,11 @@ var NodeValue = (function () {
         this.numberOfAPSentPacketForNodeImmediately = 0;
         this.avgRemainingSlotTimeWhenAPSendingInSameSlot = 0;
         this.numberOfCollisions = 0;
+        this.tcpConnected = 0;
+        this.tcpSlowStartThreshold = 0;
+        this.tcpEstimatedBandwidth = 0;
+        this.tcpRTT = 0;
+        this.numberOfBeaconsMissed = 0;
     }
     return NodeValue;
 })();
@@ -105,6 +110,7 @@ var Simulation = (function () {
         this.slotUsageAP = [];
         this.totalSlotUsageAP = [];
         this.totalSlotUsageSTA = [];
+        this.totalSlotUsageTimestamps = [];
         this.totalTraffic = 0;
         this.currentTime = 0;
         this.config = new SimulationConfiguration();

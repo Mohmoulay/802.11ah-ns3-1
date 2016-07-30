@@ -59,7 +59,8 @@ class EventManager {
                         ev.parts[25], ev.parts[26], parseInt(ev.parts[27]),
                         parseInt(ev.parts[28]), parseInt(ev.parts[29]), parseFloat(ev.parts[30]),
                         parseInt(ev.parts[31]), parseInt(ev.parts[32]), parseInt(ev.parts[33]),
-                        parseInt(ev.parts[34]), parseFloat(ev.parts[35]), parseInt(ev.parts[36]));
+                        parseInt(ev.parts[34]), parseFloat(ev.parts[35]), parseInt(ev.parts[36]),
+                        parseInt(ev.parts[37]));
                     break;
 
                 case 'slotstatsSTA':
@@ -99,7 +100,7 @@ class EventManager {
             this.onReceive({ stream: entry.stream, line: l });
         }
 
-        if(entry.lines.length > 10000) // prevent epic memory build up
+        if(this.events.length > 10000) // prevent epic memory build up
             this.processEvents();
     }
 
@@ -254,7 +255,7 @@ class EventManager {
         numberOfMACTxRTSFailed: number, numberOfMACTxMissedACK: number, numberOfDropsByReason: string, numberOfDropsByReasonAtAP: string,
         tcpRtoValue: number, numberOfAPScheduledPacketForNodeInNextSlot: number, numberOfAPSentPacketForNodeImmediately: number, avgRemainingSlotTimeWhenAPSendingInSameSlot: number,
         numberOfCollisions: number, numberofMACTxMissedACKAndDroppedPacket: number, tcpConnected:number, 
-        tcpSlowStartThreshold:number, tcpEstimatedBandwidth:number,tcpRTT:number) {
+        tcpSlowStartThreshold:number, tcpEstimatedBandwidth:number,tcpRTT:number, numberOfBeaconsMissed:number) {
 
         let simulation = this.sim.simulationContainer.getSimulation(stream);
 
@@ -355,7 +356,7 @@ class EventManager {
         nodeVal.tcpEstimatedBandwidth = tcpEstimatedBandwidth;
         nodeVal.tcpRTT = tcpRTT;
 
-
+        nodeVal.numberOfBeaconsMissed = numberOfBeaconsMissed;
     
         //if(this.hasIncreased(n.totalReceiveActiveTime))
         //   this.sim.addAnimation(new ReceivedAnimation(n.x, n.y));

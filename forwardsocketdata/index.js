@@ -141,10 +141,18 @@ var Program = (function () {
         var lines = [];
         rl.on('line', function (line) {
             //console.log("Writing entry for " + stream + ": " + line);
-            lines.push(line);
-            if (lines.length > 1000) {
-                sock.compress(true).emit("bulkentry", new Entries(stream, lines));
-                lines = [];
+            rl.pause();
+            try {
+                lines.push(line);
+                if (lines.length > 1000) {
+                    sock.compress(true).emit("bulkentry", new Entries(stream, lines));
+                    lines = [];
+                }
+            }
+            finally {
+                setTimeout(function () {
+                    rl.resume();
+                }, 100); // wait a bit to not overload the client
             }
             //sock.emit("entry",new Entry(stream, line));
         });

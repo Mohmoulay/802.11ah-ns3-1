@@ -13,35 +13,35 @@ import * as readline from "readline";
 
 import events = require('events');
 
-let HTTP_PORT:number = 8080;
-let LISTENER_PORT:number = 7707;
-let BIND_ADDRESS:string = "";
+let HTTP_PORT: number = 8080;
+let LISTENER_PORT: number = 7707;
+let BIND_ADDRESS: string = "";
 
 class SocketManager {
 
     private activeSockets = {};
 
-    addSocket(stream:string, sock:SocketIO.Socket):void {
+    addSocket(stream: string, sock: SocketIO.Socket): void {
         console.log("Adding socket " + sock.id + " for stream " + stream);
-        if(typeof this.activeSockets[stream] == "undefined")
+        if (typeof this.activeSockets[stream] == "undefined")
             this.activeSockets[stream] = [];
 
         let sockets = (<SocketIO.Socket[]>this.activeSockets[stream]);
         sockets.push(sock);
     }
 
-    removeSocket(sock:SocketIO.Socket) {
+    removeSocket(sock: SocketIO.Socket) {
         console.log("Removing socket " + sock.id);
-        for(let key in this.activeSockets) {
+        for (let key in this.activeSockets) {
             let sockets = (<SocketIO.Socket[]>this.activeSockets[key]);
-             let idx = sockets.indexOf(sock);
-                if (idx >= 0)
-                    sockets.splice(idx, 1);
+            let idx = sockets.indexOf(sock);
+            if (idx >= 0)
+                sockets.splice(idx, 1);
         }
     }
 
-    getSocketsFor(stream:string):SocketIO.Socket[] {
-        if(typeof this.activeSockets[stream] == "undefined")
+    getSocketsFor(stream: string): SocketIO.Socket[] {
+        if (typeof this.activeSockets[stream] == "undefined")
             return [];
         else {
             let sockets = (<SocketIO.Socket[]>this.activeSockets[stream]);
@@ -51,25 +51,25 @@ class SocketManager {
 }
 
 interface ISubscriptionRequest {
-    simulations:string[];
+    simulations: string[];
 }
 
 class Entry {
-    public constructor(public stream:string, public line:string) {}
+    public constructor(public stream: string, public line: string) { }
 }
 
 class Entries {
-    public constructor(public stream:string, public lines:string[]) {}
+    public constructor(public stream: string, public lines: string[]) { }
 }
 
 export class Program {
 
     // a list of active connections from the website
-    private activeSocketManager:SocketManager = new SocketManager();
+    private activeSocketManager: SocketManager = new SocketManager();
 
-    constructor(args:string[]) {
-        
-        LISTENER_PORT =   parseInt((typeof args[0] === 'undefined') ? "7707" : args[0]);
+    constructor(args: string[]) {
+
+        LISTENER_PORT = parseInt((typeof args[0] === 'undefined') ? "7707" : args[0]);
         HTTP_PORT = parseInt((typeof args[1] === 'undefined') ? "8080" : args[1]);
         BIND_ADDRESS = (typeof args[2] === 'undefined') ? "" : args[2];
         this.initialize();
@@ -101,7 +101,7 @@ export class Program {
         app.use("/", express.static(path.join(__dirname, 'public')));
 
         // binding to fetch the simulation nss files directly
-        app.get("/simulations/:name", (req,res) => {
+        app.get("/simulations/:name", (req, res) => {
             var file = req.params.name;
             let path = this.getPathForSimulationName(file);
             res.sendFile(path, {
@@ -110,7 +110,7 @@ export class Program {
         });
 
         let server;
-        if(BIND_ADDRESS == "")
+        if (BIND_ADDRESS == "")
             server = app.listen(HTTP_PORT);
         else
             server = app.listen(HTTP_PORT, BIND_ADDRESS);
@@ -125,22 +125,22 @@ export class Program {
 
         console.log("Listening for websocket requests...");
         let io = socket.listen(server);
-        
+
         io.on("connection", sock => {
 
             sock.on("close", () => {
                 this.activeSocketManager.removeSocket(sock);
             });
 
-            sock.on("subscribe", (data:ISubscriptionRequest) => {
+            sock.on("subscribe", (data: ISubscriptionRequest) => {
 
                 console.log("subscription request " + data.simulations);
-                for(let stream of data.simulations) {
+                for (let stream of data.simulations) {
                     this.activeSocketManager.addSocket(stream, sock);
 
-                    if(stream == "live") {
+                    if (stream == "live") {
                         for (let initLine of this.liveSimulationInitializationLines)
-                            sock.emit("entry",new Entry("live", initLine));
+                            sock.emit("entry", new Entry("live", initLine));
                     } else {
                         this.sendSimulationToSocket(stream, sock);
                     }
@@ -150,30 +150,38 @@ export class Program {
         });
     }
 
-    sendSimulationToSocket(stream:string, sock:SocketIO.Socket) {
+    sendSimulationToSocket(stream: string, sock: SocketIO.Socket) {
         let filename = stream + ".nss";
-        if(!fs.existsSync(this.getPathForSimulationName(filename))) {
+        if (!fs.existsSync(this.getPathForSimulationName(filename))) {
             sock.emit("fileerror", "Simulation file " + stream + " not found");
             return;
         }
-            
+
         var instream = fs.createReadStream(this.getPathForSimulationName(filename));
         var outstream = new (require('stream'))();
-        var rl = readline.createInterface(instream,outstream);
+        var rl = readline.createInterface(instream, outstream);
 
-        var lines=[];
-        rl.on('line', function(line) {
+        var lines = [];
+        rl.on('line', function (line) {
             //console.log("Writing entry for " + stream + ": " + line);
 
-            lines.push(line);
-            if(lines.length > 1000) {
-                sock.compress(true).emit("bulkentry", new Entries(stream, lines));
-                lines = [];
+            rl.pause();
+            try {
+                lines.push(line);
+                if (lines.length > 1000) {
+                    sock.compress(true).emit("bulkentry", new Entries(stream, lines));
+                    lines = [];
+                }
+            }
+            finally {
+                setTimeout(function () {
+                    rl.resume();
+                }, 100); // wait a bit to not overload the client
             }
             //sock.emit("entry",new Entry(stream, line));
         });
 
-        rl.on('close', function() {
+        rl.on('close', function () {
             // send remainder
             sock.emit("bulkentry", new Entries(stream, lines));
             lines = [];
@@ -207,7 +215,7 @@ export class Program {
         }
     }
 
-    private getPathForSimulationName(simulationName:string):string {
+    private getPathForSimulationName(simulationName: string): string {
         return path.resolve(__dirname, "simulations", simulationName);
     }
 
