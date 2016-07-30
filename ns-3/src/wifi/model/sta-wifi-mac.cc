@@ -105,6 +105,9 @@ StaWifiMac::GetTypeId (void)
     .AddTraceSource ("DeAssoc", "Association with an access point lost.",
                      MakeTraceSourceAccessor (&StaWifiMac::m_deAssocLogger),
                      "ns3::Mac48Address::TracedCallback")
+	 .AddTraceSource ("S1gBeaconMissed", "Fired when a beacon is missed.",
+					  MakeTraceSourceAccessor (&StaWifiMac::m_beaconMissed),
+					  "ns3::StaWifiMac::S1gBeaconMissedCallback")
   ;
   return tid;
 }
@@ -986,6 +989,8 @@ StaWifiMac::HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon) {
 
 				LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " Starting sleep because beacon received is not ours (beacon TIM group is " << std::to_string(beaconTIMGroup) << ")");
 				GoToSleep(beaconInterval * nrOfBeacons);
+
+				m_beaconMissed(false);
 				//m_phy->SetSleepMode();
 				//Simulator::Schedule(beaconInterval * nrOfBeacons, &StaWifiMac::OnSleepEnd, this);
 			}
@@ -996,6 +1001,7 @@ StaWifiMac::HandleS1gSleepAndSlotTimingsFromBeacon(S1gBeaconHeader& beacon) {
 				LOG_SLEEP(Simulator::Now().GetMicroSeconds() << " Starting sleep because beacon received is not ours, (beacon TIM group is " << std::to_string(beaconTIMGroup) << ")" << " DTIM comes first");
 				GoToSleep(beaconInterval * remainingBeaconsUntilDTIM);
 
+				m_beaconMissed(true);
 				//m_phy->SetSleepMode();
 				//Simulator::Schedule(beaconInterval * remainingBeaconsUntilDTIM, &StaWifiMac::OnSleepEnd, this);
 			}
@@ -1073,7 +1079,7 @@ StaWifiMac::GoToSleep(Time duration) {
 	// wake up sliiiiiiiiiiiightly earlier or the station will miss the
 	// data that it's supposed to receive
 	// this greatly depends on how fast the radio can go from sleep -> active
-	auto earlyWake = MilliSeconds(5);
+	auto earlyWake = strategy->GetEarlyWakeTime();
 	if(duration > earlyWake) {
 		m_phy->SetSleepMode();
 		auto sleepTime = duration - earlyWake;

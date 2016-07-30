@@ -32,6 +32,12 @@ public:
 	virtual Time GetSlotDuration(uint16_t slotDurationCount);
 
 	virtual bool STABelongsToRAWGroup(uint16_t aid, RPS& rps);
+
+	/**
+	 * Time to wake early for events such as beacons etc
+	 * This is time needed for the radio to go from sleeping to on and actively receive data
+	 */
+	virtual Time GetEarlyWakeTime();
 };
 
 } /* namespace ns3 */

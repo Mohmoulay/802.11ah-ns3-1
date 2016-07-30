@@ -64,7 +64,8 @@ public:
     
     void SetAssociation(std::string context, Mac48Address address);
     void UnsetAssociation(std::string context, Mac48Address address);
-    
+    void OnS1gBeaconMissed(std::string context,bool nextBeaconIsDTIM);
+
     void OnPhyTxBegin(std::string context, Ptr<const Packet> packet);
     void OnPhyTxEnd(std::string context,Ptr<const Packet> packet);
     void OnPhyTxDrop(std::string context,Ptr<const Packet> packet, DropReason reason);

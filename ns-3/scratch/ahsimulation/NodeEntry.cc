@@ -37,6 +37,10 @@ void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 	this->deAssociatedCallback();
 }
 
+void NodeEntry::OnS1gBeaconMissed(std::string context,bool nextBeaconIsDTIM) {
+	stats->get(this->id).NumberOfBeaconsMissed++;
+}
+
 void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
 	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
 	<< "Begin Tx " << packet->GetUid() << endl;

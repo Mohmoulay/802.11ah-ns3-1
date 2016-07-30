@@ -338,7 +338,6 @@ TcpEchoClient::SetFill (uint8_t *fill, uint32_t fillSize, uint32_t dataSize)
 void
 TcpEchoClient::ScheduleTransmit (Time dt)
 {
-	std::cout << "scheduling transmit " << dt.GetMicroSeconds() << std::endl;
   NS_LOG_FUNCTION_NOARGS ();
   m_sendEvent = Simulator::Schedule (dt, &TcpEchoClient::Send, this);
 }

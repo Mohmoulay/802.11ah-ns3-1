@@ -44,6 +44,10 @@ class MgtAddBaRequestHeader;
 class StaWifiMac : public RegularWifiMac
 {
 public:
+
+	typedef void (* S1gBeaconMissedCallback)
+		              (bool nextBeaconIsDTIM);
+
   static TypeId GetTypeId (void);
 
   StaWifiMac ();
@@ -275,6 +279,8 @@ private:
 
   S1gStrategy* strategy;
 
+
+  TracedCallback<bool> m_beaconMissed;
 
 
   TracedCallback<Mac48Address> m_assocLogger;
