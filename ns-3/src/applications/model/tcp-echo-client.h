@@ -153,7 +153,7 @@ private:
   void OnRTOChanged(Time oldval, Time newval);
   void OnRTTChanged(Time oldval, Time newval);
 
-  void OnTCPStateChanged(TcpStates_t oldVal,TcpStates_t newVal);
+  void OnTCPStateChanged(TcpSocket::TcpStates_t oldVal,TcpSocket::TcpStates_t newVal);
 
   void OnRetransmission(Address a);
 
@@ -191,7 +191,7 @@ private:
   TracedCallback<Time,Time>  m_rtoChanged;
   TracedCallback<Time,Time>  m_rttChanged;
 
-  TracedCallback<TcpStates_t,TcpStates_t> m_tcpStateChanged;
+  TracedCallback<TcpSocket::TcpStates_t,TcpSocket::TcpStates_t> m_tcpStateChanged;
 
 
   TracedCallback<uint32_t,uint32_t> m_slowStartThresholdChanged;

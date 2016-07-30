@@ -93,7 +93,7 @@ public:
     void OnTcpRTOChanged(Time oldval, Time newval);
     void OnTcpRTTChanged(Time oldval, Time newval);
 
-    void OnTcpStateChanged(TcpStates_t oldval, TcpStates_t newval);
+    void OnTcpStateChanged(TcpSocket::TcpStates_t oldval, TcpSocket::TcpStates_t newval);
 
     void OnTcpRetransmission(Address to);
     void OnTcpRetransmissionAtAP();

@@ -176,7 +176,7 @@ TcpEchoClient::StartApplication (void)
       m_socket->TraceConnectWithoutContext("RTT", MakeCallback(&TcpEchoClient::OnRTTChanged, this));
       m_socket->TraceConnectWithoutContext("State", MakeCallback(&TcpEchoClient::OnTCPStateChanged, this));
       m_socket->TraceConnectWithoutContext("SlowStartThreshold", MakeCallback(&TcpEchoClient::OnTCPSlowStartThresholdChanged, this));
-      m_socket->TraceConnectWithoutContext("EstimatedBW", MakeCallback(&TcpEchoClient::OnTCPEstimatedBWChanged, this));
+      m_socket->GetObject<TcpSocketBase>()->GetCongestionControlAlgorithm()->TraceConnectWithoutContext("EstimatedBW", MakeCallback(&TcpEchoClient::OnTCPEstimatedBWChanged, this));
 
 
       m_socket->Bind ();
@@ -207,7 +207,7 @@ void TcpEchoClient::OnRTTChanged(Time oldval, Time newval) {
 }
 
 
-void TcpEchoClient::OnTCPStateChanged(TcpStates_t oldVal,TcpStates_t newVal) {
+void TcpEchoClient::OnTCPStateChanged(TcpSocket::TcpStates_t oldVal,TcpSocket::TcpStates_t newVal) {
 	m_tcpStateChanged(oldVal, newVal);
 }
 

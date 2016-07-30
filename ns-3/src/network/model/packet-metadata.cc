@@ -132,8 +132,6 @@ PacketMetadata::IsPointerOk (uint16_t pointer) const
 bool
 PacketMetadata::IsStateOk (void) const
 {
-	return true; // fuck off with your bugs
-
   NS_LOG_FUNCTION (this);
   bool ok = m_used <= m_data->m_size;
   ok &= IsPointerOk (m_head);

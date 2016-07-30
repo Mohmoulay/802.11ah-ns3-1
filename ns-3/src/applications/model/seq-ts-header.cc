@@ -98,9 +98,6 @@ SeqTsHeader::Deserialize (Buffer::Iterator start)
 {
   NS_LOG_FUNCTION (this << &start);
   Buffer::Iterator i = start;
-  if(i.GetCurrent() + 4 + 8 >= i.GetEnd())
-	  throw std::runtime_error("Will read beyond the size of the buffer");
-
   m_seq = i.ReadNtohU32 ();
   m_ts = i.ReadNtohU64 ();
   return GetSerializedSize ();
