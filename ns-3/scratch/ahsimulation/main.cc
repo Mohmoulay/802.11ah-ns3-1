@@ -395,8 +395,15 @@ void tcpRetransmissionAtServer(Address to) {
 		cout << "*** Node could not be determined from received packet at AP " << endl;
 }
 
-void tcpStateChangeAtServer(TcpSocket::TcpStates_t oldState, TcpSocket::TcpStates_t newState) {
-	cout << "********** TCP SERVER SOCKET STATE CHANGED FROM " << oldState << " TO " << newState << endl;
+void tcpStateChangeAtServer(TcpSocket::TcpStates_t oldState, TcpSocket::TcpStates_t newState, Address to) {
+
+    int staId = getSTAIdFromAddress(InetSocketAddress::ConvertFrom(to).GetIpv4());
+    if(staId != -1)
+			nodes[staId]->OnTcpStateChangedAtAP(oldState, newState);
+		else
+			cout << "*** Node could not be determined from received packet at AP " << endl;
+
+	cout << Simulator::Now().GetMicroSeconds() << " ********** TCP SERVER SOCKET STATE CHANGED FROM " << oldState << " TO " << newState << endl;
 }
 
 /*void udpPacketReceivedAtClient(Ptr<const Packet> packet, Address from) {

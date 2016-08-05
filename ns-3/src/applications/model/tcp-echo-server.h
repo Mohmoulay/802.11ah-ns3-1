@@ -25,6 +25,7 @@
 #include "ns3/address.h"
 #include "ns3/traced-callback.h"
 #include "ns3/tcp-socket.h"
+#include <map>
 
 namespace ns3 {
 
@@ -51,10 +52,14 @@ public:
 	typedef void (* RetransmissionCallBack)
 		            (Address);
 
+	typedef void (* TCPStateChangedCallBack)
+			(TcpSocket::TcpStates_t oldVal,TcpSocket::TcpStates_t newVal, Address address);
+
 
   static TypeId GetTypeId (void);
   TcpEchoServer ();
   virtual ~TcpEchoServer ();
+
 
   /**
    *
@@ -96,7 +101,7 @@ private:
 
   void OnRetransmission(Address a);
 
-  void OnTCPStateChanged(TcpSocket::TcpStates_t oldVal,TcpSocket::TcpStates_t newVal);
+  void OnTCPStateChanged(TcpSocket::TcpStates_t oldVal,TcpSocket::TcpStates_t newVal, Address address);
 
   Ptr<Socket> m_socket;
   uint16_t m_port;
@@ -105,9 +110,18 @@ private:
   TracedCallback<Ptr<const Packet>, Address> m_packetReceived;
   TracedCallback<Address> m_retransmission;
 
-  TracedCallback<TcpSocket::TcpStates_t,TcpSocket::TcpStates_t> m_tcpStateChanged;
+  TracedCallback<TcpSocket::TcpStates_t,TcpSocket::TcpStates_t, Address> m_tcpStateChanged;
 
+  struct Handler {
+	  Address address;
+	  Callback<void, ns3::TcpSocket::TcpStates_t, ns3::TcpSocket::TcpStates_t, Address> callback;
 
+	  void OnTCPStateChanged(TcpSocket::TcpStates_t oldVal,TcpSocket::TcpStates_t newVal) {
+		  callback(oldVal,newVal, address);
+	  }
+  };
+
+  std::map<Address, Handler> handles;
 };
 
 } // namespace ns3

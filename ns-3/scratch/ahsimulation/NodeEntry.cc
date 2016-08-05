@@ -421,8 +421,17 @@ void NodeEntry::OnTcpRTTChanged(Time oldval, Time newval) {
 
 void NodeEntry::OnTcpStateChanged(TcpSocket::TcpStates_t oldval,
 		TcpSocket::TcpStates_t newval) {
-	stats->get(this->id).TCPConnected = (newval
-			== TcpSocket::TcpStates_t::ESTABLISHED);
+
+	tcpConnectedAtSTA = (newval == TcpSocket::TcpStates_t::ESTABLISHED);
+	stats->get(this->id).TCPConnected = tcpConnectedAtSTA && tcpConnectedAtAP;
+}
+
+void NodeEntry::OnTcpStateChangedAtAP(TcpSocket::TcpStates_t oldval,
+		TcpSocket::TcpStates_t newval) {
+	tcpConnectedAtAP = (newval	== TcpSocket::TcpStates_t::ESTABLISHED);
+	cout << "TCP connected at ap " << tcpConnectedAtAP;
+
+	stats->get(this->id).TCPConnected = tcpConnectedAtSTA && tcpConnectedAtAP;
 }
 
 void NodeEntry::OnTcpRetransmission(Address to) {

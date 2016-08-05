@@ -44,6 +44,9 @@ private:
     
     void OnEndOfReceive(Ptr<const Packet> packet);
 
+    bool tcpConnectedAtSTA = true;
+    bool tcpConnectedAtAP = true;
+
 public:
     int id;
     
@@ -94,6 +97,7 @@ public:
     void OnTcpRTTChanged(Time oldval, Time newval);
 
     void OnTcpStateChanged(TcpSocket::TcpStates_t oldval, TcpSocket::TcpStates_t newval);
+    void OnTcpStateChangedAtAP(TcpSocket::TcpStates_t oldval, TcpSocket::TcpStates_t newval);
 
     void OnTcpRetransmission(Address to);
     void OnTcpRetransmissionAtAP();
