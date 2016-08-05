@@ -9,13 +9,14 @@
 " --Rho=\"500\""\
 " --MaxTimeOfPacketsInQueue=1000"\
 " --SimulationTime=100"\
-" --TrafficPacketSize=1000"\
+" --TrafficPacketSize=100"\
 " --TrafficInterval=100"\
 " --TrafficIntervalDeviation=0000"\
 " --TrafficType=\"tcpecho\""\
 " --BeaconInterval=102400"\
 " --MinRTO=20000000"\
 " --TCPConnectionTimeout=60000000"\
+" --TCPSegmentSize=100"\
 " --APAlwaysSchedulesForNextSlot=false"\
 " --APScheduleTransmissionForNextSlotIfLessThan=5000"\
 " --NRawSta=8"\

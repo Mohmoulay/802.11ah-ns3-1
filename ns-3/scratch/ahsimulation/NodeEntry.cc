@@ -25,9 +25,6 @@ void NodeEntry::SetAssociation(std::string context, Mac48Address address) {
 	this->associatedCallback();
 }
 
-
-
-
 void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 	this->isAssociated = false;
 
@@ -37,13 +34,13 @@ void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 	this->deAssociatedCallback();
 }
 
-void NodeEntry::OnS1gBeaconMissed(std::string context,bool nextBeaconIsDTIM) {
+void NodeEntry::OnS1gBeaconMissed(std::string context, bool nextBeaconIsDTIM) {
 	stats->get(this->id).NumberOfBeaconsMissed++;
 }
 
 void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
-	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
-	<< "Begin Tx " << packet->GetUid() << endl;
+	cout << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+			<< "Begin Tx " << packet->GetUid() << endl;
 	txMap.emplace(packet->GetUid(), Simulator::Now());
 
 	if (txMap.size() > 1)
@@ -59,8 +56,8 @@ void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
-	cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
-	<< "End Tx " << packet->GetUid() << endl;
+	cout << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+			<< "End Tx " << packet->GetUid() << endl;
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
 		Time oldTime = txMap[packet->GetUid()];
@@ -264,23 +261,62 @@ void NodeEntry::OnPhyStateChange(std::string context, const Time start,
 
 }
 
+SeqTsHeader GetSeqTSFromPacket(Ptr<const Packet> packet) {
+	/*auto pCopy = packet->Copy();
+	SeqTsHeader seqTs;
+	pCopy->RemoveHeader(seqTs);
+
+	if (seqTs.GetTs() > Time(0)) {
+		// it was deserialized OK
+		return seqTs;
+	} else {*/
+		SeqTsHeader sts;
+
+		// new copy
+		auto pCopy = packet->Copy();
+		auto it = pCopy->BeginItem();
+		while (it.HasNext()) {
+
+			auto item = it.Next();
+			if (item.tid.GetUid() != 0) {
+				Callback<ObjectBase *> constructor = item.tid.GetConstructor();
+
+				ObjectBase *instance = constructor();
+				Chunk *chunk = dynamic_cast<Chunk *>(instance);
+				chunk->Deserialize(item.current);
+
+				if (dynamic_cast<SeqTsHeader*>(chunk)) {
+					SeqTsHeader* hdr = (SeqTsHeader*) chunk;
+
+					sts.SetSeq(hdr->GetSeq());
+					sts.SetTs(hdr->GetTs());
+
+					delete chunk;
+					break;
+				} else
+					delete chunk;
+			}
+		}
+
+		return sts;
+	//}
+}
+
 void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
 	cout << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
 			<< "TCP packet sent " << endl;
 
-	auto pCopy = packet->Copy();
-	SeqTsHeader seqTs;
-	pCopy->RemoveHeader(seqTs);
+	SeqTsHeader seqTs = GetSeqTSFromPacket(packet);
 
 	// the packet is just sent, so track if it's received by a list of booleans
 	// with the sequence number as index
-	if(seqTs.GetSeq() >= seqNrReceived.size()) {
-		for(int i = seqNrReceived.size(); i <= seqTs.GetSeq(); i++) {
+	if (seqTs.GetSeq() >= seqNrReceived.size()) {
+		for (int i = seqNrReceived.size(); i <= seqTs.GetSeq(); i++) {
 			seqNrReceived.push_back(false);
 		}
 	}
-	if(seqTs.GetSeq() >= seqNrReceivedAtAP.size()) {
-		for(int i = seqNrReceivedAtAP.size(); i <= seqTs.GetSeq(); i++) {
+	if (seqTs.GetSeq() >= seqNrReceivedAtAP.size()) {
+		for (int i = seqNrReceivedAtAP.size(); i <= seqTs.GetSeq(); i++) {
 			seqNrReceivedAtAP.push_back(false);
 		}
 	}
@@ -291,20 +327,20 @@ void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
 void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
 		Address from) {
 
-	auto pCopy = packet->Copy();
 	try {
-		SeqTsHeader seqTs;
-		pCopy->RemoveHeader(seqTs);
-
+		SeqTsHeader seqTs = GetSeqTSFromPacket(packet);
 
 		// check if the packet wasn't already received to prevent counting them double
-		if(seqNrReceived[seqTs.GetSeq()]){
+		if (seqTs.GetSeq() < 0 || seqTs.GetSeq() >= seqNrReceived.size()
+				|| seqNrReceived[seqTs.GetSeq()]) {
 			// but the packet was already received ?
 			// probably a fragment?
+			//cout << "Packet with seq nr " << seqTs.GetSeq()
+			//		<< " falls outside expected array or is already received"
+			//		<< endl;
 			return;
-		}
-
-		seqNrReceived[seqTs.GetSeq()] = true;
+		} else
+			seqNrReceived[seqTs.GetSeq()] = true;
 
 		auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
@@ -320,7 +356,9 @@ void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
 
 		// this occurs when packet is fragmented
 		cout << "Error: " << string(e.what()) << endl;
-		cout << "ERROR: unable to get the packet header to determine the travel time" << endl;
+		cout
+				<< "ERROR: unable to get the packet header to determine the travel time"
+				<< endl;
 		//packet->Print(cout);
 		//exit(1);
 	}
@@ -329,17 +367,27 @@ void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
 void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 	auto pCopy = packet->Copy();
 	try {
-		SeqTsHeader seqTs;
-		pCopy->RemoveHeader(seqTs);
+
+		SeqTsHeader seqTs = GetSeqTSFromPacket(packet);
 
 		// check if the packet wasn't already received to prevent counting them double
-		if(seqNrReceivedAtAP[seqTs.GetSeq()]){
+		if (seqTs.GetSeq() < 0 || seqTs.GetSeq() >= seqNrReceivedAtAP.size()
+				|| seqNrReceivedAtAP[seqTs.GetSeq()]) {
 			// but the packet was already received ?
 			// probably a fragment?
-			return;
-		}
 
-		seqNrReceivedAtAP[seqTs.GetSeq()] = true;
+			//cout << "Packet with seq nr " << seqTs.GetSeq() << " and time "
+			//		<< seqTs.GetTs().GetMicroSeconds()
+			//		<< "µs falls outside expected array or is already received and is "
+				//	<< pCopy->GetSerializedSize() << " size" << endl;
+
+			return;
+		} else {
+			cout << "Packet with seq nr " << seqTs.GetSeq() << " received at AP"
+					<< endl;
+
+			seqNrReceivedAtAP[seqTs.GetSeq()] = true;
+		}
 
 		auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
@@ -350,10 +398,11 @@ void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 		stats->get(this->id).NumberOfSuccessfulPackets++;
 		stats->get(this->id).TotalPacketSentReceiveTime += timeDiff;
 		stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
-	}
-	catch(std::runtime_error e) {
+	} catch (std::runtime_error e) {
 		// packet fragmentation
-		cout << "ERROR: unable to get the packet header at AP to determine the travel time" << endl;
+		cout
+				<< "ERROR: unable to get the packet header at AP to determine the travel time"
+				<< endl;
 	}
 }
 
@@ -370,8 +419,10 @@ void NodeEntry::OnTcpRTTChanged(Time oldval, Time newval) {
 	stats->get(this->id).TCPRTTValue = newval;
 }
 
-void NodeEntry::OnTcpStateChanged(TcpSocket::TcpStates_t oldval, TcpSocket::TcpStates_t newval) {
-	stats->get(this->id).TCPConnected = (newval == TcpSocket::TcpStates_t::ESTABLISHED);
+void NodeEntry::OnTcpStateChanged(TcpSocket::TcpStates_t oldval,
+		TcpSocket::TcpStates_t newval) {
+	stats->get(this->id).TCPConnected = (newval
+			== TcpSocket::TcpStates_t::ESTABLISHED);
 }
 
 void NodeEntry::OnTcpRetransmission(Address to) {
@@ -383,16 +434,14 @@ void NodeEntry::OnTcpRetransmissionAtAP() {
 	stats->get(this->id).NumberOfTCPRetransmissionsFromAP++;
 }
 
-
-void NodeEntry::OnTcpSlowStartThresholdChanged(uint32_t oldVal,uint32_t newVal) {
+void NodeEntry::OnTcpSlowStartThresholdChanged(uint32_t oldVal,
+		uint32_t newVal) {
 	stats->get(this->id).TCPSlowStartThreshold = newVal;
 }
 
 void NodeEntry::OnTcpEstimatedBWChanged(double oldVal, double newVal) {
 	stats->get(this->id).TCPEstimatedBandwidth = newVal;
 }
-
-
 
 void NodeEntry::OnUdpPacketSent(Ptr<const Packet> packet) {
 //cout << "[" << this->id << "] " << "UDP packet sent " << endl;
@@ -452,7 +501,8 @@ void NodeEntry::OnUdpPacketReceivedAtAP(Ptr<const Packet> packet) {
 	}
 }
 
-void NodeEntry::OnMacPacketDropped(std::string context, Ptr<const Packet> packet, DropReason reason) {
+void NodeEntry::OnMacPacketDropped(std::string context,
+		Ptr<const Packet> packet, DropReason reason) {
 	//cout << "Mac Packet Dropped!, reason:" << reason << endl;
 
 	stats->get(this->id).NumberOfDropsByReason[reason]++;
@@ -462,9 +512,8 @@ void NodeEntry::OnCollision(std::string context, uint32_t nrOfBackoffSlots) {
 	cout << "Collision sensed" << endl;
 
 	stats->get(this->id).NumberOfCollisions++;
-	stats->get(this->id).TotalNumberOfBackedOffSlots+= nrOfBackoffSlots;
+	stats->get(this->id).TotalNumberOfBackedOffSlots += nrOfBackoffSlots;
 }
-
 
 void NodeEntry::OnMacTxRtsFailed(std::string context, Mac48Address address) {
 	//cout  << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "

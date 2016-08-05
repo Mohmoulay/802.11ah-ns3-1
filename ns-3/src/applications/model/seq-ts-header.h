@@ -51,6 +51,8 @@ public:
    */
   Time GetTs (void) const;
 
+  void SetTs (Time ts);
+
   /**
    * \brief Get the type ID.
    * \return the object TypeId
