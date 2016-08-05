@@ -115,6 +115,11 @@ TypeId S1gApWifiMac::GetTypeId(void) {
 					MakeTraceSourceAccessor(&S1gApWifiMac::m_packetToTransmitReceivedFromUpperLayer),
 					"ns3::S1gApWifiMac::PacketToTransmitReceivedFromUpperLayerCallback")
 
+					.AddAttribute ("MaxTimeInQueue", "The max. time a packet stays in the DCA queue before it's dropped",
+											   TimeValue (MilliSeconds(10000)),
+											   MakeTimeAccessor(&S1gApWifiMac::m_maxTimeInQueue),
+											   MakeTimeChecker ())
+
 
 					;
 
@@ -1020,8 +1025,7 @@ void S1gApWifiMac::DoInitialize(void) {
 		dca->TraceConnect("Collision", "", MakeCallback(&S1gApWifiMac::OnCollision, this));
 
 		// ensure queues don't expire too fast
-		Time entireCycle = m_beaconInterval * m_nrOfTIMGroups * 10;
-		dca->GetQueue()->SetMaxDelay(entireCycle);
+		dca->GetQueue()->SetMaxDelay(m_maxTimeInQueue);
 		dca->Initialize();
 
 

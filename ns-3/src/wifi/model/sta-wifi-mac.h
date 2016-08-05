@@ -279,6 +279,7 @@ private:
 
   S1gStrategy* strategy;
 
+  Time m_maxTimeInQueue;
 
   TracedCallback<bool> m_beaconMissed;
 

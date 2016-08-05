@@ -103,7 +103,10 @@ namespace ns3 {
                 MakeUintegerChecker<uint32_t> ())
                 .AddTraceSource("S1gBeaconBroadcasted", "Fired when a beacon is transmitted",
                 MakeTraceSourceAccessor(&ApWifiMac::m_transmitBeaconTrace),
-                "ns3::ApWifiMac::S1gBeaconTracedCallback");
+                "ns3::ApWifiMac::S1gBeaconTracedCallback")
+
+
+				;
 
         return tid;
     }

@@ -713,9 +713,15 @@ TcpSocketBase::Listen (void)
       return -1;
     }
   // In other cases, set the state to LISTEN and done
-  NS_LOG_DEBUG ("CLOSED -> LISTEN");
-  m_state = LISTEN;
+
+  DoStateChange(LISTEN);
   return 0;
+}
+
+
+void TcpSocketBase::DoStateChange(TcpStates_t newState) {
+	NS_LOG_DEBUG ("TCP State was changed: " << TcpStateName[m_state] << " -> " << TcpStateName[newState]);
+	m_state = newState;
 }
 
 /* Inherit from Socket class: Kill this socket and signal the peer (if any) */
@@ -766,13 +772,13 @@ TcpSocketBase::ShutdownSend (void)
 
           if (m_state == ESTABLISHED)
             { // On active close: I am the first one to send FIN
-              NS_LOG_DEBUG ("ESTABLISHED -> FIN_WAIT_1");
-              m_state = FIN_WAIT_1;
+              //NS_LOG_DEBUG ("ESTABLISHED -> FIN_WAIT_1");
+              DoStateChange(FIN_WAIT_1);
             }
           else
             { // On passive close: Peer sent me FIN already
-              NS_LOG_DEBUG ("CLOSE_WAIT -> LAST_ACK");
-              m_state = LAST_ACK;
+              //NS_LOG_DEBUG ("CLOSE_WAIT -> LAST_ACK");
+        	  DoStateChange(LAST_ACK);
             }
         }
     }
@@ -801,11 +807,13 @@ TcpSocketBase::Send (Ptr<Packet> p, uint32_t flags)
       // Store the packet into Tx buffer
       if (!m_txBuffer->Add (p))
         { // TxBuffer overflow, send failed
+    	  NS_LOG_DEBUG("Not sending packet, TX Overflow");
           m_errno = ERROR_MSGSIZE;
           return -1;
         }
       if (m_shutdownSend)
         {
+    	  NS_LOG_DEBUG("Not sending packet, shutdown was sent");
           m_errno = ERROR_SHUTDOWN;
           return -1;
         }
@@ -824,6 +832,7 @@ TcpSocketBase::Send (Ptr<Packet> p, uint32_t flags)
     }
   else
     { // Connection not established yet
+	  NS_LOG_DEBUG("Not sending packet, not connected");
       m_errno = ERROR_NOTCONN;
       return -1; // Send failure
     }
@@ -1023,8 +1032,8 @@ TcpSocketBase::DoConnect (void)
   if (m_state == CLOSED || m_state == LISTEN || m_state == SYN_SENT || m_state == LAST_ACK || m_state == CLOSE_WAIT)
     { // send a SYN packet and change state into SYN_SENT
       SendEmptyPacket (TcpHeader::SYN);
-      NS_LOG_DEBUG (TcpStateName[m_state] << " -> SYN_SENT");
-      m_state = SYN_SENT;
+      //NS_LOG_DEBUG (TcpStateName[m_state] << " -> SYN_SENT");
+      DoStateChange(SYN_SENT);
     }
   else if (m_state != TIME_WAIT)
     { // In states SYN_RCVD, ESTABLISHED, FIN_WAIT_1, FIN_WAIT_2, and CLOSING, an connection
@@ -1047,14 +1056,14 @@ TcpSocketBase::DoClose (void)
     case ESTABLISHED:
       // send FIN to close the peer
       SendEmptyPacket (TcpHeader::FIN);
-      NS_LOG_DEBUG ("ESTABLISHED -> FIN_WAIT_1");
-      m_state = FIN_WAIT_1;
+      //NS_LOG_DEBUG ("ESTABLISHED -> FIN_WAIT_1");
+      DoStateChange(FIN_WAIT_1);
       break;
     case CLOSE_WAIT:
       // send FIN+ACK to close the peer
       SendEmptyPacket (TcpHeader::FIN | TcpHeader::ACK);
-      NS_LOG_DEBUG ("CLOSE_WAIT -> LAST_ACK");
-      m_state = LAST_ACK;
+      //NS_LOG_DEBUG ("CLOSE_WAIT -> LAST_ACK");
+      DoStateChange(LAST_ACK);
       break;
     case SYN_SENT:
     case CLOSING:
@@ -1090,8 +1099,8 @@ TcpSocketBase::CloseAndNotify (void)
       m_closeNotified = true;
     }
 
-  NS_LOG_DEBUG (TcpStateName[m_state] << " -> CLOSED");
-  m_state = CLOSED;
+  //NS_LOG_DEBUG (TcpStateName[m_state] << " -> CLOSED");
+  DoStateChange(CLOSED);
   DeallocateEndPoint ();
 }
 
@@ -1721,8 +1730,8 @@ TcpSocketBase::ProcessSynSent (Ptr<Packet> packet, const TcpHeader& tcpHeader)
 
   if (tcpflags == 0)
     { // Bare data, accept it and move to ESTABLISHED state. This is not a normal behaviour. Remove this?
-      NS_LOG_DEBUG ("SYN_SENT -> ESTABLISHED");
-      m_state = ESTABLISHED;
+      //NS_LOG_DEBUG ("SYN_SENT -> ESTABLISHED");
+      DoStateChange(ESTABLISHED);
       m_connected = true;
       m_retxEvent.Cancel ();
       m_delAckCount = m_delAckMaxCount;
@@ -1734,8 +1743,8 @@ TcpSocketBase::ProcessSynSent (Ptr<Packet> packet, const TcpHeader& tcpHeader)
     }
   else if (tcpflags == TcpHeader::SYN)
     { // Received SYN, move to SYN_RCVD state and respond with SYN+ACK
-      NS_LOG_DEBUG ("SYN_SENT -> SYN_RCVD");
-      m_state = SYN_RCVD;
+      //NS_LOG_DEBUG ("SYN_SENT -> SYN_RCVD");
+      DoStateChange(SYN_RCVD);
       m_synCount = m_synRetries;
       m_rxBuffer->SetNextRxSequence (tcpHeader.GetSequenceNumber () + SequenceNumber32 (1));
       SendEmptyPacket (TcpHeader::SYN | TcpHeader::ACK);
@@ -1744,7 +1753,7 @@ TcpSocketBase::ProcessSynSent (Ptr<Packet> packet, const TcpHeader& tcpHeader)
            && m_nextTxSequence + SequenceNumber32 (1) == tcpHeader.GetAckNumber ())
     { // Handshake completed
       NS_LOG_DEBUG ("SYN_SENT -> ESTABLISHED");
-      m_state = ESTABLISHED;
+      DoStateChange(ESTABLISHED);
       m_connected = true;
       m_retxEvent.Cancel ();
       m_rxBuffer->SetNextRxSequence (tcpHeader.GetSequenceNumber () + SequenceNumber32 (1));
@@ -1785,8 +1794,8 @@ TcpSocketBase::ProcessSynRcvd (Ptr<Packet> packet, const TcpHeader& tcpHeader,
     { // If it is bare data, accept it and move to ESTABLISHED state. This is
       // possibly due to ACK lost in 3WHS. If in-sequence ACK is received, the
       // handshake is completed nicely.
-      NS_LOG_DEBUG ("SYN_RCVD -> ESTABLISHED");
-      m_state = ESTABLISHED;
+      //NS_LOG_DEBUG ("SYN_RCVD -> ESTABLISHED");
+      DoStateChange(ESTABLISHED);
       m_connected = true;
       m_retxEvent.Cancel ();
       m_highTxMark = ++m_nextTxSequence;
@@ -1879,8 +1888,8 @@ TcpSocketBase::ProcessWait (Ptr<Packet> packet, const TcpHeader& tcpHeader)
       if (m_state == FIN_WAIT_1 && m_txBuffer->Size () == 0
           && tcpHeader.GetAckNumber () == m_highTxMark + SequenceNumber32 (1))
         { // This ACK corresponds to the FIN sent
-          NS_LOG_DEBUG ("FIN_WAIT_1 -> FIN_WAIT_2");
-          m_state = FIN_WAIT_2;
+          //NS_LOG_DEBUG ("FIN_WAIT_1 -> FIN_WAIT_2");
+    	  DoStateChange(FIN_WAIT_2);
         }
     }
   else if (tcpflags == TcpHeader::FIN || tcpflags == (TcpHeader::FIN | TcpHeader::ACK))
@@ -1912,8 +1921,8 @@ TcpSocketBase::ProcessWait (Ptr<Packet> packet, const TcpHeader& tcpHeader)
     {
       if (m_state == FIN_WAIT_1)
         {
-          NS_LOG_DEBUG ("FIN_WAIT_1 -> CLOSING");
-          m_state = CLOSING;
+          //NS_LOG_DEBUG ("FIN_WAIT_1 -> CLOSING");
+          DoStateChange(CLOSING);
           if (m_txBuffer->Size () == 0
               && tcpHeader.GetAckNumber () == m_highTxMark + SequenceNumber32 (1))
             { // This ACK corresponds to the FIN sent
@@ -2029,8 +2038,8 @@ TcpSocketBase::PeerClose (Ptr<Packet> p, const TcpHeader& tcpHeader)
   // Simultaneous close: Application invoked Close() when we are processing this FIN packet
   if (m_state == FIN_WAIT_1)
     {
-      NS_LOG_DEBUG ("FIN_WAIT_1 -> CLOSING");
-      m_state = CLOSING;
+      //NS_LOG_DEBUG ("FIN_WAIT_1 -> CLOSING");
+      DoStateChange(CLOSING);
       return;
     }
 
@@ -2044,8 +2053,8 @@ TcpSocketBase::DoPeerClose (void)
   NS_ASSERT (m_state == ESTABLISHED || m_state == SYN_RCVD);
 
   // Move the state to CLOSE_WAIT
-  NS_LOG_DEBUG (TcpStateName[m_state] << " -> CLOSE_WAIT");
-  m_state = CLOSE_WAIT;
+  //NS_LOG_DEBUG (TcpStateName[m_state] << " -> CLOSE_WAIT");
+  DoStateChange(CLOSE_WAIT);
 
   if (!m_closeNotified)
     {
@@ -2363,8 +2372,8 @@ TcpSocketBase::CompleteFork (Ptr<Packet> p, const TcpHeader& h,
   m_tcp->AddSocket (this);
 
   // Change the cloned socket from LISTEN state to SYN_RCVD
-  NS_LOG_DEBUG ("LISTEN -> SYN_RCVD");
-  m_state = SYN_RCVD;
+  //NS_LOG_DEBUG ("LISTEN -> SYN_RCVD");
+  DoStateChange(SYN_RCVD);
   m_synCount = m_synRetries;
   m_dataRetrCount = m_dataRetries;
   SetupCallback ();
@@ -2451,13 +2460,13 @@ TcpSocketBase::SendDataPacket (SequenceNumber32 seq, uint32_t maxSize, bool with
       flags |= TcpHeader::FIN;
       if (m_state == ESTABLISHED)
         { // On active close: I am the first one to send FIN
-          NS_LOG_DEBUG ("ESTABLISHED -> FIN_WAIT_1");
-          m_state = FIN_WAIT_1;
+          //NS_LOG_DEBUG ("ESTABLISHED -> FIN_WAIT_1");
+          DoStateChange(FIN_WAIT_1);
         }
       else if (m_state == CLOSE_WAIT)
         { // On passive close: Peer sent me FIN already
-          NS_LOG_DEBUG ("CLOSE_WAIT -> LAST_ACK");
-          m_state = LAST_ACK;
+          //NS_LOG_DEBUG ("CLOSE_WAIT -> LAST_ACK");
+          DoStateChange(LAST_ACK);
         }
     }
   TcpHeader header;
@@ -2486,6 +2495,7 @@ TcpSocketBase::SendDataPacket (SequenceNumber32 seq, uint32_t maxSize, bool with
           // RFC 6298, clause 2.5
           Time doubledRto = m_rto + m_rto;
           m_rto = Min (doubledRto, Time::FromDouble (60,  Time::S));
+          NS_LOG_LOGIC("Packet is retransmissions, doubling RTO to " << m_rto.Get().GetMicroSeconds() << "µs");
         }
 
       NS_LOG_LOGIC (this << " SendDataPacket Schedule ReTxTimeout at time " <<
@@ -2559,6 +2569,7 @@ TcpSocketBase::SendPendingData (bool withAck)
   NS_LOG_FUNCTION (this << withAck);
   if (m_txBuffer->Size () == 0)
     {
+	  NS_LOG_DEBUG("Not executing pending data, TX buffer is empty");
       return false;                           // Nothing to send
     }
   if (m_endPoint == 0 && m_endPoint6 == 0)
@@ -2571,8 +2582,11 @@ TcpSocketBase::SendPendingData (bool withAck)
     {
       uint32_t w = AvailableWindow (); // Get available window size
       // Stop sending if we need to wait for a larger Tx window (prevent silly window syndrome)
-      if (w < m_tcb->m_segmentSize && m_txBuffer->SizeFromSequence (m_nextTxSequence) > w)
+
+      auto size = m_txBuffer->SizeFromSequence (m_nextTxSequence);
+      if (w < m_tcb->m_segmentSize &&  size > w)
         {
+    	  NS_LOG_DEBUG("Silly window check: nextTxSequence=" << m_nextTxSequence << ", size=" << size << ", w=" << w);
           NS_LOG_LOGIC ("Preventing Silly Window Syndrome. Wait to send.");
           break; // No more
         }
@@ -3012,6 +3026,7 @@ TcpSocketBase::DoRetransmit ()
     {
       NS_LOG_INFO ("No more data retries available. Dropping connection");
       NotifyErrorClose ();
+      DoStateChange(TcpStates_t::CLOSED);
       DeallocateEndPoint ();
       return;
     }
@@ -3055,8 +3070,8 @@ TcpSocketBase::CancelAllTimers ()
 void
 TcpSocketBase::TimeWait ()
 {
-  NS_LOG_DEBUG (TcpStateName[m_state] << " -> TIME_WAIT");
-  m_state = TIME_WAIT;
+  //NS_LOG_DEBUG (TcpStateName[m_state] << " -> TIME_WAIT");
+  DoStateChange(TIME_WAIT);
   CancelAllTimers ();
   // Move from TIME_WAIT to CLOSED after 2*MSL. Max segment lifetime is 2 min
   // according to RFC793, p.28

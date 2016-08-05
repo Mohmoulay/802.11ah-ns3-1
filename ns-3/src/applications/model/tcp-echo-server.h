@@ -24,6 +24,7 @@
 #include "ns3/ptr.h"
 #include "ns3/address.h"
 #include "ns3/traced-callback.h"
+#include "ns3/tcp-socket.h"
 
 namespace ns3 {
 
@@ -95,12 +96,17 @@ private:
 
   void OnRetransmission(Address a);
 
+  void OnTCPStateChanged(TcpSocket::TcpStates_t oldVal,TcpSocket::TcpStates_t newVal);
+
   Ptr<Socket> m_socket;
   uint16_t m_port;
   bool m_running;
 
   TracedCallback<Ptr<const Packet>, Address> m_packetReceived;
   TracedCallback<Address> m_retransmission;
+
+  TracedCallback<TcpSocket::TcpStates_t,TcpSocket::TcpStates_t> m_tcpStateChanged;
+
 
 };
 

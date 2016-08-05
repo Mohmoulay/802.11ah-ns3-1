@@ -103,6 +103,7 @@ WifiMacQueue::Enqueue (Ptr<const Packet> packet, const WifiMacHeader &hdr)
   Cleanup ();
   if (m_size == m_maxSize)
     {
+	  std::cout << "DROPPING PACKET FROM WIFI MAC QUEUE " << std::endl;
 	  m_packetdropped(packet->Copy(), DropReason::MacQueueSizeExceeded);
       return;
     }
@@ -280,6 +281,8 @@ WifiMacQueue::PushFront (Ptr<const Packet> packet, const WifiMacHeader &hdr)
   Cleanup ();
   if (m_size == m_maxSize)
     {
+	  m_packetdropped(packet->Copy(), DropReason::MacQueueSizeExceeded);
+
       return;
     }
   Time now = Simulator::Now ();

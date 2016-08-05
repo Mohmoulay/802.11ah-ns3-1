@@ -64,6 +64,9 @@ struct Configuration {
 	uint16_t trafficPacketSize = 100;
 	string trafficType = "tcpecho";
 
+
+	uint16_t MaxTimeOfPacketsInQueue = 100;
+
 	Configuration();
 	Configuration(int argc, char** argv);
 

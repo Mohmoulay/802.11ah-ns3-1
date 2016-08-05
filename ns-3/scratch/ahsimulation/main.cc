@@ -148,7 +148,8 @@ void configureSTANodes(Ssid& ssid) {
     mac.SetType("ns3::StaWifiMac",
             "Ssid", SsidValue(ssid),
             "ActiveProbing", BooleanValue(false),
-			"MaxMissedBeacons", UintegerValue (10 *config.NGroup));
+			"MaxMissedBeacons", UintegerValue (10 *config.NGroup),
+			"MaxTimeInQueue", TimeValue(Seconds(config.MaxTimeOfPacketsInQueue)));
 
     // create wifi
     WifiHelper wifi = WifiHelper::Default();
@@ -254,7 +255,8 @@ void configureAPNode(Ssid& ssid) {
             "SlotDurationCount", UintegerValue(config.NRawSlotCount),
             "SlotNum", UintegerValue(config.NRawSlotNum),
 			"ScheduleTransmissionForNextSlotIfLessThan", TimeValue(MicroSeconds(config.APScheduleTransmissionForNextSlotIfLessThan)),
-			"AlwaysScheduleForNextSlot", BooleanValue(config.APAlwaysSchedulesForNextSlot));
+			"AlwaysScheduleForNextSlot", BooleanValue(config.APAlwaysSchedulesForNextSlot),
+			"MaxTimeInQueue", TimeValue(Seconds(config.MaxTimeOfPacketsInQueue)));
 
     // setup physical layer
     YansWifiPhyHelper phy = YansWifiPhyHelper::Default();
@@ -393,6 +395,10 @@ void tcpRetransmissionAtServer(Address to) {
 		cout << "*** Node could not be determined from received packet at AP " << endl;
 }
 
+void tcpStateChangeAtServer(TcpSocket::TcpStates_t oldState, TcpSocket::TcpStates_t newState) {
+	cout << "********** TCP SERVER SOCKET STATE CHANGED FROM " << oldState << " TO " << newState << endl;
+}
+
 /*void udpPacketReceivedAtClient(Ptr<const Packet> packet, Address from) {
     int apId = -1;
     for (int i = 0; i < apNodeInterfaces.GetN(); i++) {
@@ -430,6 +436,9 @@ void configureTCPEchoServer() {
 	serverApp = myServer.Install(apNodes);
 	serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&tcpPacketReceivedAtServer));
 	serverApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&tcpRetransmissionAtServer));
+	serverApp.Get(0)->TraceConnectWithoutContext("TCPStateChanged", MakeCallback(&tcpStateChangeAtServer));
+
+
 	serverApp.Start(Seconds(0));
 }
 

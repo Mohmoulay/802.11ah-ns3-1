@@ -246,6 +246,8 @@ private:
   EventId m_beaconEvent;                     //!< Event to generate one beacon
   Ptr<UniformRandomVariable> m_beaconJitter; //!< UniformRandomVariable used to randomize the time of the first beacon
   bool m_enableBeaconJitter;                 //!< Flag if the first beacon should be generated at random time
+
+
 };
 
 } //namespace ns3

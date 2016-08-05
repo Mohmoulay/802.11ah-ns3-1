@@ -16,6 +16,8 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("NRawSlotNum", "number of slots per RAW", NRawSlotNum);
     cmd.AddValue("NGroup", "number of RAW group", NGroup);
 
+    cmd.AddValue("MaxTimeOfPacketsInQueue", "Max nr of seconds packets can remain in the DCA queue", MaxTimeOfPacketsInQueue);
+
     cmd.AddValue("BeaconInterval", "Beacon interval time in us", BeaconInterval);
     cmd.AddValue("APAlwaysSchedulesForNextSlot", "AP Always schedules for next slot (true/false)", APAlwaysSchedulesForNextSlot);
     cmd.AddValue("APScheduleTransmissionForNextSlotIfLessThan", "AP schedules transmission for next slot if slot time is less than (microseconds)", APScheduleTransmissionForNextSlotIfLessThan);

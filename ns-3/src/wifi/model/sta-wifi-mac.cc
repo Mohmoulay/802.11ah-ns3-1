@@ -84,6 +84,12 @@ StaWifiMac::GetTypeId (void)
                    MakeTimeAccessor (&StaWifiMac::GetRawDuration,
                                      &StaWifiMac::SetRawDuration),
                    MakeTimeChecker ())
+
+	.AddAttribute ("MaxTimeInQueue", "The max. time a packet stays in the DCA queue before it's dropped",
+				   TimeValue (MilliSeconds(10000)),
+				   MakeTimeAccessor(&StaWifiMac::m_maxTimeInQueue),
+				   MakeTimeChecker ())
+
     .AddAttribute ("MaxMissedBeacons",
                    "Number of beacons which much be consecutively missed before "
                    "we attempt to restart association.",
@@ -518,6 +524,7 @@ StaWifiMac::Enqueue (Ptr<const Packet> packet, Mac48Address to)
   NS_LOG_FUNCTION (this << packet << to);
   if (!IsAssociated ())
     {
+	  std::cout << "NOT ASSOCIATED" << std::endl;
       NotifyTxDrop (packet);
       TryToEnsureAssociated ();
       return;
@@ -580,7 +587,7 @@ StaWifiMac::Enqueue (Ptr<const Packet> packet, Mac48Address to)
     }
   else
     {
-	  //m_dca->DEBUG_TRACK_PACKETS = true;
+	 // m_dca->DEBUG_TRACK_PACKETS = true;
       m_dca->Queue (packet, hdr);
     }
 }
@@ -849,10 +856,9 @@ StaWifiMac::EnsureBackoffDoesNotExceedRAWSlot(S1gBeaconHeader& beacon) {
 
 void
 StaWifiMac::EnsureQueuesKeepDataLongEnough(S1gBeaconHeader& beacon) {
-	Time entireCycle = MicroSeconds(beacon.GetTIM().GetDTIMPeriod() * beacon.GetBeaconCompatibility().GetBeaconInterval());
+//	Time entireCycle = MicroSeconds(beacon.GetTIM().GetDTIMPeriod() * beacon.GetBeaconCompatibility().GetBeaconInterval());
 
-	// TODO make this an attribute instead of magic number
-	Time duration = entireCycle * 10;
+	Time duration = m_maxTimeInQueue; //entireCycle * 10;
 	m_dca->GetQueue()->SetMaxDelay(duration);
 	m_edca.find (AC_VO)->second->GetEdcaQueue()->SetMaxDelay(duration);
 	m_edca.find (AC_VI)->second->GetEdcaQueue()->SetMaxDelay(duration);

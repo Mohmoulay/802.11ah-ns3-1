@@ -53,6 +53,11 @@ TcpEchoServer::GetTypeId (void)
 						  MakeTraceSourceAccessor (&TcpEchoServer::m_retransmission),
 						  "ns3::TcpEchoServer::RetransmissionCallBack")
 
+	  .AddTraceSource ("TCPStateChanged",
+						 "TCP state changed",
+						 MakeTraceSourceAccessor (&TcpEchoServer::m_tcpStateChanged),
+						 "ns3::TcpStatesTracedValueCallback")
+
   ;
   return tid;
 }
@@ -107,6 +112,11 @@ void TcpEchoServer::OnRetransmission(Address a) {
 }
 
 
+void TcpEchoServer::OnTCPStateChanged(TcpSocket::TcpStates_t oldVal,TcpSocket::TcpStates_t newVal) {
+	m_tcpStateChanged(oldVal, newVal);
+}
+
+
 void
 TcpEchoServer::StopApplication ()
 {
@@ -154,6 +164,7 @@ void TcpEchoServer::HandleAccept (Ptr<Socket> s, const Address& from)
   NS_LOG_FUNCTION (this << s << from);
 
   s->TraceConnectWithoutContext("Retransmission", MakeCallback(&TcpEchoServer::OnRetransmission, this));
+  s->TraceConnectWithoutContext("State", MakeCallback(&TcpEchoServer::OnTCPStateChanged, this));
 
   s->SetRecvCallback (MakeCallback (&TcpEchoServer::ReceivePacket, this));
   s->SetCloseCallbacks(MakeCallback (&TcpEchoServer::HandleSuccessClose, this),

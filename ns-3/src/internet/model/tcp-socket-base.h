@@ -441,7 +441,7 @@ protected:
   virtual bool     SetAllowBroadcast (bool allowBroadcast);
   virtual bool     GetAllowBroadcast (void) const;
 
-
+  virtual void DoStateChange(TcpStates_t newState);
 
   // Helper functions: Connection set up
 
@@ -955,7 +955,7 @@ protected:
   Ptr<TcpTxBuffer>              m_txBuffer;       //!< Tx buffer
 
   // State-related attributes
-  TracedValue<TcpStates_t> m_state;         //!< TCP state
+
   mutable enum SocketErrno m_errno;         //!< Socket error code
   bool                     m_closeNotified; //!< Told app to close socket
   bool                     m_closeOnEmpty;  //!< Close socket upon tx buffer emptied
@@ -1004,6 +1004,9 @@ protected:
                  Ptr<const TcpSocketBase> > m_rxTrace; //!< Trace of received packets
 
   TracedCallback<Address> m_retransmission;
+
+private:
+  TracedValue<TcpStates_t> m_state;         //!< TCP state
 
 };
 

@@ -294,6 +294,8 @@ private:
   bool m_enableBeaconJitter;                 //!< Flag if the first beacon should be generated at random time
 
   Time m_scheduleTransmissionForNextSlotIfLessThan;
+
+  Time m_maxTimeInQueue;
 };
 
 } //namespace ns3
