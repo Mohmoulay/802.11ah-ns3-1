@@ -116,51 +116,64 @@ var Program = (function () {
                 for (var _i = 0, _a = data.simulations; _i < _a.length; _i++) {
                     var stream = _a[_i];
                     _this.activeSocketManager.addSocket(stream, sock);
-                    if (stream == "live") {
-                        for (var _b = 0, _c = _this.liveSimulationInitializationLines; _b < _c.length; _b++) {
-                            var initLine = _c[_b];
-                            sock.emit("entry", new Entry("live", initLine));
-                        }
-                    }
-                    else {
-                        _this.sendSimulationToSocket(stream, sock);
-                    }
                 }
+                _this.sendSimulations(data.simulations, sock);
             });
         });
     };
-    Program.prototype.sendSimulationToSocket = function (stream, sock) {
-        var filename = stream + ".nss";
-        if (!fs.existsSync(this.getPathForSimulationName(filename))) {
-            sock.emit("fileerror", "Simulation file " + stream + " not found");
-            return;
+    Program.prototype.sendSimulations = function (streams, sock) {
+        var _this = this;
+        var i = 0;
+        // send each subscription 1 by 1 in series to prevent overloading the socket
+        var func = function () {
+            if (i < streams.length)
+                _this.sendSimulationToSocket(streams[i], sock, function () { return func(); });
+            i++;
+        };
+        func();
+    };
+    Program.prototype.sendSimulationToSocket = function (stream, sock, onDone) {
+        if (stream == "live") {
+            for (var _i = 0, _a = this.liveSimulationInitializationLines; _i < _a.length; _i++) {
+                var initLine = _a[_i];
+                sock.emit("entry", new Entry("live", initLine));
+            }
+            onDone();
         }
-        var instream = fs.createReadStream(this.getPathForSimulationName(filename));
-        var outstream = new (require('stream'))();
-        var rl = readline.createInterface(instream, outstream);
-        var lines = [];
-        rl.on('line', function (line) {
-            //console.log("Writing entry for " + stream + ": " + line);
-            rl.pause();
-            try {
-                lines.push(line);
-                if (lines.length > 1000) {
-                    sock.compress(true).emit("bulkentry", new Entries(stream, lines));
-                    lines = [];
+        else {
+            var filename = stream + ".nss";
+            if (!fs.existsSync(this.getPathForSimulationName(filename))) {
+                sock.emit("fileerror", "Simulation file " + stream + " not found");
+                return;
+            }
+            var instream = fs.createReadStream(this.getPathForSimulationName(filename));
+            var outstream = new (require('stream'))();
+            var rl = readline.createInterface(instream, outstream);
+            var lines = [];
+            rl.on('line', function (line) {
+                //console.log("Writing entry for " + stream + ": " + line);
+                rl.pause();
+                try {
+                    lines.push(line);
+                    if (lines.length > 1000) {
+                        sock.compress(true).emit("bulkentry", new Entries(stream, lines));
+                        lines = [];
+                    }
                 }
-            }
-            finally {
-                setTimeout(function () {
-                    rl.resume();
-                }, 100); // wait a bit to not overload the client
-            }
-            //sock.emit("entry",new Entry(stream, line));
-        });
-        rl.on('close', function () {
-            // send remainder
-            sock.emit("bulkentry", new Entries(stream, lines));
-            lines = [];
-        });
+                finally {
+                    setTimeout(function () {
+                        rl.resume();
+                    }, 50); // wait a bit to not overload the client
+                }
+                //sock.emit("entry",new Entry(stream, line));
+            });
+            rl.on('close', function () {
+                // send remainder
+                sock.emit("bulkentry", new Entries(stream, lines));
+                lines = [];
+                onDone();
+            });
+        }
     };
     /**
    * Fired when the client has received data. Append the received data to the buffer
