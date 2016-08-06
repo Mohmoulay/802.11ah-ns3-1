@@ -10,3 +10,6 @@ Visit the wiki for more details:
 * [Overview of the project structure](../../wiki/Overall-project-structure)
 
 * [Step by step guide to add extra metrics](../../wiki/Adding-extra-statistics) 
+
+
+![](http://i.imgur.com/bbrpIRO.png)
