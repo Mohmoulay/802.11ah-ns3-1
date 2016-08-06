@@ -5,8 +5,8 @@ This repository hosts an implementation of the IEEE802.11ah (Wi-Fi HaLow) protoc
 
 Visit the wiki for more details:
 
-* [Running a simulation with visualization](wiki/Running-a-simulation)
+* [Running a simulation with visualization](../../wiki/Running-a-simulation)
 
-* [Overview of the project structure](wiki/Overall-project-structure)
+* [Overview of the project structure](../../wiki/Overall-project-structure)
 
-* [Step by step guide to add extra metrics](wiki/Adding-extra-statistics) 
+* [Step by step guide to add extra metrics](../../wiki/Adding-extra-statistics) 
