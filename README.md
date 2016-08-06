@@ -13,3 +13,7 @@ Visit the wiki for more details:
 
 
 ![](http://i.imgur.com/bbrpIRO.png)
+
+Based on original implementation by
+> Le Tian, Steven Latre, Jeroen Famaey. An IEEE 802.11ah simulation module for NS-3. University of Antwerp technical report, 2016, 
+> Retrieved from https://www.uantwerpen.be/en/rg/mosaic/projects/ieee-802-11ah/.
