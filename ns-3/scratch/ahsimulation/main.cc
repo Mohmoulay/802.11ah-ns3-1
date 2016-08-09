@@ -171,7 +171,7 @@ void configureSTANodes(Ssid& ssid) {
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(staNodes);
 
-    //phy.EnablePcap("stafile", staNodes, 0);
+//    phy.EnablePcap("stafile", staNodes, 0);
 }
 
 void OnAPPhyRxBegin(std::string context, Ptr<const Packet> packet) {
@@ -437,7 +437,6 @@ void configureUDPEchoServer() {
     serverApp.Start(Seconds(0));
 }
 
-
 void configureTCPEchoServer() {
 	TcpEchoServerHelper myServer(80);
 	serverApp = myServer.Install(apNodes);
@@ -447,6 +446,65 @@ void configureTCPEchoServer() {
 
 
 	serverApp.Start(Seconds(0));
+}
+
+
+void configureTCPPingPongServer() {
+	// TCP ping pong is a test for the new base tcp-client and tcp-server applications
+	ObjectFactory factory;
+	factory.SetTypeId (TCPPingPongServer::GetTypeId ());
+	factory.Set("Port", UintegerValue (80));
+
+	Ptr<Application> tcpServer = factory.Create<TCPPingPongServer>();
+	apNodes.Get(0)->AddApplication(tcpServer);
+
+	auto serverApp = ApplicationContainer(tcpServer);
+	serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&tcpPacketReceivedAtServer));
+	serverApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&tcpRetransmissionAtServer));
+	serverApp.Get(0)->TraceConnectWithoutContext("TCPStateChanged", MakeCallback(&tcpStateChangeAtServer));
+	serverApp.Start(Seconds(0));
+}
+
+void configureTCPPingPongClients() {
+
+	ObjectFactory factory;
+	factory.SetTypeId (TCPPingPongClient::GetTypeId ());
+	factory.Set("Interval", TimeValue(MilliSeconds(config.trafficInterval)));
+	factory.Set("PacketSize", UintegerValue(config.trafficPacketSize));
+
+	factory.Set("RemoteAddress", Ipv4AddressValue (apNodeInterfaces.GetAddress(0)));
+	factory.Set("RemotePort", UintegerValue (80));
+
+	Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable> ();
+
+	for (uint16_t i = 0; i < config.Nsta; i++) {
+
+		Ptr<Application> tcpClient = factory.Create<TCPPingPongClient>();
+		staNodes.Get(i)->AddApplication(tcpClient);
+		auto clientApp = ApplicationContainer(tcpClient);
+		wireTCPClient(clientApp,i);
+
+		double random = m_rv->GetValue(0, config.trafficInterval);
+		clientApp.Start(MilliSeconds(0+random));
+		//clientApp.Stop(Seconds(simulationTime + 1));
+	}
+}
+
+
+
+void wireTCPClient(ApplicationContainer clientApp, int i) {
+
+	clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnTcpPacketSent, nodes[i]));
+	clientApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&NodeEntry::OnTcpEchoPacketReceived, nodes[i]));
+
+	clientApp.Get(0)->TraceConnectWithoutContext("CongestionWindow", MakeCallback(&NodeEntry::OnTcpCongestionWindowChanged, nodes[i]));
+	clientApp.Get(0)->TraceConnectWithoutContext("RTO", MakeCallback(&NodeEntry::OnTcpRTOChanged, nodes[i]));
+	clientApp.Get(0)->TraceConnectWithoutContext("RTT", MakeCallback(&NodeEntry::OnTcpRTTChanged, nodes[i]));
+	clientApp.Get(0)->TraceConnectWithoutContext("SlowStartThreshold", MakeCallback(&NodeEntry::OnTcpSlowStartThresholdChanged, nodes[i]));
+	clientApp.Get(0)->TraceConnectWithoutContext("EstimatedBW", MakeCallback(&NodeEntry::OnTcpEstimatedBWChanged, nodes[i]));
+
+	clientApp.Get(0)->TraceConnectWithoutContext("TCPStateChanged", MakeCallback(&NodeEntry::OnTcpStateChanged, nodes[i]));
+	clientApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&NodeEntry::OnTcpRetransmission, nodes[i]));
 }
 
 void configureTCPEchoClients() {
@@ -460,19 +518,7 @@ void configureTCPEchoClients() {
 
 	for (uint16_t i = 0; i < config.Nsta; i++) {
 		ApplicationContainer clientApp = clientHelper.Install(staNodes.Get(i));
-		clientApp.Get(0)->TraceConnectWithoutContext("Tx", MakeCallback(&NodeEntry::OnTcpPacketSent, nodes[i]));
-		clientApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&NodeEntry::OnTcpEchoPacketReceived, nodes[i]));
-
-		clientApp.Get(0)->TraceConnectWithoutContext("CongestionWindow", MakeCallback(&NodeEntry::OnTcpCongestionWindowChanged, nodes[i]));
-		clientApp.Get(0)->TraceConnectWithoutContext("RTO", MakeCallback(&NodeEntry::OnTcpRTOChanged, nodes[i]));
-		clientApp.Get(0)->TraceConnectWithoutContext("RTT", MakeCallback(&NodeEntry::OnTcpRTTChanged, nodes[i]));
-		clientApp.Get(0)->TraceConnectWithoutContext("SlowStartThreshold", MakeCallback(&NodeEntry::OnTcpSlowStartThresholdChanged, nodes[i]));
-		clientApp.Get(0)->TraceConnectWithoutContext("EstimatedBW", MakeCallback(&NodeEntry::OnTcpEstimatedBWChanged, nodes[i]));
-
-		clientApp.Get(0)->TraceConnectWithoutContext("TCPStateChanged", MakeCallback(&NodeEntry::OnTcpStateChanged, nodes[i]));
-		clientApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&NodeEntry::OnTcpRetransmission, nodes[i]));
-
-
+		wireTCPClient(clientApp,i);
 
 		double random = m_rv->GetValue(0, config.trafficInterval);
 		clientApp.Start(MilliSeconds(0+random));
@@ -552,6 +598,10 @@ void onSTAAssociated(int i) {
 			configureTCPEchoServer();
 			configureTCPEchoClients();
     	}
+    	else if(config.trafficType == "tcppingpong") {
+    		configureTCPPingPongServer();
+			configureTCPPingPongClients();
+		}
 
         updateNodesQueueLength();
     }

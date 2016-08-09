@@ -23,6 +23,9 @@
 #include "Statistics.h"
 #include "SimulationEventManager.h"
 
+#include "TCPPingPongClient.h"
+#include "TCPPingPongServer.h"
+
 using namespace std;
 using namespace ns3;
 
@@ -63,16 +66,18 @@ void configureIPStack();
 void configureNodes();
 
 void configureUDPServer();
-
 void configureUDPClients();
 
 void configureUDPEchoClients();
-
 void configureUDPEchoServer();
 
 void configureTCPEchoClients();
-
 void configureTCPEchoServer();
+
+void configureTCPPingPongServer();
+void configureTCPPingPongClients();
+
+void wireTCPClient(ApplicationContainer clientApp, int i);
 
 
 void onSTAAssociated(int i);
@@ -90,3 +95,4 @@ int main(int argc, char** argv);
 void printStatistics();
 
 void sendStatistics();
+
