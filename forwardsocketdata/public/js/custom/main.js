@@ -405,9 +405,9 @@ var Charting = (function () {
         if (canUpdateIncremental) {
             for (var s = 0; s < simulations.length; s++) {
                 for (var i_5 = 0; i_5 < seriesAverages[s].length; i_5++) {
-                    this.simGUI.currentChart.series[showAreas ? s * 2 : s].addPoint(seriesAverages[s][i_5], false, false);
+                    this.simGUI.currentChart.series[showAreas ? s * 2 : s].addPoint(seriesAverages[s][i_5], false, false, false);
                     if (showAreas)
-                        this.simGUI.currentChart.series[s * 2 + 1].addPoint(seriesRanges[s][i_5], false, false);
+                        this.simGUI.currentChart.series[s * 2 + 1].addPoint(seriesRanges[s][i_5], false, false, false);
                 }
             }
             this.simGUI.currentChart.redraw(false);

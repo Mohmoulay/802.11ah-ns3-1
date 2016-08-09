@@ -388,9 +388,9 @@ class Charting {
 
             for (let s = 0; s < simulations.length; s++) {
                 for (let i = 0; i < seriesAverages[s].length; i++) {
-                    this.simGUI.currentChart.series[showAreas ? s * 2 : s].addPoint(seriesAverages[s][i], false, false);
+                    this.simGUI.currentChart.series[showAreas ? s * 2 : s].addPoint(seriesAverages[s][i], false, false, false);
                     if (showAreas)
-                        this.simGUI.currentChart.series[s * 2 + 1].addPoint(seriesRanges[s][i], false, false);
+                        this.simGUI.currentChart.series[s * 2 + 1].addPoint(seriesRanges[s][i], false, false, false);
                 }
             }
             this.simGUI.currentChart.redraw(false);

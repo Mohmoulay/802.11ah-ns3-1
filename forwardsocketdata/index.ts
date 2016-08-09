@@ -135,57 +135,70 @@ export class Program {
             sock.on("subscribe", (data: ISubscriptionRequest) => {
 
                 console.log("subscription request " + data.simulations);
-                for (let stream of data.simulations) {
+                for (let stream of data.simulations)
                     this.activeSocketManager.addSocket(stream, sock);
 
-                    if (stream == "live") {
-                        for (let initLine of this.liveSimulationInitializationLines)
-                            sock.emit("entry", new Entry("live", initLine));
-                    } else {
-                        this.sendSimulationToSocket(stream, sock);
-                    }
-                }
-            })
-
+                this.sendSimulations(data.simulations, sock);
+            });
         });
     }
 
-    sendSimulationToSocket(stream: string, sock: SocketIO.Socket) {
-        let filename = stream + ".nss";
-        if (!fs.existsSync(this.getPathForSimulationName(filename))) {
-            sock.emit("fileerror", "Simulation file " + stream + " not found");
-            return;
+    sendSimulations(streams: string[], sock: SocketIO.Socket) {
+        let i = 0;
+        // send each subscription 1 by 1 in series to prevent overloading the socket
+        var func = () => {
+            if (i < streams.length)
+                this.sendSimulationToSocket(streams[i], sock, () => func());
+            i++;
+        };
+        func();
+    }
+
+    sendSimulationToSocket(stream: string, sock: SocketIO.Socket, onDone: Function) {
+        if (stream == "live") {
+            for (let initLine of this.liveSimulationInitializationLines)
+                sock.emit("entry", new Entry("live", initLine));
+            onDone();
         }
+        else {
+            let filename = stream + ".nss";
+            if (!fs.existsSync(this.getPathForSimulationName(filename))) {
+                sock.emit("fileerror", "Simulation file " + stream + " not found");
+                return;
+            }
 
-        var instream = fs.createReadStream(this.getPathForSimulationName(filename));
-        var outstream = new (require('stream'))();
-        var rl = readline.createInterface(instream, outstream);
+            var instream = fs.createReadStream(this.getPathForSimulationName(filename));
+            var outstream = new (require('stream'))();
+            var rl = readline.createInterface(instream, outstream);
 
-        var lines = [];
-        rl.on('line', function (line) {
-            //console.log("Writing entry for " + stream + ": " + line);
+            var lines = [];
+            rl.on('line', function (line) {
+                //console.log("Writing entry for " + stream + ": " + line);
 
-            rl.pause();
-            try {
-                lines.push(line);
-                if (lines.length > 1000) {
-                    sock.compress(true).emit("bulkentry", new Entries(stream, lines));
-                    lines = [];
+                rl.pause();
+                try {
+                    lines.push(line);
+                    if (lines.length > 1000) {
+                        sock.compress(true).emit("bulkentry", new Entries(stream, lines));
+                        lines = [];
+                    }
                 }
-            }
-            finally {
-                setTimeout(function () {
-                    rl.resume();
-                }, 100); // wait a bit to not overload the client
-            }
-            //sock.emit("entry",new Entry(stream, line));
-        });
+                finally {
+                    setTimeout(function () {
+                        rl.resume();
+                    }, 50); // wait a bit to not overload the client
+                }
+                //sock.emit("entry",new Entry(stream, line));
+            });
 
-        rl.on('close', function () {
-            // send remainder
-            sock.emit("bulkentry", new Entries(stream, lines));
-            lines = [];
-        });
+            rl.on('close', function () {
+                // send remainder
+                sock.emit("bulkentry", new Entries(stream, lines));
+                lines = [];
+
+                onDone();
+            });
+        }
     }
 
 
