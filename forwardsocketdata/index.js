@@ -127,8 +127,10 @@ var Program = (function () {
         // send each subscription 1 by 1 in series to prevent overloading the socket
         var func = function () {
             if (i < streams.length)
-                _this.sendSimulationToSocket(streams[i], sock, function () { return func(); });
-            i++;
+                _this.sendSimulationToSocket(streams[i], sock, function () {
+                    i++;
+                    func();
+                });
         };
         func();
     };
