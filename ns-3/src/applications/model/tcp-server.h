@@ -27,6 +27,7 @@
 #include "ns3/tcp-socket.h"
 #include <map>
 #include <queue>
+#include "ns3/drop-reason.h"
 
 namespace ns3 {
 
@@ -55,6 +56,10 @@ public:
 
 	typedef void (* TCPStateChangedCallBack)
 			(TcpSocket::TcpStates_t oldVal,TcpSocket::TcpStates_t newVal, Address address);
+
+	  typedef void (* PacketDroppedCallback)
+	                      (Address to, Ptr<Packet> packet, DropReason reason);
+
 
 
   static TypeId GetTypeId (void);
@@ -100,6 +105,7 @@ private:
 
   TracedCallback<Ptr<const Packet>, Address> m_packetReceived;
   TracedCallback<Address> m_retransmission;
+  TracedCallback<Address, Ptr<Packet>, DropReason> m_packetdropped;
 
   TracedCallback<TcpSocket::TcpStates_t,TcpSocket::TcpStates_t, Address> m_tcpStateChanged;
 

@@ -57,6 +57,11 @@ TypeId TcpClient::GetTypeId(void) {
 			MakeTraceSourceAccessor(&TcpClient::m_retransmission),
 			"ns3::TcpClient::RetransmissionCallBack")
 
+	.AddTraceSource("PacketDropped",
+			"Occurs when a packet is dropped",
+			MakeTraceSourceAccessor(&TcpClient::m_packetdropped),
+			"ns3::TcpClient::PacketDroppedCallback")
+
 	.AddTraceSource("TCPStateChanged", "TCP state changed",
 			MakeTraceSourceAccessor(&TcpClient::m_tcpStateChanged),
 			"ns3::TcpStatesTracedValueCallback")
@@ -203,9 +208,16 @@ void TcpClient::Send(uint8_t* data, int size) {
 	// so that tags added to the packet can be sent as well
 	m_txTrace(p);
 
-	m_socket->Send(p);
+	int retVal = m_socket->Send(p);
+	if(retVal == -1) {
+		Socket::SocketErrno err = m_socket->GetErrno();
 
-	++m_sent;
+		if(err == Socket::SocketErrno::ERROR_MSGSIZE) {
+			m_packetdropped(p,DropReason::TCPTxBufferExceeded);
+		}
+	}
+
+		++m_sent;
 
 	NS_LOG_INFO("Sent " << p->GetSize() << " bytes to " << m_peerAddress);
 

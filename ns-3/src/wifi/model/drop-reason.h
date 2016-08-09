@@ -23,7 +23,8 @@ namespace ns3 {
 		MacNotForAP,
 		MacAPToAPFrame,
 		MacQueueDelayExceeded,
-		MacQueueSizeExceeded
+		MacQueueSizeExceeded,
+		TCPTxBufferExceeded
 	};
 
 }

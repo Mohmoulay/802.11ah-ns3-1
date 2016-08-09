@@ -517,6 +517,13 @@ void NodeEntry::OnMacPacketDropped(std::string context,
 	stats->get(this->id).NumberOfDropsByReason[reason]++;
 }
 
+void NodeEntry::OnTcpPacketDropped(Ptr<Packet> packet, DropReason reason) {
+	//cout << "Mac Packet Dropped!, reason:" << reason << endl;
+
+	stats->get(this->id).NumberOfDropsByReason[reason]++;
+}
+
+
 void NodeEntry::OnCollision(std::string context, uint32_t nrOfBackoffSlots) {
 	cout << "Collision sensed" << endl;
 

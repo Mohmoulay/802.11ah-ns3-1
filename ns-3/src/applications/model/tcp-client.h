@@ -10,6 +10,8 @@
 #include "ns3/traced-value.h"
 #include "ns3/random-variable-stream.h"
 #include "ns3/tcp-socket.h"
+#include "ns3/drop-reason.h"
+
 #include <queue>
 
 namespace ns3 {
@@ -22,6 +24,9 @@ class TcpClient : public Application
 {
 public:
   static TypeId GetTypeId (void);
+
+  typedef void (* PacketDroppedCallback)
+                      (Ptr<Packet> packet, DropReason reason);
 
   TcpClient ();
 
@@ -139,6 +144,8 @@ private:
 
   std::queue<char> rxBuffer;
   std::queue<char> txBuffer;
+
+  TracedCallback<Ptr<Packet>, DropReason> m_packetdropped;
 
 
 };

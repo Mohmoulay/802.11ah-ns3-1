@@ -62,7 +62,7 @@ struct Configuration {
 	uint32_t trafficIntervalDeviation = 1000;
 
 	uint16_t trafficPacketSize = 100;
-	string trafficType = "tcpecho";
+	string trafficType = "tcpipcamera";
 
 
 	uint16_t MaxTimeOfPacketsInQueue = 100;

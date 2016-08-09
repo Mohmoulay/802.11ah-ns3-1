@@ -52,6 +52,11 @@ TypeId TcpServer::GetTypeId(void) {
 			MakeTraceSourceAccessor(&TcpServer::m_packetReceived),
 			"ns3::TcpServer::PacketReceivedCallback")
 
+		.AddTraceSource("PacketDropped",
+					"Occurs when a packet is dropped",
+					MakeTraceSourceAccessor(&TcpServer::m_packetdropped),
+					"ns3::TcpServer::PacketDroppedCallback")
+
 		.AddTraceSource(
 			"Retransmission", "Occurs when TCP socket does a retransmission",
 			MakeTraceSourceAccessor(&TcpServer::m_retransmission),
@@ -166,7 +171,7 @@ void TcpServer::HandleAccept(Ptr<Socket> s, const Address& from) {
 
 	handles[from].address = from;
 	handles[from].callback = MakeCallback(&TcpServer::OnTCPStateChanged, this);
-	// make sure it's a reference to the pointer or the pointer will destructor the actual object
+
 	handles[from].socket = Ptr<Socket>(s);
 
 	s->TraceConnectWithoutContext("Retransmission",
@@ -257,7 +262,14 @@ void TcpServer::Send(Address to, uint8_t* data, int size) {
 	if(((handles[to].socket)) == 0) {
 		std::cout << "SOCKET POINTER DEREFERENCED " << std::endl;
 	}
-	((handles[to].socket))->Send(p);
+	int retVal = ((handles[to].socket))->Send(p);
+	if(retVal == -1) {
+		Socket::SocketErrno err = ((handles[to].socket))->GetErrno();
+
+		if(err == Socket::SocketErrno::ERROR_MSGSIZE) {
+			m_packetdropped(to, p, DropReason::TCPTxBufferExceeded);
+		}
+	}
 
 	handles[to].sent++;
 

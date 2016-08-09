@@ -395,6 +395,13 @@ void tcpRetransmissionAtServer(Address to) {
 		cout << "*** Node could not be determined from received packet at AP " << endl;
 }
 
+void tcpPacketDroppedAtServer(Address to, Ptr<Packet> packet, DropReason reason) {
+	int staId = getSTAIdFromAddress(Ipv4Address::ConvertFrom(to));
+	if(staId != -1) {
+		stats.get(staId).NumberOfDropsByReasonAtAP[reason]++;
+	}
+}
+
 void tcpStateChangeAtServer(TcpSocket::TcpStates_t oldState, TcpSocket::TcpStates_t newState, Address to) {
 
     int staId = getSTAIdFromAddress(InetSocketAddress::ConvertFrom(to).GetIpv4());
@@ -405,22 +412,6 @@ void tcpStateChangeAtServer(TcpSocket::TcpStates_t oldState, TcpSocket::TcpState
 
 	cout << Simulator::Now().GetMicroSeconds() << " ********** TCP SERVER SOCKET STATE CHANGED FROM " << oldState << " TO " << newState << endl;
 }
-
-/*void udpPacketReceivedAtClient(Ptr<const Packet> packet, Address from) {
-    int apId = -1;
-    for (int i = 0; i < apNodeInterfaces.GetN(); i++) {
-        if (apNodeInterfaces.GetAddress(i) == InetSocketAddress::ConvertFrom(from).GetIpv4()) {
-        	apId = i;
-            break;
-        }
-    }
-
-    if (apId != -1)
-        nodes[staId]->OnUdpPacketReceivedAtAP(packet);
-    else
-    	cout << "Echo packet received at client is not coming from AP" << endl;
-}*/
-
 
 void configureUDPServer() {
     UdpServerHelper myServer(9);
@@ -440,11 +431,7 @@ void configureUDPEchoServer() {
 void configureTCPEchoServer() {
 	TcpEchoServerHelper myServer(80);
 	serverApp = myServer.Install(apNodes);
-	serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&tcpPacketReceivedAtServer));
-	serverApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&tcpRetransmissionAtServer));
-	serverApp.Get(0)->TraceConnectWithoutContext("TCPStateChanged", MakeCallback(&tcpStateChangeAtServer));
-
-
+	wireTCPServer(serverApp);
 	serverApp.Start(Seconds(0));
 }
 
@@ -459,9 +446,7 @@ void configureTCPPingPongServer() {
 	apNodes.Get(0)->AddApplication(tcpServer);
 
 	auto serverApp = ApplicationContainer(tcpServer);
-	serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&tcpPacketReceivedAtServer));
-	serverApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&tcpRetransmissionAtServer));
-	serverApp.Get(0)->TraceConnectWithoutContext("TCPStateChanged", MakeCallback(&tcpStateChangeAtServer));
+	wireTCPServer(serverApp);
 	serverApp.Start(Seconds(0));
 }
 
@@ -491,6 +476,53 @@ void configureTCPPingPongClients() {
 }
 
 
+void configureTCPIPCameraServer() {
+	// TCP ping pong is a test for the new base tcp-client and tcp-server applications
+	ObjectFactory factory;
+	factory.SetTypeId (TCPIPCameraServer::GetTypeId ());
+	factory.Set("Port", UintegerValue (80));
+
+	Ptr<Application> tcpServer = factory.Create<TCPIPCameraServer>();
+	apNodes.Get(0)->AddApplication(tcpServer);
+
+
+	auto serverApp = ApplicationContainer(tcpServer);
+	wireTCPServer(serverApp);
+	serverApp.Start(Seconds(0));
+}
+
+void configureTCPIPCameraClients() {
+
+	ObjectFactory factory;
+	factory.SetTypeId (TCPIPCameraClient::GetTypeId ());
+	factory.Set("MotionPercentage", DoubleValue(0.1));
+	factory.Set("MotionDuration", TimeValue(Seconds(60)));
+	factory.Set("DataRate", UintegerValue(200));
+
+	factory.Set("PacketSize", UintegerValue(config.trafficPacketSize));
+
+	factory.Set("RemoteAddress", Ipv4AddressValue (apNodeInterfaces.GetAddress(0)));
+	factory.Set("RemotePort", UintegerValue (80));
+
+	Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable> ();
+
+	for (uint16_t i = 0; i < config.Nsta; i++) {
+
+		Ptr<Application> tcpClient = factory.Create<TCPIPCameraClient>();
+		staNodes.Get(i)->AddApplication(tcpClient);
+		auto clientApp = ApplicationContainer(tcpClient);
+		wireTCPClient(clientApp,i);
+
+		clientApp.Start(MilliSeconds(0));
+	}
+}
+
+void wireTCPServer(ApplicationContainer serverApp) {
+	serverApp.Get(0)->GetObject<TcpServer>()->TraceConnectWithoutContext("Rx", MakeCallback(&tcpPacketReceivedAtServer));
+	serverApp.Get(0)->GetObject<TcpServer>()->TraceConnectWithoutContext("Retransmission", MakeCallback(&tcpRetransmissionAtServer));
+	serverApp.Get(0)->GetObject<TcpServer>()->TraceConnectWithoutContext("PacketDropped", MakeCallback(&tcpPacketDroppedAtServer));
+	serverApp.Get(0)->GetObject<TcpServer>()->TraceConnectWithoutContext("TCPStateChanged", MakeCallback(&tcpStateChangeAtServer));
+}
 
 void wireTCPClient(ApplicationContainer clientApp, int i) {
 
@@ -505,6 +537,8 @@ void wireTCPClient(ApplicationContainer clientApp, int i) {
 
 	clientApp.Get(0)->TraceConnectWithoutContext("TCPStateChanged", MakeCallback(&NodeEntry::OnTcpStateChanged, nodes[i]));
 	clientApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&NodeEntry::OnTcpRetransmission, nodes[i]));
+
+	clientApp.Get(0)->TraceConnectWithoutContext("PacketDropped", MakeCallback(&NodeEntry::OnTcpPacketDropped, nodes[i]));
 }
 
 void configureTCPEchoClients() {
@@ -601,6 +635,10 @@ void onSTAAssociated(int i) {
     	else if(config.trafficType == "tcppingpong") {
     		configureTCPPingPongServer();
 			configureTCPPingPongClients();
+		}
+    	else if(config.trafficType == "tcpipcamera") {
+			configureTCPIPCameraServer();
+			configureTCPIPCameraClients();
 		}
 
         updateNodesQueueLength();

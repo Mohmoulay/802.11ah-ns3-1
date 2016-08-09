@@ -90,6 +90,8 @@ public:
     void OnPhyStateChange(std::string context, const Time start, const Time duration, const WifiPhy::State state);
 
     void OnTcpPacketSent(Ptr<const Packet> packet);
+    void OnTcpPacketDropped(Ptr<Packet> packet, DropReason reason);
+
     void OnTcpEchoPacketReceived(Ptr<const Packet> packet, Address from);
     void OnTcpPacketReceivedAtAP(Ptr<const Packet> packet);
     void OnTcpCongestionWindowChanged(uint32_t oldval, uint32_t newval);

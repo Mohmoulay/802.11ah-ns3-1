@@ -67,7 +67,7 @@ void SimulationEventManager::onNodeDeassociated(NodeEntry& node) {
 
 string SimulationEventManager::SerializeDropReason(map<DropReason, long>& map) {
 
-	int lastItem = DropReason::MacQueueSizeExceeded;
+	int lastItem = DropReason::TCPTxBufferExceeded;
 	std::stringstream s;
 	for(int i = 0; i <= lastItem;i++) {
 		s << map[(DropReason)i] << ((i == lastItem) ? "": ",");
