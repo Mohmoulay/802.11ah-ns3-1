@@ -15,7 +15,7 @@
 " --TrafficType=\"tcpipcamera\""\
 " --IpCameraMotionPercentage=0.1"\
 " --IpCameraMotionDuration=60"\
-" --IpCameraDataRate=4"\
+" --IpCameraDataRate=32"\
 " --BeaconInterval=102400"\
 " --MinRTO=819200000"\
 " --TCPConnectionTimeout=60000000"\
@@ -28,4 +28,5 @@
 " --VisualizerPort=7707"\
 " --VisualizerSamplingInterval=1"\
 " --APPcapFile=\"appcap\""\
+" --NSSFile=\"/home/dwight/ns3ah/802.11ah-ns3/ns-3/test.nss\""\
 " --Name=\"test\""

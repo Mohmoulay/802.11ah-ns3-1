@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
     transmissionsPerTIMGroupAndSlotFromSTASinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
 
-    eventManager = SimulationEventManager(config.visualizerIP, config.visualizerPort);
+    eventManager = SimulationEventManager(config.visualizerIP, config.visualizerPort, config.NSSFile);
 
     RngSeedManager::SetSeed(config.seed);
 
@@ -77,14 +77,14 @@ int main(int argc, char** argv) {
     eventManager.onAPNodeCreated(apposition.x, apposition.y);
 
     // start sending statistics every second
-    sendStatistics();
+    sendStatistics(true);
 
     Simulator::Stop(Seconds(config.simulationTime));
     Simulator::Run();
     Simulator::Destroy();
 
-
     stats.TotalSimulationTime = Seconds(config.simulationTime);
+
     printStatistics();
 
     return (EXIT_SUCCESS);
@@ -702,7 +702,7 @@ void printStatistics() {
 	}
 }
 
-void sendStatistics() {
+void sendStatistics(bool schedule) {
 	eventManager.onUpdateStatistics(stats);
 
 	eventManager.onUpdateSlotStatistics(transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval, transmissionsPerTIMGroupAndSlotFromSTASinceLastInterval);
@@ -710,5 +710,6 @@ void sendStatistics() {
 	transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
 	transmissionsPerTIMGroupAndSlotFromSTASinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
 
-	Simulator::Schedule(Seconds(config.visualizerSamplingInterval), &sendStatistics);
+	if(schedule)
+		Simulator::Schedule(Seconds(config.visualizerSamplingInterval), &sendStatistics, true);
 }

@@ -57,6 +57,7 @@ struct Configuration {
 	string name = "";
 
 	string APPcapFile = "";
+	string NSSFile = "";
 
 	uint32_t trafficInterval = 10000;
 	uint32_t trafficIntervalDeviation = 1000;

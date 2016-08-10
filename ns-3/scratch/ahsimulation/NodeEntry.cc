@@ -5,6 +5,9 @@
 using namespace ns3;
 using namespace std;
 
+
+bool showLog = false;
+
 NodeEntry::NodeEntry(int id, Statistics* stats, Ptr<Node> node,
 		Ptr<NetDevice> device) :
 		id(id), stats(stats), node(node), device(device) {
@@ -39,7 +42,7 @@ void NodeEntry::OnS1gBeaconMissed(std::string context, bool nextBeaconIsDTIM) {
 }
 
 void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
-	cout << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+	if(showLog) cout << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
 			<< "Begin Tx " << packet->GetUid() << endl;
 	txMap.emplace(packet->GetUid(), Simulator::Now());
 
@@ -56,7 +59,7 @@ void NodeEntry::OnPhyTxBegin(std::string context, Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
-	cout << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+	if(showLog) cout << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
 			<< "End Tx " << packet->GetUid() << endl;
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
@@ -64,14 +67,14 @@ void NodeEntry::OnPhyTxEnd(std::string context, Ptr<const Packet> packet) {
 		txMap.erase(packet->GetUid());
 		stats->get(this->id).TotalTransmitTime += (Simulator::Now() - oldTime);
 	} else
-		cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+		if(showLog) cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
 				<< " End tx for packet " << packet->GetUid()
 				<< " without a begin tx" << endl;
 }
 
 void NodeEntry::OnPhyTxDrop(std::string context, Ptr<const Packet> packet,
 		DropReason reason) {
-	cout << "[" << this->aId << "] " << "Tx Dropped " << packet->GetUid()
+	if(showLog) cout << "[" << this->aId << "] " << "Tx Dropped " << packet->GetUid()
 			<< endl;
 
 	if (txMap.find(packet->GetUid()) != txMap.end()) {
@@ -79,7 +82,7 @@ void NodeEntry::OnPhyTxDrop(std::string context, Ptr<const Packet> packet,
 		txMap.erase(packet->GetUid());
 		stats->get(this->id).TotalTransmitTime += (Simulator::Now() - oldTime);
 	} else
-		cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
+		if(showLog) cout << "[" << this->id << "] " << Simulator::Now().GetMicroSeconds()
 				<< " End tx for packet " << packet->GetUid()
 				<< " without a begin tx" << endl;
 	stats->get(this->id).NumberOfTransmissionsDropped++;
@@ -96,7 +99,7 @@ void NodeEntry::OnPhyRxBegin(std::string context, Ptr<const Packet> packet) {
 	rxMap.emplace(packet->GetUid(), Simulator::Now());
 
 	if (rxMap.size() > 1)
-		cout << "warning: more than 1 receive active: " << rxMap.size()
+		if(showLog) cout << "warning: more than 1 receive active: " << rxMap.size()
 				<< " receives" << endl;
 }
 
@@ -306,7 +309,7 @@ SeqTsHeader GetSeqTSFromPacket(Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
-	cout << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+	if(showLog) cout << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
 			<< "TCP packet sent " << endl;
 
 	SeqTsHeader seqTs = GetSeqTSFromPacket(packet);
@@ -358,8 +361,8 @@ void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
 	} catch (std::runtime_error e) {
 
 		// this occurs when packet is fragmented
-		cout << "Error: " << string(e.what()) << endl;
-		cout
+		cerr << "Error: " << string(e.what()) << endl;
+		cerr
 				<< "ERROR: unable to get the packet header to determine the travel time"
 				<< endl;
 		//packet->Print(cout);
@@ -386,7 +389,7 @@ void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 
 			return;
 		} else {
-			cout << "Packet with seq nr " << seqTs.GetSeq() << " received at AP"
+			if(showLog) cout << "Packet with seq nr " << seqTs.GetSeq() << " received at AP"
 					<< endl;
 
 			seqNrReceivedAtAP[seqTs.GetSeq()] = true;
@@ -403,7 +406,7 @@ void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 		stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
 	} catch (std::runtime_error e) {
 		// packet fragmentation
-		cout
+		cerr
 				<< "ERROR: unable to get the packet header at AP to determine the travel time"
 				<< endl;
 	}
@@ -432,7 +435,7 @@ void NodeEntry::OnTcpStateChanged(TcpSocket::TcpStates_t oldval,
 void NodeEntry::OnTcpStateChangedAtAP(TcpSocket::TcpStates_t oldval,
 		TcpSocket::TcpStates_t newval) {
 	tcpConnectedAtAP = (newval	== TcpSocket::TcpStates_t::ESTABLISHED);
-	cout << "TCP connected at ap " << tcpConnectedAtAP;
+	if(showLog) cout << "TCP connected at ap " << tcpConnectedAtAP;
 
 	stats->get(this->id).TCPConnected = tcpConnectedAtSTA && tcpConnectedAtAP;
 }
@@ -528,7 +531,7 @@ void NodeEntry::OnTcpPacketDropped(Ptr<Packet> packet, DropReason reason) {
 
 
 void NodeEntry::OnCollision(std::string context, uint32_t nrOfBackoffSlots) {
-	cout << "Collision sensed" << endl;
+	if(showLog) cout << "Collision sensed" << endl;
 
 	stats->get(this->id).NumberOfCollisions++;
 	stats->get(this->id).TotalNumberOfBackedOffSlots += nrOfBackoffSlots;

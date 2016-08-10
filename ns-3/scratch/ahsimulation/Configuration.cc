@@ -55,6 +55,8 @@ Configuration::Configuration(int argc, char** argv) {
 
 
     cmd.AddValue("APPcapFile", "Name of the pcap file to generate at the AP, leave empty to omit generation", APPcapFile);
+
+    cmd.AddValue("NSSFile", "Path of the nss file to write. Note: if a visualizer is active it will also save the nss file", NSSFile);
     cmd.AddValue("Name", "Name of the simulation", name);
 
 

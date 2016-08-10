@@ -9,11 +9,16 @@
 #include "SimpleTCPClient.h"
 
 SimulationEventManager::SimulationEventManager()
-	: hostname("localhost"), port(7707) {
+	: hostname("localhost"), port(7707), filename("") {
 }
 
-SimulationEventManager::SimulationEventManager(string hostname, int port)
-	: hostname(hostname), port(port) {
+SimulationEventManager::SimulationEventManager(string hostname, int port, string filename)
+	: hostname(hostname), port(port), filename(filename) {
+
+	if(filename != "") {
+		//delete old file
+		std::remove(filename.c_str());
+	}
 }
 
 void SimulationEventManager::onStart(Configuration& config) {
@@ -137,8 +142,23 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 }
 
 void SimulationEventManager::send(vector<string> str) {
-	if(this->hostname != "") {
 
+	std::stringstream s;
+	s << Simulator::Now().GetNanoSeconds() << ";";
+	for(int i = 0; i < str.size(); i++) {
+		s << str[i] << ((i != str.size()-1) ? ";" : "");
+	}
+	s << "\n";
+
+	if(this->filename != "") {
+		ofstream fileStream(filename,fstream::out|fstream::app);
+		if(fileStream.is_open())
+			fileStream << s.str();
+		// append to file
+		fileStream.close();
+	}
+
+	if(this->hostname != "") {
 
 		//int sockfd ;
 		if(socketDescriptor == -1) {
@@ -148,13 +168,6 @@ void SimulationEventManager::send(vector<string> str) {
 				return;
 		}
 
-
-		std::stringstream s;
-		s << Simulator::Now().GetNanoSeconds() << ";";
-		for(int i = 0; i < str.size(); i++) {
-			s << str[i] << ((i != str.size()-1) ? ";" : "");
-		}
-		s << "\n";
 		bool success = stat_send(socketDescriptor, string(s.str()).c_str());
 
 		if(!success) {

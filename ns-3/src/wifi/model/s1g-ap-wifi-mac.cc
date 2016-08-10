@@ -24,7 +24,7 @@ NS_LOG_COMPONENT_DEFINE("S1gApWifiMac");
 
 NS_OBJECT_ENSURE_REGISTERED(S1gApWifiMac);
 
-#define LOG_TRAFFIC(msg)	if(true) std::cout << Simulator::Now().GetMicroSeconds() << " " << msg << std::endl;
+#define LOG_TRAFFIC(msg)	if(true) NS_LOG_DEBUG(Simulator::Now().GetMicroSeconds() << " " << msg << std::endl);
 
 TypeId S1gApWifiMac::GetTypeId(void) {
 	static TypeId tid =

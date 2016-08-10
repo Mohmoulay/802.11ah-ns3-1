@@ -40,7 +40,7 @@
 #include "ht-capabilities.h"
 #include "random-stream.h"
 
-#define LOG_SLEEP(msg)	if(true) std::cout << "[" << (GetAID()) << "] " << msg << std::endl;
+#define LOG_SLEEP(msg)	if(true) NS_LOG_DEBUG("[" << (GetAID()) << "] " << msg << std::endl);
 
 /*
  * The state machine for this STA is:
