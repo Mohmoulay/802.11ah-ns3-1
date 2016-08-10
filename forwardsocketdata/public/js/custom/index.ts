@@ -396,7 +396,9 @@ class SimulationGUI {
 
 
         $("#nodeTitle").text("Node " + node.id);
-        $("#nodePosition").text(node.x.toFixed(2) + "," + node.y.toFixed(2));
+
+        let distance = Math.sqrt((node.x - selectedSimulation.apNode.x) ** 2 + (node.y - selectedSimulation.apNode.y) ** 2) 
+        $("#nodePosition").text(node.x.toFixed(2) + "," + node.y.toFixed(2) + ", dist: " + distance.toFixed(2));
         if (node.type == "STA" && !(<STANode>node).isAssociated) {
             $("#nodeAID").text("Not associated");
         }

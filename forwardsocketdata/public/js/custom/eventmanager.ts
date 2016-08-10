@@ -206,7 +206,8 @@ class EventManager {
         n.aId = aId;
 
         this.sim.simulationContainer.getSimulation(stream).nodes.push(n);
-
+        if(!isSTA) 
+            this.sim.simulationContainer.getSimulation(stream).apNode = <APNode>n;
         // this.sim.onNodeAdded(stream, id);
     }
 
