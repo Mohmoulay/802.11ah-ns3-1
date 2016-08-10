@@ -102,6 +102,9 @@ public:
   void DoDispose ();
     
     bool AccessIfRaw;
+    Time rawDuration;
+    Time rawStartedAt;
+
   /**
    * Set MacLow associated with this EdcaTxopN.
    *
@@ -467,7 +470,7 @@ public:
   int64_t AssignStreams (int64_t stream);
     
   void AccessAllowedIfRaw (bool allowed);
-  void RawStart (void);
+  void RawStart (Time duration);
   void OutsideRawStart (void);
 
 

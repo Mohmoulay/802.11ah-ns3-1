@@ -1038,11 +1038,11 @@ StaWifiMac::GrantDCAAccess() {
 	m_edca.find (AC_VI)->second->AccessAllowedIfRaw (true);
 	m_edca.find (AC_BE)->second->AccessAllowedIfRaw (true);
 	m_edca.find (AC_BK)->second->AccessAllowedIfRaw (true);
-	m_dca->RawStart();
-	m_edca.find (AC_VO)->second->RawStart();
-	m_edca.find (AC_VI)->second->RawStart();
-	m_edca.find (AC_BE)->second->RawStart();
-	m_edca.find (AC_BK)->second->RawStart();
+	m_dca->RawStart(m_slotDuration);
+	m_edca.find (AC_VO)->second->RawStart(m_slotDuration);
+	m_edca.find (AC_VI)->second->RawStart(m_slotDuration);
+	m_edca.find (AC_BE)->second->RawStart(m_slotDuration);
+	m_edca.find (AC_BK)->second->RawStart(m_slotDuration);
 }
 
 void

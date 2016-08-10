@@ -171,7 +171,7 @@ void configureSTANodes(Ssid& ssid) {
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(staNodes);
 
-//    phy.EnablePcap("stafile", staNodes, 0);
+    phy.EnablePcap("stafile", staNodes, 0);
 }
 
 void OnAPPhyRxBegin(std::string context, Ptr<const Packet> packet) {
@@ -495,9 +495,9 @@ void configureTCPIPCameraClients() {
 
 	ObjectFactory factory;
 	factory.SetTypeId (TCPIPCameraClient::GetTypeId ());
-	factory.Set("MotionPercentage", DoubleValue(0.1));
-	factory.Set("MotionDuration", TimeValue(Seconds(60)));
-	factory.Set("DataRate", UintegerValue(200));
+	factory.Set("MotionPercentage", DoubleValue(config.ipcameraMotionPercentage));
+	factory.Set("MotionDuration", TimeValue(Seconds(config.ipcameraMotionDuration)));
+	factory.Set("DataRate", UintegerValue(config.ipcameraDataRate));
 
 	factory.Set("PacketSize", UintegerValue(config.trafficPacketSize));
 

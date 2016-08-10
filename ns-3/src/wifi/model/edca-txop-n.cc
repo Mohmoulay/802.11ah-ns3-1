@@ -269,6 +269,8 @@ EdcaTxopN::EdcaTxopN ()
 {
   NS_LOG_FUNCTION (this);
   AccessAllowedIfRaw (true);
+  rawDuration = Time::Max(); // no limit on raw
+
   m_transmissionListener = new EdcaTxopN::TransmissionListener (this);
   m_blockAckListener = new EdcaTxopN::AggregationCapableTransmissionListener (this);
   m_dcf = new EdcaTxopN::Dcf (this);
@@ -483,6 +485,10 @@ EdcaTxopN::RemoveRetransmitPacket (uint8_t tid, Mac48Address recipient, uint16_t
 void
 EdcaTxopN::NotifyAccessGranted (void)
 {
+
+  Time remainingRawTime = rawDuration - (Simulator::Now() - rawStartedAt);
+
+
 	//std::cout << "Access  granted (raw access: " << AccessIfRaw << ")" << std::endl;
   NS_LOG_FUNCTION (this);
   if (!AccessIfRaw)
@@ -547,6 +553,17 @@ EdcaTxopN::NotifyAccessGranted (void)
       params.DisableRts ();
       params.DisableAck ();
       params.DisableNextData ();
+
+       Time txDuration = m_low->CalculateTransmissionTime(m_currentPacket,
+      			&m_currentHdr, params);
+      	if (txDuration > remainingRawTime) { // don't transmit if it can't be done inside RAW window, the ACK won't be received anyway
+      		NS_LOG_DEBUG("TX will take longer (" << txDuration << ") than the remaining RAW time (" << remainingRawTime << "), not transmitting");
+      		return;
+      	}
+      	else {
+      		NS_LOG_DEBUG("TX can be done (" << txDuration << ") before the RAW expires (" << remainingRawTime << " remaining)");
+      	}
+
       m_low->StartTransmission (m_currentPacket,
                                 &m_currentHdr,
                                 params,
@@ -590,6 +607,17 @@ EdcaTxopN::NotifyAccessGranted (void)
               NS_LOG_DEBUG ("fragmenting size=" << fragment->GetSize ());
               params.EnableNextData (GetNextFragmentSize ());
             }
+
+          Time txDuration = m_low->CalculateTransmissionTime(fragment,
+                			&hdr, params);
+			if (txDuration > remainingRawTime) { // don't transmit if it can't be done inside RAW window, the ACK won't be received anyway
+				NS_LOG_DEBUG("TX will take longer than the remaining RAW time, not transmitting");
+				return;
+			}
+			else
+	      		NS_LOG_DEBUG("TX can be done (" << txDuration << ") before the RAW expires (" << remainingRawTime << " remaining)");
+
+
           m_low->StartTransmission (fragment, &hdr, params,
                                     m_transmissionListener);
         }
@@ -650,6 +678,16 @@ EdcaTxopN::NotifyAccessGranted (void)
               NS_LOG_DEBUG ("tx unicast");
             }
           params.DisableNextData ();
+
+          Time txDuration = m_low->CalculateTransmissionTime(m_currentPacket,
+                         			&m_currentHdr, params);
+	      if (txDuration > remainingRawTime) { // don't transmit if it can't be done inside RAW window, the ACK won't be received anyway
+			NS_LOG_DEBUG("TX will take longer (" << txDuration << ") than the remaining RAW time (" << remainingRawTime << "), not transmitting");
+			return;
+		  }
+	      else
+	      	NS_LOG_DEBUG("TX can be done (" << txDuration << ") before the RAW expires (" << remainingRawTime << " remaining)");
+
           m_low->StartTransmission (m_currentPacket, &m_currentHdr,
                                     params, m_transmissionListener);
           if (!GetAmpduExist ())
@@ -1019,9 +1057,14 @@ EdcaTxopN::StartAccessIfNeededRaw (void)
 }
     
 void
-EdcaTxopN::RawStart (void)
+EdcaTxopN::RawStart (Time duration)
 {
   NS_LOG_FUNCTION (this);
+  this->rawDuration = duration;
+  rawStartedAt = Simulator::Now();
+
+  NS_LOG_DEBUG("RAW START, duration is " << duration);
+
 /*
   int newdata=66;
   m_AccessQuest_record (Simulator::Now ().GetMicroSeconds (), newdata);
@@ -1113,6 +1156,9 @@ EdcaTxopN::NextFragment (void)
 void
 EdcaTxopN::StartNext (void)
 {
+	if(!AccessIfRaw)
+		return;
+
   NS_LOG_FUNCTION (this);
   NS_LOG_DEBUG ("start next packet fragment");
   /* this callback is used only for fragments. */
@@ -1433,6 +1479,14 @@ EdcaTxopN::SendBlockAckRequest (const struct Bar &bar)
       //Delayed block ack
       params.EnableAck ();
     }
+
+  Time txDuration = Low()->CalculateTransmissionTime(m_currentPacket, &m_currentHdr, params);
+  Time remainingRawTime =  rawDuration -  (Simulator::Now() - rawStartedAt);
+  if(txDuration > remainingRawTime) {  // don't transmit if it can't be done inside RAW window, the ACK won't be received anyway
+      NS_LOG_DEBUG("TX will take longer (" << txDuration << ") than the remaining RAW time (" << remainingRawTime << "), not transmitting");
+	  return;
+  }
+
   m_low->StartTransmission (m_currentPacket, &m_currentHdr, params, m_transmissionListener);
 }
 
@@ -1525,6 +1579,16 @@ EdcaTxopN::SendAddBaRequest (Mac48Address dest, uint8_t tid, uint16_t startSeq,
   params.DisableRts ();
   params.DisableNextData ();
   params.DisableOverrideDurationId ();
+
+	Time txDuration = m_low->CalculateTransmissionTime(m_currentPacket,
+			&m_currentHdr, params);
+	Time remainingRawTime = rawDuration - (Simulator::Now() - rawStartedAt);
+	if (txDuration > remainingRawTime) { // don't transmit if it can't be done inside RAW window, the ACK won't be received anyway
+		NS_LOG_DEBUG("TX will take longer (" << txDuration << ") than the remaining RAW time (" << remainingRawTime << "), not transmitting");
+		return;
+	}
+	else
+  		NS_LOG_DEBUG("TX can be done (" << txDuration << ") before the RAW expires (" << remainingRawTime << " remaining)");
 
   m_low->StartTransmission (m_currentPacket, &m_currentHdr, params,
                             m_transmissionListener);

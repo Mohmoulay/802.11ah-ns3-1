@@ -85,6 +85,8 @@ void NodeEntry::OnPhyTxDrop(std::string context, Ptr<const Packet> packet,
 	stats->get(this->id).NumberOfTransmissionsDropped++;
 
 	stats->get(this->id).NumberOfDropsByReason[reason]++;
+
+
 }
 
 void NodeEntry::OnPhyRxBegin(std::string context, Ptr<const Packet> packet) {
@@ -196,6 +198,7 @@ void NodeEntry::OnPhyRxDrop(std::string context, Ptr<const Packet> packet,
 				stats->get(this->id).NumberOfReceiveDroppedByDestination++;
 				stats->get(this->id).NumberOfDropsByReason[reason]++;
 
+				//packet->Copy()->Print(cout);
 				//	cout  << Simulator::Now().GetMicroSeconds() << "[" << this->aId << "] "
 				//		<< " Drop Rx for STA " << packet->GetUid() << endl;
 			}

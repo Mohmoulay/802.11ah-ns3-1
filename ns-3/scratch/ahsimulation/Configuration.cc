@@ -36,6 +36,10 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("TCPInitialCwnd", "TCP Initial congestion window in segments", TCPInitialCwnd);
 
 
+    cmd.AddValue("IpCameraMotionPercentage", "Probability the ip camera detects motion each second [0-1]", ipcameraMotionPercentage);
+    cmd.AddValue("IpCameraMotionDuration", "Time in seconds to stream data when motion was detected", ipcameraMotionDuration);
+    cmd.AddValue("IpCameraDataRate", "Data rate of the captured stream in kbps", ipcameraDataRate);
+
     cmd.AddValue("DataMode", "Date mode", DataMode);
     cmd.AddValue("Datarate", "data rate in Mbps", datarate);
     cmd.AddValue("BandWidth", "bandwidth in MHz", bandWidth);

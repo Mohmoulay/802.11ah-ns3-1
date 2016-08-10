@@ -64,6 +64,9 @@ struct Configuration {
 	uint16_t trafficPacketSize = 100;
 	string trafficType = "tcpipcamera";
 
+	double ipcameraMotionPercentage = 0.1;
+	uint16_t ipcameraMotionDuration = 60;
+	uint16_t ipcameraDataRate = 20;
 
 	uint16_t MaxTimeOfPacketsInQueue = 100;
 

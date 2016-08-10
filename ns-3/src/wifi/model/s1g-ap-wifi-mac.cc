@@ -766,7 +766,7 @@ void S1gApWifiMac::OnRAWSlotStart(uint8_t timGroup, uint8_t slot) {
 	m_currentTIMGroupSlot = slot;
 
 	rawSlotsDCA[timGroup * m_slotNum + slot]->AccessAllowedIfRaw (true);
-	rawSlotsDCA[timGroup * m_slotNum + slot]->RawStart();
+	rawSlotsDCA[timGroup * m_slotNum + slot]->RawStart(strategy->GetSlotDuration(m_slotDurationCount));
 }
 
 void S1gApWifiMac::OnRAWSlotEnd(uint8_t timGroup, uint8_t slot) {

@@ -8,11 +8,14 @@
 " --BandWidth=2"\
 " --Rho=\"500\""\
 " --MaxTimeOfPacketsInQueue=1000"\
-" --SimulationTime=1000"\
+" --SimulationTime=100"\
 " --TrafficPacketSize=100"\
 " --TrafficInterval=1000"\
 " --TrafficIntervalDeviation=1000"\
 " --TrafficType=\"tcpipcamera\""\
+" --IpCameraMotionPercentage=0.1"\
+" --IpCameraMotionDuration=60"\
+" --IpCameraDataRate=4"\
 " --BeaconInterval=102400"\
 " --MinRTO=819200000"\
 " --TCPConnectionTimeout=60000000"\
