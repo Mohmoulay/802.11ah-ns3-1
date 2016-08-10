@@ -48,7 +48,11 @@ void TCPIPCameraClient::StartApplication(void) {
 
 	m_rv = CreateObject<UniformRandomVariable> ();
 
-	ns3::Simulator::Schedule(m_interval, &TCPIPCameraClient::Action, this);
+	m_schedule = ns3::Simulator::Schedule(m_interval, &TCPIPCameraClient::Action, this);
+}
+
+void TCPIPCameraClient::StopApplication(void) {
+	 ns3::Simulator::Cancel((const ns3::EventId)m_schedule);
 }
 
 void TCPIPCameraClient::Action() {
@@ -67,7 +71,7 @@ void TCPIPCameraClient::Action() {
 		}
 	}
 
-	ns3::Simulator::Schedule(m_interval, &TCPIPCameraClient::Action, this);
+	m_schedule = ns3::Simulator::Schedule(m_interval, &TCPIPCameraClient::Action, this);
 }
 
 void TCPIPCameraClient::Stream() {

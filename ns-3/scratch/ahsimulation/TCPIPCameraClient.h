@@ -18,6 +18,7 @@ public:
 
 protected:
 	virtual void StartApplication(void);
+	virtual void StopApplication(void);
 	virtual void OnDataReceived();
 
 private:
@@ -29,6 +30,7 @@ private:
 	ns3::Time m_motionDuration;
 	int m_datarate;
 
+	ns3::EventId m_schedule;
 
 	ns3::Time motionStartedOn;
 	bool motionActive = false;

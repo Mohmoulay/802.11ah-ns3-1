@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
     // start sending statistics every second
     sendStatistics(true);
 
-    Simulator::Stop(Seconds(config.simulationTime));
+    Simulator::Stop(Seconds(config.simulationTime + 60)); // allow up to a minute after the client & server apps are finished to process the queue
     Simulator::Run();
     Simulator::Destroy();
 
@@ -489,6 +489,7 @@ void configureTCPIPCameraServer() {
 	auto serverApp = ApplicationContainer(tcpServer);
 	wireTCPServer(serverApp);
 	serverApp.Start(Seconds(0));
+//	serverApp.Stop(Seconds(config.simulationTime));
 }
 
 void configureTCPIPCameraClients() {
@@ -514,6 +515,7 @@ void configureTCPIPCameraClients() {
 		wireTCPClient(clientApp,i);
 
 		clientApp.Start(MilliSeconds(0));
+		clientApp.Stop(Seconds(config.simulationTime));
 	}
 }
 
