@@ -114,6 +114,11 @@ StaWifiMac::GetTypeId (void)
 	 .AddTraceSource ("S1gBeaconMissed", "Fired when a beacon is missed.",
 					  MakeTraceSourceAccessor (&StaWifiMac::m_beaconMissed),
 					  "ns3::StaWifiMac::S1gBeaconMissedCallback")
+
+	.AddTraceSource ("NrOfTransmissionsDuringRAWSlot",
+					 "Nr of transmissions during RAW slot",
+					 MakeTraceSourceAccessor (&StaWifiMac::nrOfTransmissionsDuringRAWSlot),
+					 "ns3::TracedValueCallback::Uint16")
   ;
   return tid;
 }
@@ -1058,6 +1063,12 @@ StaWifiMac::DenyDCAAccess() {
 	m_edca.find (AC_VI)->second->OutsideRawStart();
 	m_edca.find (AC_BE)->second->OutsideRawStart();
 	m_edca.find (AC_BK)->second->OutsideRawStart();
+
+	nrOfTransmissionsDuringRAWSlot = m_dca->GetNrOfTransmissionsDuringRaw() +
+			m_edca.find (AC_VO)->second->GetNrOfTransmissionsDuringRaw() +
+			m_edca.find (AC_VI)->second->GetNrOfTransmissionsDuringRaw() +
+			m_edca.find (AC_BE)->second->GetNrOfTransmissionsDuringRaw() +
+			m_edca.find (AC_BK)->second->GetNrOfTransmissionsDuringRaw();
 }
 
 void

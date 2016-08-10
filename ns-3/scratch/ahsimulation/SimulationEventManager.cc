@@ -136,7 +136,8 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 			std::to_string(stats.get(i).TCPSlowStartThreshold),
 			std::to_string(stats.get(i).TCPEstimatedBandwidth),
 			std::to_string(stats.get(i).TCPRTTValue.GetMicroSeconds() == 0 ? -1 : stats.get(i).TCPRTTValue.GetMicroSeconds()),
-			std::to_string(stats.get(i).NumberOfBeaconsMissed)
+			std::to_string(stats.get(i).NumberOfBeaconsMissed),
+			std::to_string(stats.get(i).NumberOfTransmissionsDuringRAWSlot)
 		});
 	}
 }

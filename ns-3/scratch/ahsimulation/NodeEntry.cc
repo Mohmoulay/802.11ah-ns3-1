@@ -37,6 +37,11 @@ void NodeEntry::UnsetAssociation(std::string context, Mac48Address address) {
 	this->deAssociatedCallback();
 }
 
+
+void NodeEntry::OnNrOfTransmissionsDuringRAWSlotChanged(std::string context, uint16_t oldValue, uint16_t newValue) {
+	stats->get(this->id).NumberOfTransmissionsDuringRAWSlot = newValue;
+}
+
 void NodeEntry::OnS1gBeaconMissed(std::string context, bool nextBeaconIsDTIM) {
 	stats->get(this->id).NumberOfBeaconsMissed++;
 }

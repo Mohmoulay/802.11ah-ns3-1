@@ -146,6 +146,11 @@ DcaTxop::GetTypeId (void)
                    PointerValue (),
                    MakePointerAccessor (&DcaTxop::GetQueue),
                    MakePointerChecker<WifiMacQueue> ())
+
+   .AddAttribute ("NrOfTransmissionsDuringRAW", "Number of transmissions done during RAW period",
+					  UintegerValue(),
+					  MakeUintegerAccessor(&DcaTxop::nrOfTransmissionsDuringRaw),
+					  MakeUintegerChecker<uint16_t> ())
 	.AddTraceSource("Collision", "Fired when a collision occurred",
 			MakeTraceSourceAccessor(&DcaTxop::m_collisionTrace), "ns3::DcaTxop::CollisionCallback")
   ;
@@ -356,6 +361,7 @@ DcaTxop::RawStart (Time duration)
   NS_LOG_FUNCTION (this);
   this->rawDuration = duration;
   rawStartedAt = Simulator::Now();
+  nrOfTransmissionsDuringRaw = 0;
   m_dcf->RawStart ();
   m_stationManager->RawStart ();
 
@@ -379,6 +385,8 @@ DcaTxop::OutsideRawStart ()
   m_stationManager->OutsideRawStart ();
   m_dcf->StartBackoffNow (m_dcf->GetBackoffSlots());
   StartAccessIfNeededRaw (); //how about remove it?
+
+
 }
 
 Ptr<MacLow>
@@ -551,6 +559,7 @@ DcaTxop::NotifyAccessGranted (void)
                                  &m_currentHdr,
                                  params,
                                  m_transmissionListener);
+      nrOfTransmissionsDuringRaw++;
       NS_LOG_DEBUG ("tx broadcast");
     }
   else
@@ -589,6 +598,7 @@ DcaTxop::NotifyAccessGranted (void)
 
           Low ()->StartTransmission (fragment, &hdr, params,
                                      m_transmissionListener);
+          nrOfTransmissionsDuringRaw++;
         }
       else
         {
@@ -614,6 +624,7 @@ DcaTxop::NotifyAccessGranted (void)
 
           Low ()->StartTransmission (m_currentPacket, &m_currentHdr,
                                      params, m_transmissionListener);
+          nrOfTransmissionsDuringRaw++;
         }
     }
 }
@@ -779,6 +790,7 @@ DcaTxop::StartNext (void)
       params.EnableNextData (GetNextFragmentSize ());
     }
   Low ()->StartTransmission (fragment, &hdr, params, m_transmissionListener);
+  nrOfTransmissionsDuringRaw++;
 }
 
 void

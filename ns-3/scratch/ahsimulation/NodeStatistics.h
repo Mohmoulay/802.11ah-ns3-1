@@ -75,6 +75,8 @@ public:
     Time TCPRTTValue = Time();
 
     long NumberOfBeaconsMissed = 0;
+
+    uint16_t NumberOfTransmissionsDuringRAWSlot = 0;
 };
 
 #endif /* NODESTATISTICS_H */

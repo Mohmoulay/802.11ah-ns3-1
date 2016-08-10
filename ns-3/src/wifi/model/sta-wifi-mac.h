@@ -31,6 +31,8 @@
 #include "s1g-beacon-compatibility.h"
 #include "extension-headers.h"
 #include "s1g-strategy.h"
+#include "ns3/traced-value.h"
+
 
 namespace ns3  {
 
@@ -248,6 +250,9 @@ private:
    * it belongs to
    */
   void HandleS1gSleepFromSTATIMGroupBeacon(S1gBeaconHeader& beacon);
+
+  TracedValue<uint16_t> nrOfTransmissionsDuringRAWSlot = 0;
+
   Time m_lastRawDurationus;
   Time m_lastRawStart;
   Time m_rawDuration;

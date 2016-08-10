@@ -68,6 +68,8 @@ public:
     void SetAssociation(std::string context, Mac48Address address);
     void UnsetAssociation(std::string context, Mac48Address address);
     void OnS1gBeaconMissed(std::string context,bool nextBeaconIsDTIM);
+    void OnNrOfTransmissionsDuringRAWSlotChanged(std::string context, uint16_t oldValue, uint16_t newValue);
+
 
     void OnPhyTxBegin(std::string context, Ptr<const Packet> packet);
     void OnPhyTxEnd(std::string context,Ptr<const Packet> packet);

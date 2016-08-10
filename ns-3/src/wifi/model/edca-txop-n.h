@@ -96,6 +96,8 @@ public:
 
   typedef void (* CollisionCallback)(uint32_t nrOfSlotsToBackOff);
 
+  uint16_t GetNrOfTransmissionsDuringRaw() { return nrOfTransmissionsDuringRaw; }
+
   static TypeId GetTypeId (void);
   EdcaTxopN ();
   virtual ~EdcaTxopN ();
@@ -104,6 +106,7 @@ public:
     bool AccessIfRaw;
     Time rawDuration;
     Time rawStartedAt;
+    uint16_t nrOfTransmissionsDuringRaw = 0;
 
   /**
    * Set MacLow associated with this EdcaTxopN.

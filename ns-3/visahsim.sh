@@ -7,13 +7,13 @@
 " --Rho=\"500\""\
 " --MaxTimeOfPacketsInQueue=1000"\
 " --SimulationTime=200"\
-" --TrafficPacketSize=500"\
+" --TrafficPacketSize=100"\
 " --TrafficInterval=1000"\
 " --TrafficIntervalDeviation=1000"\
 " --TrafficType=\"tcpipcamera\""\
 " --IpCameraMotionPercentage=1"\
 " --IpCameraMotionDuration=10"\
-" --IpCameraDataRate=28"\
+" --IpCameraDataRate=8"\
 " --BeaconInterval=102400"\
 " --MinRTO=819200000"\
 " --TCPConnectionTimeout=60000000"\

@@ -253,6 +253,12 @@ EdcaTxopN::GetTypeId (void)
                      "The header of successfully transmitted packet",
                      MakeTraceSourceAccessor (&EdcaTxopN::m_AccessQuest_record),
                      "ns3::TimeSeriesAdaptor::OutputTracedCallback")
+
+   .AddAttribute ("NrOfTransmissionsDuringRAW", "Number of transmissions done during RAW period",
+					  UintegerValue(),
+					  MakeUintegerAccessor(&EdcaTxopN::nrOfTransmissionsDuringRaw),
+					  MakeUintegerChecker<uint16_t> ())
+
 	 .AddTraceSource("Collision", "Fired when a collision occurred",
 				MakeTraceSourceAccessor(&EdcaTxopN::m_collisionTrace), "ns3::EdcaTxopN::CollisionCallback")
   ;
@@ -568,6 +574,7 @@ EdcaTxopN::NotifyAccessGranted (void)
                                 &m_currentHdr,
                                 params,
                                 m_transmissionListener);
+      nrOfTransmissionsDuringRaw++;
 
       NS_LOG_DEBUG ("tx broadcast");
     }
@@ -620,6 +627,7 @@ EdcaTxopN::NotifyAccessGranted (void)
 
           m_low->StartTransmission (fragment, &hdr, params,
                                     m_transmissionListener);
+          nrOfTransmissionsDuringRaw++;
         }
       else
         {
@@ -690,6 +698,7 @@ EdcaTxopN::NotifyAccessGranted (void)
 
           m_low->StartTransmission (m_currentPacket, &m_currentHdr,
                                     params, m_transmissionListener);
+          nrOfTransmissionsDuringRaw++;
           if (!GetAmpduExist ())
             {
               CompleteTx ();
@@ -1061,6 +1070,7 @@ EdcaTxopN::RawStart (Time duration)
 {
   NS_LOG_FUNCTION (this);
   this->rawDuration = duration;
+  nrOfTransmissionsDuringRaw = 0;
   rawStartedAt = Simulator::Now();
 
   NS_LOG_DEBUG("RAW START, duration is " << duration);
@@ -1178,6 +1188,7 @@ EdcaTxopN::StartNext (void)
       params.EnableNextData (GetNextFragmentSize ());
     }
   Low ()->StartTransmission (fragment, &hdr, params, m_transmissionListener);
+  nrOfTransmissionsDuringRaw++;
 }
 
 void
@@ -1488,6 +1499,7 @@ EdcaTxopN::SendBlockAckRequest (const struct Bar &bar)
   }
 
   m_low->StartTransmission (m_currentPacket, &m_currentHdr, params, m_transmissionListener);
+  nrOfTransmissionsDuringRaw++;
 }
 
 void
@@ -1592,6 +1604,7 @@ EdcaTxopN::SendAddBaRequest (Mac48Address dest, uint8_t tid, uint16_t startSeq,
 
   m_low->StartTransmission (m_currentPacket, &m_currentHdr, params,
                             m_transmissionListener);
+  nrOfTransmissionsDuringRaw++;
 }
 
 void
