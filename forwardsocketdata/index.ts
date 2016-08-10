@@ -148,8 +148,10 @@ export class Program {
         // send each subscription 1 by 1 in series to prevent overloading the socket
         var func = () => {
             if (i < streams.length)
-                this.sendSimulationToSocket(streams[i], sock, () => func());
-            i++;
+                this.sendSimulationToSocket(streams[i], sock, () => {
+                    i++;
+                    func();
+                });
         };
         func();
     }

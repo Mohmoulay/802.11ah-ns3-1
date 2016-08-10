@@ -314,7 +314,8 @@ class EventManager {
             nodeVal.numberOfDropsByReasonMacNotForAP = parseInt(dropParts[9]);
             nodeVal.numberOfDropsByReasonMacAPToAPFrame = parseInt(dropParts[10]);
             nodeVal.numberOfDropsByReasonMacQueueDelayExceeded = parseInt(dropParts[11]);
-            nodeVal.numberOfDropsByReasonMacQeueuSizeExceeded = parseInt(dropParts[12]);
+            nodeVal.numberOfDropsByReasonMacQueueSizeExceeded = parseInt(dropParts[12]);
+            nodeVal.numberOfDropsByReasonTCPTxBufferExceeded = parseInt(dropParts[13]);
         }
 
         if (typeof numberOfDropsByReason != "undefined") {
@@ -331,7 +332,9 @@ class EventManager {
             nodeVal.numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed = parseInt(dropParts[8]);
             nodeVal.numberOfDropsFromAPByReasonMacNotForAP = parseInt(dropParts[9]);
             nodeVal.numberOfDropsFromAPByReasonMacAPToAPFrame = parseInt(dropParts[10]);
-
+            nodeVal.numberOfDropsFromAPByReasonMacQueueDelayExceeded = parseInt(dropParts[11]);
+            nodeVal.numberOfDropsFromAPByReasonMacQueueSizeExceeded = parseInt(dropParts[12]);
+            nodeVal.numberOfDropsFromAPByReasonTCPTxBufferExceeded = parseInt(dropParts[13]);
         }
 
         nodeVal.tcpRTO = tcpRtoValue;
