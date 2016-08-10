@@ -666,12 +666,12 @@ DcfManager::GetBackoffEndFor (DcfState *state)
 		if(adjusted <= GetBackoffStartFor (state)) {
 			// eh can't adjust it, the start of the backoff is already later
 			// nothing to be done now, let it drop
-			std::cout << "Unable to adjust the backoff end to prevent going out of the RAW period, the start is already later than the raw slot end" << std::endl;;
+			//std::cout << "Unable to adjust the backoff end to prevent going out of the RAW period, the start is already later than the raw slot end" << std::endl;;
 			return backOffEnd;
 		}
 		else {
+			//std::cout << "Adjusted the backoff end to prevent going out of the RAW period to " << adjusted.GetMicroSeconds() << "µs" << std::endl;
 			return adjusted;
-			std::cout << "Adjusted the backoff end to prevent going out of the RAW period to " << adjusted.GetMicroSeconds() << "µs" << std::endl;
 		}
 	}
 	else

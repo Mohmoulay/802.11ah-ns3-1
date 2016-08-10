@@ -309,10 +309,12 @@ SeqTsHeader GetSeqTSFromPacket(Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
-	if(showLog) cout << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
-			<< "TCP packet sent " << endl;
-
 	SeqTsHeader seqTs = GetSeqTSFromPacket(packet);
+
+	if(showLog) cout << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
+			<< "TCP packet sent with seq nr " << seqTs.GetSeq() << endl;
+
+
 
 	// the packet is just sent, so track if it's received by a list of booleans
 	// with the sequence number as index
@@ -328,6 +330,8 @@ void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
 	}
 
 	stats->get(this->id).NumberOfSentPackets++;
+
+
 }
 
 void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
@@ -382,11 +386,15 @@ void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 			// but the packet was already received ?
 			// probably a fragment?
 
-			//cout << "Packet with seq nr " << seqTs.GetSeq() << " and time "
-			//		<< seqTs.GetTs().GetMicroSeconds()
-			//		<< "µs falls outside expected array or is already received and is "
-				//	<< pCopy->GetSerializedSize() << " size" << endl;
+			if(showLog) cout << "Packet with seq nr " << seqTs.GetSeq() << " and time "
+					<< seqTs.GetTs().GetMicroSeconds()
+					<< "µs falls outside expected array or is already received and is "
+					<< pCopy->GetSerializedSize() << " size" << endl;
 
+
+			// well ns3 corruption sets in with packet fragmentation
+			// count it as succesfully received, but don't update the time
+			stats->get(this->id).NumberOfSuccessfulPackets++;
 			return;
 		} else {
 			if(showLog) cout << "Packet with seq nr " << seqTs.GetSeq() << " received at AP"

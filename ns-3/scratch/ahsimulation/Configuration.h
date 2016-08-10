@@ -45,8 +45,8 @@ struct Configuration {
 	uint32_t APScheduleTransmissionForNextSlotIfLessThan = 2000;
 
 	string DataMode = "OfdmRate650KbpsBW2MHz";
-	double datarate = 0.65;
-	double bandWidth = 2;
+	//double datarate = 0.65;
+	//double bandWidth = 2;
 
 	string visualizerIP = "";
 	int visualizerPort = 7707;

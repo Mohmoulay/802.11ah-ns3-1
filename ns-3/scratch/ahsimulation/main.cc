@@ -19,16 +19,16 @@ int main(int argc, char** argv) {
 
     RngSeedManager::SetSeed(config.seed);
 
-    if(config.trafficType == "tcpecho") {
-    	Config::SetDefault ("ns3::TcpSocketBase::MinRto",TimeValue(MicroSeconds(config.MinRTO)));
-    	// don't change the delayed ack timeout, for high values this causes the AP to retransmit
-    	//Config::SetDefault ("ns3::TcpSocket::DelAckTimeout",TimeValue(MicroSeconds(config.MinRTO)));
-    	Config::SetDefault ("ns3::TcpSocket::ConnTimeout",TimeValue(MicroSeconds(config.TCPConnectionTimeout)));
 
-    	Config::SetDefault ("ns3::TcpSocket::SegmentSize",UintegerValue(config.TCPSegmentSize));
-    	Config::SetDefault ("ns3::TcpSocket::InitialSlowStartThreshold",UintegerValue(config.TCPInitialSlowStartThreshold));
-    	Config::SetDefault ("ns3::TcpSocket::InitialCwnd",UintegerValue(config.TCPInitialCwnd));
-    }
+	Config::SetDefault ("ns3::TcpSocketBase::MinRto",TimeValue(MicroSeconds(config.MinRTO)));
+	// don't change the delayed ack timeout, for high values this causes the AP to retransmit
+	//Config::SetDefault ("ns3::TcpSocket::DelAckTimeout",TimeValue(MicroSeconds(config.MinRTO)));
+	Config::SetDefault ("ns3::TcpSocket::ConnTimeout",TimeValue(MicroSeconds(config.TCPConnectionTimeout)));
+
+	Config::SetDefault ("ns3::TcpSocket::SegmentSize",UintegerValue(config.TCPSegmentSize));
+	Config::SetDefault ("ns3::TcpSocket::InitialSlowStartThreshold",UintegerValue(config.TCPInitialSlowStartThreshold));
+	Config::SetDefault ("ns3::TcpSocket::InitialCwnd",UintegerValue(config.TCPInitialCwnd));
+
 
     configureChannel();
 
@@ -122,6 +122,51 @@ void onChannelTransmission(Ptr<NetDevice> senderDevice, Ptr<Packet> packet) {
 	}
 }
 
+int getBandwidth(string dataMode) {
+	if(dataMode == "MCS1_0" ||
+	   dataMode == "MCS1_1" || dataMode == "MCS1_2" ||
+		dataMode == "MCS1_3" || dataMode == "MCS1_4" ||
+		dataMode == "MCS1_5" || dataMode == "MCS1_6" ||
+		dataMode == "MCS1_7" || dataMode == "MCS1_8" ||
+		dataMode == "MCS1_9" || dataMode == "MCS1_10")
+			return 1;
+
+	else if(dataMode == "MCS2_0" ||
+	    dataMode == "MCS2_1" || dataMode == "MCS2_2" ||
+		dataMode == "MCS2_3" || dataMode == "MCS2_4" ||
+		dataMode == "MCS2_5" || dataMode == "MCS2_6" ||
+		dataMode == "MCS2_7" || dataMode == "MCS2_8")
+			return 2;
+
+	return 0;
+}
+
+string getWifiMode(string dataMode) {
+	if("MCS1_0") return "OfdmRate300KbpsBW1MHz";
+	else if("MCS1_1") return "OfdmRate600KbpsBW1MHz";
+	else if("MCS1_2") return "OfdmRate900KbpsBW1MHz";
+	else if("MCS1_3") return "OfdmRate1_2MbpsBW1MHz";
+	else if("MCS1_4") return "OfdmRate1_8MbpsBW1MHz";
+	else if("MCS1_5") return "OfdmRate2_4MbpsBW1MHz";
+	else if("MCS1_6") return "OfdmRate2_7MbpsBW1MHz";
+	else if("MCS1_7") return "OfdmRate3MbpsBW1MHz";
+	else if("MCS1_8") return "OfdmRate3_6MbpsBW1MHz";
+	else if("MCS1_9") return "OfdmRate4MbpsBW1MHz";
+	else if("MCS1_10") return "OfdmRate150KbpsBW1MHz";
+
+
+	else if("MCS2_0") return "OfdmRate650KbpsBW2MHz";
+	else if("MCS2_1") return "OfdmRate1_3MbpsBW2MHz";
+	else if("MCS2_2") return "OfdmRate1_95MbpsBW2MHz";
+	else if("MCS2_3") return "OfdmRate2_6MbpsBW2MHz";
+	else if("MCS2_4") return "OfdmRate3_9MbpsBW2MHz";
+	else if("MCS2_5") return "OfdmRate5_2MbpsBW2MHz";
+	else if("MCS2_6") return "OfdmRate5_85MbpsBW2MHz";
+	else if("MCS2_7") return "OfdmRate6_5MbpsBW2MHz";
+	else if("MCS2_8") return "OfdmRate7_8MbpsBW2MHz";
+	return "";
+}
+
 void configureSTANodes(Ssid& ssid) {
 	cout << "Configuring STA Nodes " << endl;
     // create STA nodes
@@ -132,7 +177,7 @@ void configureSTANodes(Ssid& ssid) {
     phy.SetErrorRateModel("ns3::YansErrorRateModel");
     phy.SetChannel(channel);
     phy.Set("ShortGuardEnabled", BooleanValue(false));
-    phy.Set("ChannelWidth", UintegerValue(config.bandWidth));
+    phy.Set("ChannelWidth", UintegerValue(getBandwidth(config.DataMode)));
     phy.Set("EnergyDetectionThreshold", DoubleValue(-116.0));
     phy.Set("CcaMode1Threshold", DoubleValue(-119.0));
     phy.Set("TxGain", DoubleValue(0.0));
@@ -154,7 +199,7 @@ void configureSTANodes(Ssid& ssid) {
     // create wifi
     WifiHelper wifi = WifiHelper::Default();
     wifi.SetStandard(WIFI_PHY_STANDARD_80211ah);
-    StringValue dataRate = StringValue(config.DataMode);
+    StringValue dataRate = StringValue(getWifiMode(config.DataMode));
     wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager", "DataMode", dataRate, "ControlMode", dataRate);
 
     cout << "Installing STA Node devices" << endl;
@@ -263,7 +308,7 @@ void configureAPNode(Ssid& ssid) {
     phy.SetErrorRateModel("ns3::YansErrorRateModel");
     phy.SetChannel(channel);
     phy.Set("ShortGuardEnabled", BooleanValue(false));
-    phy.Set("ChannelWidth", UintegerValue(config.bandWidth));
+    phy.Set("ChannelWidth", UintegerValue(getBandwidth(config.DataMode)));
     phy.Set("EnergyDetectionThreshold", DoubleValue(-116.0));
     phy.Set("CcaMode1Threshold", DoubleValue(-119.0));
     phy.Set("TxGain", DoubleValue(3.0));
@@ -277,7 +322,7 @@ void configureAPNode(Ssid& ssid) {
     // create wifi
     WifiHelper wifi = WifiHelper::Default();
     wifi.SetStandard(WIFI_PHY_STANDARD_80211ah);
-    StringValue dataRate = StringValue(config.DataMode);
+    StringValue dataRate = StringValue(getWifiMode(config.DataMode));
     wifi.SetRemoteStationManager("ns3::ConstantRateWifiManager", "DataMode", dataRate, "ControlMode", dataRate);
 
 

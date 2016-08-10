@@ -30,8 +30,8 @@ void SimulationEventManager::onStart(Configuration& config) {
 		  std::to_string(config.NRawSlotNum),
 
 		  config.DataMode,
-		  std::to_string(config.datarate),
-		  std::to_string(config.bandWidth),
+		  "",
+		  "",
 
 		  std::to_string(config.trafficInterval),
 		  std::to_string(config.trafficPacketSize),

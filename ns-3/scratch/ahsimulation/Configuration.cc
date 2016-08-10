@@ -40,9 +40,9 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("IpCameraMotionDuration", "Time in seconds to stream data when motion was detected", ipcameraMotionDuration);
     cmd.AddValue("IpCameraDataRate", "Data rate of the captured stream in kbps", ipcameraDataRate);
 
-    cmd.AddValue("DataMode", "Date mode", DataMode);
-    cmd.AddValue("Datarate", "data rate in Mbps", datarate);
-    cmd.AddValue("BandWidth", "bandwidth in MHz", bandWidth);
+    cmd.AddValue("DataMode", "Date mode (check MCStoWifiMode for more details) (format: MCSbw_mcs, e.g. MCS1_0 is OfdmRate300KbpsBW1Mhz)", DataMode);
+//    cmd.AddValue("Datarate", "data rate in Mbps", datarate);
+//cmd.AddValue("BandWidth", "bandwidth in MHz", bandWidth);
 
     cmd.AddValue("Rho", "maximal distance between AP and stations", rho);
 
