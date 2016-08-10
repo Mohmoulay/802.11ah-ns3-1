@@ -158,6 +158,8 @@ DcaTxop::DcaTxop ()
 {
   NS_LOG_FUNCTION (this);
   AccessAllowedIfRaw (true);
+  rawDuration = Time::Max(); // no limit on raw
+
   m_transmissionListener = new DcaTxop::TransmissionListener (this);
   m_dcf = new DcaTxop::Dcf (this);
   m_queue = CreateObject<WifiMacQueue> ();
@@ -349,11 +351,14 @@ DcaTxop::StartAccessIfNeededRaw (void) //possibilely necessary, start new backof
 }
     
 void
-DcaTxop::RawStart (void)
+DcaTxop::RawStart (Time duration)
 {
   NS_LOG_FUNCTION (this);
-  //m_dcf->RawStart ();
-  //m_stationManager->RawStart ();
+  this->rawDuration = duration;
+  rawStartedAt = Simulator::Now();
+  m_dcf->RawStart ();
+  m_stationManager->RawStart ();
+
 
   //auto nrOfSlots = m_rng->GetNext (0, m_dcf->GetCw ());
 
@@ -493,6 +498,9 @@ DcaTxop::NeedsAccess (void) const
 void
 DcaTxop::NotifyAccessGranted (void)
 {
+
+	Time remainingRawTime =  rawDuration -  (Simulator::Now() - rawStartedAt);
+
 	if(DEBUG_TRACK_PACKETS) std::cout << "Access  granted (raw access: " << AccessIfRaw << ")" << std::endl;
   NS_LOG_FUNCTION (this);
   if (!AccessIfRaw) 
@@ -531,6 +539,14 @@ DcaTxop::NotifyAccessGranted (void)
       params.DisableAck ();
       params.DisableNextData ();
       if(DEBUG_TRACK_PACKETS) std::cout << "Starting Transmission" << std::endl;
+
+      Time txDuration = Low()->CalculateTransmissionTime(m_currentPacket, &m_currentHdr, params);
+
+	  if(txDuration > remainingRawTime) {  // don't transmit if it can't be done inside RAW window, the ACK won't be received anyway
+		  NS_LOG_DEBUG("TX will take longer (" << txDuration << ") than the remaining RAW time (" << remainingRawTime << "), not transmitting");
+		  return;
+	  }
+
       Low ()->StartTransmission (m_currentPacket,
                                  &m_currentHdr,
                                  params,
@@ -564,6 +580,13 @@ DcaTxop::NotifyAccessGranted (void)
               params.EnableNextData (GetNextFragmentSize ());
             }
           if(DEBUG_TRACK_PACKETS) std::cout << "Starting Transmission" << std::endl;
+
+          Time txDuration = Low()->CalculateTransmissionTime(fragment, &hdr, params);
+		  if(txDuration > remainingRawTime) {  // don't transmit if it can't be done inside RAW window, the ACK won't be received anyway
+			  NS_LOG_DEBUG("TX will take longer (" << txDuration << ") than the remaining RAW time (" << remainingRawTime << "), not transmitting");
+			  return;
+		  }
+
           Low ()->StartTransmission (fragment, &hdr, params,
                                      m_transmissionListener);
         }
@@ -582,6 +605,13 @@ DcaTxop::NotifyAccessGranted (void)
           params.DisableNextData ();
 
           if(DEBUG_TRACK_PACKETS) std::cout << "Starting Transmission" << std::endl;
+
+          Time txDuration = Low()->CalculateTransmissionTime(m_currentPacket, &m_currentHdr, params);
+          if(txDuration > remainingRawTime) {
+        	  NS_LOG_DEBUG("TX will take longer (" << txDuration << ") than the remaining RAW time (" << remainingRawTime << "), not transmitting");
+        	  return;
+          }
+
           Low ()->StartTransmission (m_currentPacket, &m_currentHdr,
                                      params, m_transmissionListener);
         }
@@ -727,6 +757,9 @@ DcaTxop::MissedAck (void)
 void
 DcaTxop::StartNext (void)
 {
+	if(!AccessIfRaw)
+		return;
+
   NS_LOG_FUNCTION (this);
   NS_LOG_DEBUG ("start next packet fragment");
   /* this callback is used only for fragments. */

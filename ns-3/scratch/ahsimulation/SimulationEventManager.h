@@ -12,6 +12,8 @@
 #include "Statistics.h"
 #include "Configuration.h"
 #include "ns3/drop-reason.h"
+#include <fstream>
+#include <memory>
 
 class SimulationEventManager {
 
@@ -19,6 +21,7 @@ private:
 
 	string hostname;
 	int port;
+	string filename;
 
 	int socketDescriptor = -1;
 
@@ -26,7 +29,7 @@ private:
 
 public:
 	SimulationEventManager();
-	SimulationEventManager(string hostname, int port);
+	SimulationEventManager(string hostname, int port, string filename);
 
 
 	void onStart(Configuration& config);

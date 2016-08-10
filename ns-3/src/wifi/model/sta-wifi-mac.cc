@@ -40,7 +40,7 @@
 #include "ht-capabilities.h"
 #include "random-stream.h"
 
-#define LOG_SLEEP(msg)	if(true) std::cout << "[" << (GetAID()) << "] " << msg << std::endl;
+#define LOG_SLEEP(msg)	if(true) NS_LOG_DEBUG("[" << (GetAID()) << "] " << msg << std::endl);
 
 /*
  * The state machine for this STA is:
@@ -1038,11 +1038,11 @@ StaWifiMac::GrantDCAAccess() {
 	m_edca.find (AC_VI)->second->AccessAllowedIfRaw (true);
 	m_edca.find (AC_BE)->second->AccessAllowedIfRaw (true);
 	m_edca.find (AC_BK)->second->AccessAllowedIfRaw (true);
-	m_dca->RawStart();
-	m_edca.find (AC_VO)->second->RawStart();
-	m_edca.find (AC_VI)->second->RawStart();
-	m_edca.find (AC_BE)->second->RawStart();
-	m_edca.find (AC_BK)->second->RawStart();
+	m_dca->RawStart(m_slotDuration);
+	m_edca.find (AC_VO)->second->RawStart(m_slotDuration);
+	m_edca.find (AC_VI)->second->RawStart(m_slotDuration);
+	m_edca.find (AC_BE)->second->RawStart(m_slotDuration);
+	m_edca.find (AC_BK)->second->RawStart(m_slotDuration);
 }
 
 void

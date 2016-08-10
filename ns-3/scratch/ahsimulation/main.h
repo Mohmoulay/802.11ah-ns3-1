@@ -100,5 +100,5 @@ int main(int argc, char** argv);
 
 void printStatistics();
 
-void sendStatistics();
+void sendStatistics(bool schedule);
 

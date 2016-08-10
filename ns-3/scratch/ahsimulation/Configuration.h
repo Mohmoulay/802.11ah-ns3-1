@@ -57,6 +57,7 @@ struct Configuration {
 	string name = "";
 
 	string APPcapFile = "";
+	string NSSFile = "";
 
 	uint32_t trafficInterval = 10000;
 	uint32_t trafficIntervalDeviation = 1000;
@@ -64,6 +65,9 @@ struct Configuration {
 	uint16_t trafficPacketSize = 100;
 	string trafficType = "tcpipcamera";
 
+	double ipcameraMotionPercentage = 0.1;
+	uint16_t ipcameraMotionDuration = 60;
+	uint16_t ipcameraDataRate = 20;
 
 	uint16_t MaxTimeOfPacketsInQueue = 100;
 

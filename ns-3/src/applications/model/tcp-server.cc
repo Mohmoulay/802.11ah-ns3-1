@@ -152,7 +152,7 @@ void TcpServer::ReceivePacket(Ptr<Socket> s) {
 			packet->RemoveAllByteTags();
 
 			int remainingSize = packet->GetSize();
-			std::cout << "Remaining size: " << remainingSize << std::endl;
+
 
 			uint8_t* buf = new uint8_t[remainingSize];
 			packet->CopyData(buf, remainingSize);
@@ -259,9 +259,6 @@ void TcpServer::Send(Address to, uint8_t* data, int size) {
 
 	p->AddHeader(seqTs);
 
-	if(((handles[to].socket)) == 0) {
-		std::cout << "SOCKET POINTER DEREFERENCED " << std::endl;
-	}
 	int retVal = ((handles[to].socket))->Send(p);
 	if(retVal == -1) {
 		Socket::SocketErrno err = ((handles[to].socket))->GetErrno();

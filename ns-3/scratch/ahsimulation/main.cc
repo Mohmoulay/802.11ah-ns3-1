@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
     transmissionsPerTIMGroupAndSlotFromSTASinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
 
-    eventManager = SimulationEventManager(config.visualizerIP, config.visualizerPort);
+    eventManager = SimulationEventManager(config.visualizerIP, config.visualizerPort, config.NSSFile);
 
     RngSeedManager::SetSeed(config.seed);
 
@@ -77,14 +77,14 @@ int main(int argc, char** argv) {
     eventManager.onAPNodeCreated(apposition.x, apposition.y);
 
     // start sending statistics every second
-    sendStatistics();
+    sendStatistics(true);
 
-    Simulator::Stop(Seconds(config.simulationTime));
+    Simulator::Stop(Seconds(config.simulationTime + 60)); // allow up to a minute after the client & server apps are finished to process the queue
     Simulator::Run();
     Simulator::Destroy();
 
-
     stats.TotalSimulationTime = Seconds(config.simulationTime);
+
     printStatistics();
 
     return (EXIT_SUCCESS);
@@ -171,7 +171,7 @@ void configureSTANodes(Ssid& ssid) {
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(staNodes);
 
-//    phy.EnablePcap("stafile", staNodes, 0);
+    phy.EnablePcap("stafile", staNodes, 0);
 }
 
 void OnAPPhyRxBegin(std::string context, Ptr<const Packet> packet) {
@@ -489,15 +489,16 @@ void configureTCPIPCameraServer() {
 	auto serverApp = ApplicationContainer(tcpServer);
 	wireTCPServer(serverApp);
 	serverApp.Start(Seconds(0));
+//	serverApp.Stop(Seconds(config.simulationTime));
 }
 
 void configureTCPIPCameraClients() {
 
 	ObjectFactory factory;
 	factory.SetTypeId (TCPIPCameraClient::GetTypeId ());
-	factory.Set("MotionPercentage", DoubleValue(0.1));
-	factory.Set("MotionDuration", TimeValue(Seconds(60)));
-	factory.Set("DataRate", UintegerValue(200));
+	factory.Set("MotionPercentage", DoubleValue(config.ipcameraMotionPercentage));
+	factory.Set("MotionDuration", TimeValue(Seconds(config.ipcameraMotionDuration)));
+	factory.Set("DataRate", UintegerValue(config.ipcameraDataRate));
 
 	factory.Set("PacketSize", UintegerValue(config.trafficPacketSize));
 
@@ -514,6 +515,7 @@ void configureTCPIPCameraClients() {
 		wireTCPClient(clientApp,i);
 
 		clientApp.Start(MilliSeconds(0));
+		clientApp.Stop(Seconds(config.simulationTime));
 	}
 }
 
@@ -702,7 +704,7 @@ void printStatistics() {
 	}
 }
 
-void sendStatistics() {
+void sendStatistics(bool schedule) {
 	eventManager.onUpdateStatistics(stats);
 
 	eventManager.onUpdateSlotStatistics(transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval, transmissionsPerTIMGroupAndSlotFromSTASinceLastInterval);
@@ -710,5 +712,6 @@ void sendStatistics() {
 	transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
 	transmissionsPerTIMGroupAndSlotFromSTASinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
 
-	Simulator::Schedule(Seconds(config.visualizerSamplingInterval), &sendStatistics);
+	if(schedule)
+		Simulator::Schedule(Seconds(config.visualizerSamplingInterval), &sendStatistics, true);
 }
