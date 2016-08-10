@@ -145,6 +145,7 @@ class SimulationConfiguration {
 class Simulation {
 
     nodes: SimulationNode[] = [];
+    apNode:APNode;
 
     slotUsageSTA: number[][] = [];
     slotUsageAP: number[][] = [];

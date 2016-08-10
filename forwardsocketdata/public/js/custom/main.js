@@ -774,6 +774,8 @@ var EventManager = (function () {
         n.y = y;
         n.aId = aId;
         this.sim.simulationContainer.getSimulation(stream).nodes.push(n);
+        if (!isSTA)
+            this.sim.simulationContainer.getSimulation(stream).apNode = n;
         // this.sim.onNodeAdded(stream, id);
     };
     EventManager.prototype.onNodeAssociated = function (stream, id, aId, groupNumber, rawSlotIndex) {
@@ -1217,7 +1219,8 @@ var SimulationGUI = (function () {
     SimulationGUI.prototype.updateGUIForSelectedNode = function (simulations, selectedSimulation, full) {
         var node = selectedSimulation.nodes[this.selectedNode];
         $("#nodeTitle").text("Node " + node.id);
-        $("#nodePosition").text(node.x.toFixed(2) + "," + node.y.toFixed(2));
+        var distance = Math.sqrt(Math.pow((node.x - selectedSimulation.apNode.x), 2) + Math.pow((node.y - selectedSimulation.apNode.y), 2));
+        $("#nodePosition").text(node.x.toFixed(2) + "," + node.y.toFixed(2) + ", dist: " + distance.toFixed(2));
         if (node.type == "STA" && !node.isAssociated) {
             $("#nodeAID").text("Not associated");
         }
