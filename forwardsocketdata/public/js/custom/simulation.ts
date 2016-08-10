@@ -93,6 +93,8 @@ class NodeValue {
     tcpRTT: number = 0;
 
     numberOfBeaconsMissed:number = 0;
+
+    numberOfTransmissionsDuringRAWSlot:number = 0;
 }
 
 class APNode extends SimulationNode {

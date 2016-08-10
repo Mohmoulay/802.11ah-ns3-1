@@ -60,7 +60,7 @@ class EventManager {
                         parseInt(ev.parts[28]), parseInt(ev.parts[29]), parseFloat(ev.parts[30]),
                         parseInt(ev.parts[31]), parseInt(ev.parts[32]), parseInt(ev.parts[33]),
                         parseInt(ev.parts[34]), parseFloat(ev.parts[35]), parseInt(ev.parts[36]),
-                        parseInt(ev.parts[37]));
+                        parseInt(ev.parts[37]), parseInt(ev.parts[38]));
                     break;
 
                 case 'slotstatsSTA':
@@ -256,7 +256,8 @@ class EventManager {
         numberOfMACTxRTSFailed: number, numberOfMACTxMissedACK: number, numberOfDropsByReason: string, numberOfDropsByReasonAtAP: string,
         tcpRtoValue: number, numberOfAPScheduledPacketForNodeInNextSlot: number, numberOfAPSentPacketForNodeImmediately: number, avgRemainingSlotTimeWhenAPSendingInSameSlot: number,
         numberOfCollisions: number, numberofMACTxMissedACKAndDroppedPacket: number, tcpConnected:number, 
-        tcpSlowStartThreshold:number, tcpEstimatedBandwidth:number,tcpRTT:number, numberOfBeaconsMissed:number) {
+        tcpSlowStartThreshold:number, tcpEstimatedBandwidth:number,tcpRTT:number, numberOfBeaconsMissed:number, numberOfTransmissionsDuringRAWSlot:number) {
+        // ^- it's getting awfully crowded around here
 
         let simulation = this.sim.simulationContainer.getSimulation(stream);
 
@@ -362,6 +363,8 @@ class EventManager {
 
         nodeVal.numberOfBeaconsMissed = numberOfBeaconsMissed;
     
+        nodeVal.numberOfTransmissionsDuringRAWSlot = numberOfTransmissionsDuringRAWSlot
+
         //if(this.hasIncreased(n.totalReceiveActiveTime))
         //   this.sim.addAnimation(new ReceivedAnimation(n.x, n.y));
 
