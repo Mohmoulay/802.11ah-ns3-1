@@ -28,13 +28,19 @@ NS_OBJECT_ENSURE_REGISTERED(S1gApWifiMac);
 
 TypeId S1gApWifiMac::GetTypeId(void) {
 	static TypeId tid =
-			TypeId("ns3::S1gApWifiMac").SetParent<RegularWifiMac>().SetGroupName(
-					"Wifi").AddConstructor<S1gApWifiMac>().AddAttribute(
+			TypeId("ns3::S1gApWifiMac")
+			.SetParent<RegularWifiMac>()
+			.SetGroupName("Wifi")
+			.AddConstructor<S1gApWifiMac>()
+
+					.AddAttribute(
 					"BeaconInterval", "Delay between two beacons",
 					TimeValue(MicroSeconds(102400)),
 					MakeTimeAccessor(&S1gApWifiMac::GetBeaconInterval,
 							&S1gApWifiMac::SetBeaconInterval),
-					MakeTimeChecker()).AddAttribute("BeaconJitter",
+					MakeTimeChecker())
+
+					.AddAttribute("BeaconJitter",
 					"A uniform random variable to cause the initial beacon starting time (after simulation time 0) "
 							"to be distributed between 0 and the BeaconInterval.",
 					StringValue("ns3::UniformRandomVariable"),
@@ -749,12 +755,23 @@ void S1gApWifiMac::SendOneBeacon(void) {
 		current_aid_end = m_rawGroupInterval;
 	}
 
+	// broadcast so disable rts, ack & fragmentation
+	// sending the beacon and starting the RAW at the same time will always mismatch
+	// a while due to the travel time of the beacon, try to compensate beacon travel time
+
+	MacLowTransmissionParameters params;
+	params.DisableRts ();
+    params.DisableAck ();
+    params.DisableNextData ();
+	Time txTime = m_low->CalculateOverallTxTime(packet, &hdr, params);
+	NS_LOG_DEBUG("Transmission of beacon will take " << txTime << ", delaying RAW start for that amount");
+	Time bufferTimeToAllowBeaconToBeReceived = txTime;
 
 	// schedule the slot start & ends
 	Time slotDuration = strategy->GetSlotDuration(m_slotDurationCount);
 	for(int i = 0; i < m_slotNum; i++) {
-		Simulator::Schedule(slotDuration * i, &S1gApWifiMac::OnRAWSlotStart, this,m_currentBeaconTIMGroup, i);
-		Simulator::Schedule(slotDuration * (i+1), &S1gApWifiMac::OnRAWSlotEnd, this,m_currentBeaconTIMGroup, i);
+		Simulator::Schedule(bufferTimeToAllowBeaconToBeReceived + (slotDuration * i), &S1gApWifiMac::OnRAWSlotStart, this,m_currentBeaconTIMGroup, i);
+		Simulator::Schedule(bufferTimeToAllowBeaconToBeReceived + (slotDuration * (i+1)), &S1gApWifiMac::OnRAWSlotEnd, this,m_currentBeaconTIMGroup, i);
 	}
 
 	m_beaconEvent = Simulator::Schedule(m_beaconInterval,

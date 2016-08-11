@@ -11,8 +11,8 @@ Configuration::Configuration(int argc, char** argv) {
 
     cmd.AddValue("Nsta", "number of total stations", Nsta);
     cmd.AddValue("NRawSta", "number of stations supporting RAW", NRawSta);
-    cmd.AddValue("SlotFormat", "format of NRawSlotCount", SlotFormat);
-    cmd.AddValue("NRawSlotCount", "RAW slot duration", NRawSlotCount);
+    cmd.AddValue("SlotFormat", "format of NRawSlotCount, -1 will auto calculate based on raw slot num", SlotFormat);
+    cmd.AddValue("NRawSlotCount", "RAW slot duration, , -1 will auto calculate based on raw slot num", NRawSlotCount);
     cmd.AddValue("NRawSlotNum", "number of slots per RAW", NRawSlotNum);
     cmd.AddValue("NGroup", "number of RAW group", NGroup);
 
@@ -59,6 +59,7 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("NSSFile", "Path of the nss file to write. Note: if a visualizer is active it will also save the nss file", NSSFile);
     cmd.AddValue("Name", "Name of the simulation", name);
 
+    cmd.AddValue("CoolDownPeriod", "Period of no more traffic generation after simulation time (to allow queues to be processed) in seconds", CoolDownPeriod);
 
 
     cmd.Parse(argc, argv);

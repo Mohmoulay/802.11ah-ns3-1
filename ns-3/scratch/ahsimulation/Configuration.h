@@ -25,8 +25,8 @@ struct Configuration {
 	uint32_t seed = 1;
 	uint32_t Nsta = 1;
 	uint32_t NRawSta = 96;
-	uint32_t SlotFormat = 0;
-	uint32_t NRawSlotCount = 126;
+	uint32_t SlotFormat = -1; //0;
+	uint32_t NRawSlotCount = -1; //162;
 	uint32_t NRawSlotNum = 5;
 	uint32_t NGroup = 4;
 	uint32_t BeaconInterval = 102400;
@@ -70,6 +70,8 @@ struct Configuration {
 	uint16_t ipcameraDataRate = 20;
 
 	uint16_t MaxTimeOfPacketsInQueue = 100;
+
+	uint16_t CoolDownPeriod = 60;
 
 	Configuration();
 	Configuration(int argc, char** argv);

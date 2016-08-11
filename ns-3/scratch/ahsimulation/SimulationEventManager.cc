@@ -56,7 +56,8 @@ void SimulationEventManager::onStart(Configuration& config) {
 		  std::to_string(config.ipcameraMotionPercentage),
 		  std::to_string(config.ipcameraMotionDuration),
 		  std::to_string(config.ipcameraDataRate),
-		  std::to_string(config.Nsta)
+		  std::to_string(config.Nsta),
+		  std::to_string(config.CoolDownPeriod)
 	});
 }
 
@@ -215,7 +216,8 @@ void SimulationEventManager::onStartHeader() {
 		   "IPCameraMotionPercentage",
 		   "IPCameraMotionDuration",
 		   "IPCameraDataRate",
-		   "NSta"
+		   "NSta",
+		   "CoolDownPeriod"
 		});
 }
 

@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     // start sending statistics every second
     sendStatistics(true);
 
-    Simulator::Stop(Seconds(config.simulationTime + 60)); // allow up to a minute after the client & server apps are finished to process the queue
+    Simulator::Stop(Seconds(config.simulationTime + config.CoolDownPeriod)); // allow up to a minute after the client & server apps are finished to process the queue
     Simulator::Run();
     Simulator::Destroy();
 
@@ -107,11 +107,17 @@ void onChannelTransmission(Ptr<NetDevice> senderDevice, Ptr<Packet> packet) {
 
 	int timGroup = (Simulator::Now().GetMicroSeconds() / config.BeaconInterval) % config.NGroup;
 
+	uint16_t rawslotCount;
+	 if(config.NRawSlotCount == -1)
+	    	rawslotCount = ceil(162 * 5 / config.NRawSlotNum);
+	    else
+	    	rawslotCount = config.NRawSlotCount;
+
 	S1gStrategy strategy;
-	auto slotDuration = strategy.GetSlotDuration(config.NRawSlotCount);
+	auto slotDuration = strategy.GetSlotDuration(rawslotCount);
 	int slotIndex = (Simulator::Now().GetMicroSeconds() % config.BeaconInterval) / slotDuration.GetMicroSeconds();
 
-	//cout << "Transission during tim group " << timGroup << ", slot: " << slotIndex << endl;
+	//cout << "Transmission during tim group " << timGroup << ", slot: " << slotIndex << endl;
 
 
 	if(senderDevice->GetAddress() == apDevices.Get(0)->GetAddress()) {
@@ -292,6 +298,24 @@ void configureAPNode(Ssid& ssid) {
 
     uint32_t NGroupStas = config.NRawSta / config.NGroup;
 
+
+    uint16_t rawslotCount;
+
+    if(config.NRawSlotCount == -1)
+    	rawslotCount = ceil(162 * 5 / config.NRawSlotNum);
+    else
+    	rawslotCount = config.NRawSlotCount;
+
+    uint16_t rawSlotFormat;
+
+    if(config.SlotFormat == -1)
+    	rawSlotFormat = rawslotCount > 256 ? 1 : 0;
+    else
+    	rawSlotFormat = config.SlotFormat;
+
+    cout << "Raw slot format " << rawSlotFormat << endl;
+    cout << "Raw slot count " << rawslotCount << endl;
+
     // setup mac
     S1gWifiMacHelper mac = S1gWifiMacHelper::Default();
     mac.SetType("ns3::S1gApWifiMac",
@@ -299,8 +323,8 @@ void configureAPNode(Ssid& ssid) {
             "BeaconInterval", TimeValue(MicroSeconds(config.BeaconInterval)),
             "NRawGroupStas", UintegerValue(NGroupStas),
             "NRawStations", UintegerValue(config.NRawSta),
-            "SlotFormat", UintegerValue(config.SlotFormat),
-            "SlotDurationCount", UintegerValue(config.NRawSlotCount),
+            "SlotFormat", UintegerValue(rawSlotFormat),
+            "SlotDurationCount", UintegerValue(rawslotCount),
             "SlotNum", UintegerValue(config.NRawSlotNum),
 			"ScheduleTransmissionForNextSlotIfLessThan", TimeValue(MicroSeconds(config.APScheduleTransmissionForNextSlotIfLessThan)),
 			"AlwaysScheduleForNextSlot", BooleanValue(config.APAlwaysSchedulesForNextSlot),
