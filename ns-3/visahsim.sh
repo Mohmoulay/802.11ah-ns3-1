@@ -10,7 +10,7 @@
 " --TrafficPacketSize=100"\
 " --TrafficInterval=1000"\
 " --TrafficIntervalDeviation=1000"\
-" --TrafficType=\"tcpipcamera\""\
+" --TrafficType=\"tcpecho\""\
 " --IpCameraMotionPercentage=1"\
 " --IpCameraMotionDuration=10"\
 " --IpCameraDataRate=8"\
