@@ -37,6 +37,12 @@ for my $f (@files) {
 }
 
 
+
+     my @statHeaders;
+     my @configHeaders;
+
+
+
 sub analyzeFile {
    my $f = $ARGV[0] . "/" . @_[0];
    my $printHeaders = @_[1];
@@ -47,9 +53,6 @@ sub analyzeFile {
      my @configParts;
      my @statParts;
      my $nrOfSta = 0;
-
-     my @statHeaders;
-     my @configHeaders;
 
      while(my $line = <$info>) {
 
@@ -72,6 +75,8 @@ sub analyzeFile {
 			@statHeaders = (@parts);
 			$statHeaders[0] = "time";
 			$statHeaders[1] = "type";
+
+			resolveIdxNames();
 		}
 		elsif($parts[1] eq "nodestats") {
 			if($parts[2] == 0) {
@@ -113,4 +118,24 @@ sub analyzeFile {
      print ";";
      print join(";", @statParts);
      print "\n";
+}
+
+sub resolveIdxNames {
+                        for(my $itm; $itm < scalar @statsIdx; $itm++) {
+                                my $item = $statsIdx[$itm];
+                                if($item =~ /[0-9]+/) {
+                                        # ok already index
+                                }
+                                else {
+                                        # try to find the matching index based on name
+                                        for(my $i = 0; $i < scalar @statHeaders; $i++) {
+						#print lc($statHeaders[$i]) . " <-> " . $item . "\n";
+                                                if(lc($statHeaders[$i]) eq lc($item)) {
+                                                        $statsIdx[$itm] = $i; # update to index
+							print "updated $statsIdx[$item] to $i because its equal to $item\n";
+                                                        last;
+                                                }
+                                        }
+                                }
+                        }
 }
