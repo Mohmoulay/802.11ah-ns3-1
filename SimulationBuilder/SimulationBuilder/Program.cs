@@ -61,17 +61,25 @@ namespace SimulationBuilder
                     {
                         Console.WriteLine("Running simulation " + (i + 1) + "/" + combos.Count);
 
+                        
                         var finalArguments = Merge(baseArgs, combos[i]);
                         var name = string.Join("", combos[i].Select(p => p.Key.Replace("--", "") + p.Value)).Replace("\"", "");
                         finalArguments["--NSSFile"] = "\"" + System.IO.Path.Combine(nssFolder, name + ".nss") + "\"";
                         finalArguments["--Name"] = "\"" + name + "\"";
                         // finalArguments["--VisualizerIP"] = "\"" + "\""; // no visualization 
 
-                        Stopwatch sw = new Stopwatch();
-                        sw.Start();
-                        RunSimulation(finalArguments);
-                        sw.Stop();
-                        Console.WriteLine("Simulation " + i + " took " + sw.ElapsedMilliseconds + "ms");
+                        if (!System.IO.File.Exists(System.IO.Path.Combine(nssFolder, name + ".nss")))
+                        {
+                            Stopwatch sw = new Stopwatch();
+                            sw.Start();
+                            RunSimulation(finalArguments);
+                            sw.Stop();
+                            Console.WriteLine("Simulation " + (i+1) + " took " + sw.ElapsedMilliseconds + "ms");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Skipping simulation " + (i + 1) + " because the nss file was already present");
+                        }
                     }
                     catch (Exception ex)
                     {
