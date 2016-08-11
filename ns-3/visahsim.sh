@@ -1,8 +1,8 @@
 ./waf --run "scratch/ahsimulation/ahsimulation"\
 " --NGroup=4"\
-" --NRawSlotNum=2"\
+" --NRawSlotNum=5"\
 " --DataMode=\"MCS2_8\""\
-" --Rho=\"100\""\
+" --Rho=\"400\""\
 " --MaxTimeOfPacketsInQueue=1000"\
 " --SimulationTime=200"\
 " --TrafficInterval=1000"\

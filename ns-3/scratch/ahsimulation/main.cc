@@ -19,8 +19,6 @@ int main(int argc, char** argv) {
     if(config.SlotFormat == -1)
     	config.SlotFormat = config.NRawSlotCount > 256 ? 1 : 0;
 
-
-
     stats = Statistics(config.Nsta);
 
     transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
@@ -165,28 +163,28 @@ int getBandwidth(string dataMode) {
 }
 
 string getWifiMode(string dataMode) {
-	if("MCS1_0") return "OfdmRate300KbpsBW1MHz";
-	else if("MCS1_1") return "OfdmRate600KbpsBW1MHz";
-	else if("MCS1_2") return "OfdmRate900KbpsBW1MHz";
-	else if("MCS1_3") return "OfdmRate1_2MbpsBW1MHz";
-	else if("MCS1_4") return "OfdmRate1_8MbpsBW1MHz";
-	else if("MCS1_5") return "OfdmRate2_4MbpsBW1MHz";
-	else if("MCS1_6") return "OfdmRate2_7MbpsBW1MHz";
-	else if("MCS1_7") return "OfdmRate3MbpsBW1MHz";
-	else if("MCS1_8") return "OfdmRate3_6MbpsBW1MHz";
-	else if("MCS1_9") return "OfdmRate4MbpsBW1MHz";
-	else if("MCS1_10") return "OfdmRate150KbpsBW1MHz";
+	if(dataMode == "MCS1_0") return "OfdmRate300KbpsBW1MHz";
+	else if(dataMode == "MCS1_1") return "OfdmRate600KbpsBW1MHz";
+	else if(dataMode == "MCS1_2") return "OfdmRate900KbpsBW1MHz";
+	else if(dataMode == "MCS1_3") return "OfdmRate1_2MbpsBW1MHz";
+	else if(dataMode == "MCS1_4") return "OfdmRate1_8MbpsBW1MHz";
+	else if(dataMode == "MCS1_5") return "OfdmRate2_4MbpsBW1MHz";
+	else if(dataMode == "MCS1_6") return "OfdmRate2_7MbpsBW1MHz";
+	else if(dataMode == "MCS1_7") return "OfdmRate3MbpsBW1MHz";
+	else if(dataMode == "MCS1_8") return "OfdmRate3_6MbpsBW1MHz";
+	else if(dataMode == "MCS1_9") return "OfdmRate4MbpsBW1MHz";
+	else if(dataMode == "MCS1_10") return "OfdmRate150KbpsBW1MHz";
 
 
-	else if("MCS2_0") return "OfdmRate650KbpsBW2MHz";
-	else if("MCS2_1") return "OfdmRate1_3MbpsBW2MHz";
-	else if("MCS2_2") return "OfdmRate1_95MbpsBW2MHz";
-	else if("MCS2_3") return "OfdmRate2_6MbpsBW2MHz";
-	else if("MCS2_4") return "OfdmRate3_9MbpsBW2MHz";
-	else if("MCS2_5") return "OfdmRate5_2MbpsBW2MHz";
-	else if("MCS2_6") return "OfdmRate5_85MbpsBW2MHz";
-	else if("MCS2_7") return "OfdmRate6_5MbpsBW2MHz";
-	else if("MCS2_8") return "OfdmRate7_8MbpsBW2MHz";
+	else if(dataMode == "MCS2_0") return "OfdmRate650KbpsBW2MHz";
+	else if(dataMode == "MCS2_1") return "OfdmRate1_3MbpsBW2MHz";
+	else if(dataMode == "MCS2_2") return "OfdmRate1_95MbpsBW2MHz";
+	else if(dataMode == "MCS2_3") return "OfdmRate2_6MbpsBW2MHz";
+	else if(dataMode == "MCS2_4") return "OfdmRate3_9MbpsBW2MHz";
+	else if(dataMode == "MCS2_5") return "OfdmRate5_2MbpsBW2MHz";
+	else if(dataMode == "MCS2_6") return "OfdmRate5_85MbpsBW2MHz";
+	else if(dataMode == "MCS2_7") return "OfdmRate6_5MbpsBW2MHz";
+	else if(dataMode == "MCS2_8") return "OfdmRate7_8MbpsBW2MHz";
 	return "";
 }
 
