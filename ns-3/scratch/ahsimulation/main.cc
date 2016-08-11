@@ -69,13 +69,16 @@ int main(int argc, char** argv) {
         i++;
     }
 
+    eventManager.onStartHeader();
     eventManager.onStart(config);
+
 
     for(int i = 0; i < config.Nsta; i++)
     	eventManager.onSTANodeCreated(*nodes[i]);
 
     eventManager.onAPNodeCreated(apposition.x, apposition.y);
 
+    eventManager.onStatisticsHeader();
     // start sending statistics every second
     sendStatistics(true);
 
@@ -216,7 +219,7 @@ void configureSTANodes(Ssid& ssid) {
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
     mobility.Install(staNodes);
 
-    phy.EnablePcap("stafile", staNodes, 0);
+    //phy.EnablePcap("stafile", staNodes, 0);
 }
 
 void OnAPPhyRxBegin(std::string context, Ptr<const Packet> packet) {

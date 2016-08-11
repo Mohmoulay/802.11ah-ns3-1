@@ -31,7 +31,7 @@ public:
 	SimulationEventManager();
 	SimulationEventManager(string hostname, int port, string filename);
 
-
+    void onStartHeader();
 	void onStart(Configuration& config);
 
 	void onAPNodeCreated(double x, double y);
@@ -44,6 +44,8 @@ public:
 	string SerializeDropReason(map<DropReason, long>& map);
 
 	void onUpdateSlotStatistics(vector<long>& transmissionsPerSlotFromAP, vector<long>& transmissionsPerSlotFromSTA);
+
+	void onStatisticsHeader();
 
 	void onUpdateStatistics(Statistics& stats);
 

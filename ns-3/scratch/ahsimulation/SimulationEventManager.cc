@@ -21,6 +21,7 @@ SimulationEventManager::SimulationEventManager(string hostname, int port, string
 	}
 }
 
+
 void SimulationEventManager::onStart(Configuration& config) {
 	send({"start",
 		  std::to_string(config.NRawSta),
@@ -54,7 +55,8 @@ void SimulationEventManager::onStart(Configuration& config) {
 		  std::to_string(config.MaxTimeOfPacketsInQueue),
 		  std::to_string(config.ipcameraMotionPercentage),
 		  std::to_string(config.ipcameraMotionDuration),
-		  std::to_string(config.ipcameraDataRate)
+		  std::to_string(config.ipcameraDataRate),
+		  std::to_string(config.Nsta)
 	});
 }
 
@@ -183,6 +185,82 @@ void SimulationEventManager::send(vector<string> str) {
 		}
 	}
 }
+
+
+void SimulationEventManager::onStartHeader() {
+	send({"startheader",
+		   "NRawSta",
+		   "NGroup",
+		   "SlotFormat",
+		   "NRawSlotCount",
+		   "NRawSlotNum",
+		   "DataMode",
+		   "",
+		   "",
+		   "TrafficInterval",
+		   "TrafficPacketSize",
+		   "BeaconInterval",
+		   "Name",
+		   "PropagationLossExponent",
+		   "PropagationLossReferenceLoss",
+		   "APAlwaysSchedulesForNextSlot",
+		   "MinRTO",
+		   "SimulationTime",
+		   "TrafficType",
+		   "TrafficIntervalDeviation",
+		   "TCPSegmentSize",
+		   "TCPInitialSlowStartThreshold",
+		   "TCPInitialCwnd",
+		   "MaxTimeOfPacketsInQueue",
+		   "IPCameraMotionPercentage",
+		   "IPCameraMotionDuration",
+		   "IPCameraDataRate",
+		   "NSta"
+		});
+}
+
+void SimulationEventManager::onStatisticsHeader() {
+	send({"nodestatsheader", "STAIndex",
+		"TotalTransmitTime",
+		"TotalReceiveTime",
+		"TotalDozeTime",
+		"TotalActiveTime",
+		"NumberOfTransmissions",
+		"NumberOfTransmissionsDropped",
+		"NumberOfReceives",
+		"NumberOfReceivesDropped",
+		"NumberOfSentPackets",
+		"NumberOfSuccessfulPackets",
+		"NumberOfDroppedPackets",
+		"AveragePacketSentReceiveTime",
+		"GoodputKbit",
+		"EDCAQueueLength",
+		"NumberOfSuccessfulRoundtripPackets",
+		"AveragePacketRoundTripTime",
+		"TCPCongestionWindow",
+		"NumberOfTCPRetransmissions",
+		"NumberOfTCPRetransmissionsFromAP",
+		"NumberOfReceiveDroppedByDestination",
+		"NumberOfMACTxRTSFailed",
+		"NumberOfMACTxMissedACK",
+		"NumberOfDropsByReason",
+		"NumberOfDropsByReasonAtAP",
+		"TCPRTOValue",
+		"NumberOfAPScheduledPacketForNodeInNextSlot",
+		"NumberOfAPSentPacketForNodeImmediately",
+		"AverageTimeRemainingWhenAPSendingPacketInSameSlot",
+		"NumberOfCollisions",
+		"NumberOfMACTxMissedACKAndDroppedPacket",
+		"TCPConnected",
+		"TCPSlowStartThreshold",
+		"TCPEstimatedBandwidth",
+		"TCPRTTValue",
+		"NumberOfBeaconsMissed",
+		"NumberOfTransmissionsDuringRAWSlot"
+	});
+
+}
+
 
 SimulationEventManager::~SimulationEventManager() {
 
