@@ -29,7 +29,8 @@ class EventManager {
                         parseInt(ev.parts[6]), ev.parts[7], parseFloat(ev.parts[8]), parseFloat(ev.parts[9]),
                         parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), ev.parts[13],
                         parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), ev.parts[16], parseInt(ev.parts[17]), parseInt(ev.parts[18]), ev.parts[19], parseInt(ev.parts[20]),
-                        parseInt(ev.parts[21]), parseInt(ev.parts[22]), parseInt(ev.parts[23]));
+                        parseInt(ev.parts[21]), parseInt(ev.parts[22]), parseInt(ev.parts[23]), parseInt(ev.parts[24]), parseInt(ev.parts[25]), parseInt(ev.parts[26]), parseInt(ev.parts[27]),
+                        parseInt(ev.parts[28]), parseInt(ev.parts[29]));
                     break;
 
                 case 'stanodeadd':
@@ -60,7 +61,7 @@ class EventManager {
                         parseInt(ev.parts[28]), parseInt(ev.parts[29]), parseFloat(ev.parts[30]),
                         parseInt(ev.parts[31]), parseInt(ev.parts[32]), parseInt(ev.parts[33]),
                         parseInt(ev.parts[34]), parseFloat(ev.parts[35]), parseInt(ev.parts[36]),
-                        parseInt(ev.parts[37]), parseInt(ev.parts[38]));
+                        parseInt(ev.parts[37]), parseInt(ev.parts[38]), parseInt(ev.parts[39]));
                     break;
 
                 case 'slotstatsSTA':
@@ -116,7 +117,8 @@ class EventManager {
     onStart(stream: string, aidRAWRange: number, numberOfRAWGroups: number, RAWSlotFormat: string, RAWSlotDuration: number, numberOfRAWSlots: number,
         dataMode: string, dataRate: number, bandwidth: number, trafficInterval: number, trafficPacketsize: number, beaconInterval: number,
         name: string, propagationLossExponent: number, propagationLossReferenceLoss: number, apAlwaysSchedulesForNextSlot: string, minRTO: number, simulationTime: number,
-        trafficType:string, trafficIntervalDeviation:number, tcpSegmentSize:number, tcpInitialSlowStartThreshold:number, tcpInitialCWnd:number) {
+        trafficType:string, trafficIntervalDeviation:number, tcpSegmentSize:number, tcpInitialSlowStartThreshold:number, tcpInitialCWnd:number,
+        maxTimeOfPacketsInQueue:number, ipCameraMotionPercentage:number, ipCameraMotionDuration:number, ipCameraDataRate:number, nsta:number, cooldownPeriod:number) {
 
         let simulation = this.sim.simulationContainer.getSimulation(stream);
         if (typeof simulation == "undefined") {
@@ -157,6 +159,14 @@ class EventManager {
         config.tcpSegmentSize = tcpSegmentSize;
         config.tcpInitialSlowStartThreshold = tcpInitialSlowStartThreshold;
         config.tcpInitialCWnd = tcpInitialCWnd;
+
+        config.maxTimeOfPacketsInQueue = maxTimeOfPacketsInQueue;
+        config.ipCameraMotionPercentage  = ipCameraMotionPercentage; 
+        config.ipCameraMotionDuration = ipCameraMotionDuration;
+        config.ipCameraDataRate = ipCameraDataRate;
+        config.nrSta = nsta;
+        config.cooldownPeriod = cooldownPeriod;
+
 
 
     }
@@ -256,7 +266,8 @@ class EventManager {
         numberOfMACTxRTSFailed: number, numberOfMACTxMissedACK: number, numberOfDropsByReason: string, numberOfDropsByReasonAtAP: string,
         tcpRtoValue: number, numberOfAPScheduledPacketForNodeInNextSlot: number, numberOfAPSentPacketForNodeImmediately: number, avgRemainingSlotTimeWhenAPSendingInSameSlot: number,
         numberOfCollisions: number, numberofMACTxMissedACKAndDroppedPacket: number, tcpConnected:number, 
-        tcpSlowStartThreshold:number, tcpEstimatedBandwidth:number,tcpRTT:number, numberOfBeaconsMissed:number, numberOfTransmissionsDuringRAWSlot:number) {
+        tcpSlowStartThreshold:number, tcpEstimatedBandwidth:number,tcpRTT:number, numberOfBeaconsMissed:number, numberOfTransmissionsDuringRAWSlot:number,
+        totalNumberOfDrops:number) {
         // ^- it's getting awfully crowded around here
 
         let simulation = this.sim.simulationContainer.getSimulation(stream);
@@ -348,12 +359,6 @@ class EventManager {
 
         nodeVal.numberOfCollisions = numberOfCollisions;
 
-        if (this.updateGUI && stream == this.sim.selectedStream) {
-            if (this.hasIncreased(n, "totalTransmitTime")) {
-                this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));
-            }
-        }
-
         nodeVal.tcpConnected = tcpConnected;
 
 
@@ -363,7 +368,15 @@ class EventManager {
 
         nodeVal.numberOfBeaconsMissed = numberOfBeaconsMissed;
     
-        nodeVal.numberOfTransmissionsDuringRAWSlot = numberOfTransmissionsDuringRAWSlot
+        nodeVal.numberOfTransmissionsDuringRAWSlot = numberOfTransmissionsDuringRAWSlot;
+
+        nodeVal.totalNumberOfDrops = totalNumberOfDrops;
+
+        if (this.updateGUI && stream == this.sim.selectedStream) {
+            if (this.hasIncreased(n, "totalTransmitTime")) {
+                this.sim.addAnimation(new BroadcastAnimation(n.x, n.y));
+            }
+        }
 
         //if(this.hasIncreased(n.totalReceiveActiveTime))
         //   this.sim.addAnimation(new ReceivedAnimation(n.x, n.y));

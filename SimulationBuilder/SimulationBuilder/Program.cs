@@ -67,7 +67,11 @@ namespace SimulationBuilder
                         finalArguments["--Name"] = "\"" + name + "\"";
                         // finalArguments["--VisualizerIP"] = "\"" + "\""; // no visualization 
 
+                        Stopwatch sw = new Stopwatch();
+                        sw.Start();
                         RunSimulation(finalArguments);
+                        sw.Stop();
+                        Console.WriteLine("Simulation " + i + " took " + sw.ElapsedMilliseconds + "ms");
                     }
                     catch (Exception ex)
                     {
@@ -96,10 +100,10 @@ namespace SimulationBuilder
             };
             var proc = Process.Start(ps);
             if (proc != null)
+            {
                 proc.WaitForExit();
-
-
-            Console.WriteLine("Simulation ended on " + DateTime.Now.ToString());
+                proc.Dispose();
+            }
         }
 
         private static Dictionary<string, string> Merge(Dictionary<string, string> baseArgs, Dictionary<string, string> customArgs)

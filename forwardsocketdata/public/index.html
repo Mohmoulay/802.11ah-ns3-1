@@ -66,15 +66,7 @@
                                                     <td>---</td>
                                                 </tr>
                                                 <tr class="configProperty" data-property="dataMode">
-                                                    <td>Data Mode</td>
-                                                    <td>---</td>
-                                                </tr>
-                                                <tr class="configProperty" data-property="dataRate">
-                                                    <td>Data rate (in Kbps)</td>
-                                                    <td>---</td>
-                                                </tr>
-                                                <tr class="configProperty" data-property="bandwidth">
-                                                    <td>Bandwidth (in MHz)</td>
+                                                    <td>Data Mode <a target="_blank" href="https://raw.githubusercontent.com/drake7707/802.11ah-ns3/master/MCStoWifiMode">?</a></td>
                                                     <td>---</td>
                                                 </tr>
                                                 <tr class="configProperty" data-property="propagationLossExponent">
@@ -83,6 +75,28 @@
                                                 </tr>
                                                 <tr class="configProperty" data-property="propagationLossReferenceLoss">
                                                     <td>Propagation ref. loss</td>
+                                                    <td>---</td>
+                                                </tr>
+                                                <tr class="configProperty" data-property="maxTimeOfPacketsInQueue">
+                                                    <td>Max. time of packets in MAC Queue (sec)</td>
+                                                    <td>---</td>
+                                                </tr>
+
+                                                <tr class="configProperty" data-property="ipCameraMotionPercentage">
+                                                    <td>IP Camera Motion Probability (each sec)</td>
+                                                    <td>---</td>
+                                                </tr>
+                                                <tr class="configProperty" data-property="ipCameraMotionDuration">
+                                                    <td>IP Camera Motion Duration (sec)</td>
+                                                    <td>---</td>
+                                                </tr>
+                                                <tr class="configProperty" data-property="ipCameraDataRate">
+                                                    <td>IP Camera Data rate (kbit/s)</td>
+                                                    <td>---</td>
+                                                </tr>
+
+                                                <tr class="configProperty" data-property="cooldownPeriod">
+                                                    <td>Cooldown period (sec)</td>
                                                     <td>---</td>
                                                 </tr>
                                             </table>
@@ -113,7 +127,7 @@
                                                     <td>---</td>
                                                 </tr>
                                                 <tr class="configProperty" data-property="numberOfRAWSlots">
-                                                    <td>Number of slots in RAW</td>
+                                                    <td>Number of backoff slots in RAW</td>
                                                     <td>---</td>
                                                 </tr>
                                                 <tr class="configProperty" data-property="RAWSlotDuration">
@@ -332,6 +346,11 @@
                                     <div class="col-md-6">
                                         <div class="scrollTable" style="max-height: 280px;">
                                             <table class="table">
+                                                <tr class="chartProperty nodeProperty" data-property="totalNumberOfDrops" data-max="*" data-min="0" data-type="LOWER_IS_BETTER">
+                                                    <td>Total nr of drops</td>
+                                                    <td>---</td>
+                                                </tr>
+
                                                 <tr class="header">
                                                     <th colspan="2"><span>-</span> Drop Reasons at station</th>
                                                 </tr>

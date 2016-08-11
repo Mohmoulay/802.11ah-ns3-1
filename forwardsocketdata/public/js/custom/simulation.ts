@@ -95,6 +95,7 @@ class NodeValue {
     numberOfBeaconsMissed:number = 0;
 
     numberOfTransmissionsDuringRAWSlot:number = 0;
+    totalNumberOfDrops:number = 0;
 }
 
 class APNode extends SimulationNode {
@@ -141,7 +142,12 @@ class SimulationConfiguration {
     tcpSegmentSize: number;
     tcpInitialSlowStartThreshold: number;
     tcpInitialCWnd: number;
-
+    maxTimeOfPacketsInQueue:number;
+    ipCameraMotionPercentage:number;
+    ipCameraMotionDuration:number;
+    ipCameraDataRate:number;
+    nrSta:number;
+    cooldownPeriod:number;
 }
 
 class Simulation {
