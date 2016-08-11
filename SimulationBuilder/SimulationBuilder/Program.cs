@@ -4,7 +4,7 @@ using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using RunTimeDebuggers.Helpers;
 
 namespace SimulationBuilder
 {
@@ -46,27 +46,41 @@ namespace SimulationBuilder
 
             var combos = GetCombinations(customArgs, customArgs.Keys.ToList()).ToList();
 
-            ParallelOptions pOptions = new ParallelOptions() { MaxDegreeOfParallelism = 12 };
-            Parallel.For(0, combos.Count, pOptions, i =>
+            //ParallelOptions pOptions = new ParallelOptions() { MaxDegreeOfParallelism = 12 };
+            //Parallel.For(0, combos.Count, pOptions, i =>
+            //{
+
+            TaskFactory factory = new TaskFactory(Environment.ProcessorCount, System.Threading.ThreadPriority.Normal);
+
+            for (int idx = 0; idx < combos.Count; idx++)
             {
-
-                try
+                var i = idx;
+                factory.StartTask(() =>
                 {
-                    Console.WriteLine("Running simulation " + (i + 1) + "/" + combos.Count);
+                    try
+                    {
+                        Console.WriteLine("Running simulation " + (i + 1) + "/" + combos.Count);
 
-                    var finalArguments = Merge(baseArgs, combos[i]);
-                    var name = string.Join("", combos[i].Select(p => p.Key.Replace("--", "") + p.Value)).Replace("\"", "");
-                    finalArguments["--NSSFile"] = "\"" + System.IO.Path.Combine(nssFolder,name + ".nss") + "\"";
-                    finalArguments["--Name"] = "\"" + name + "\"";
-                    finalArguments["--VisualizerIP"] = "\"" + "\""; // no visualization 
+                        var finalArguments = Merge(baseArgs, combos[i]);
+                        var name = string.Join("", combos[i].Select(p => p.Key.Replace("--", "") + p.Value)).Replace("\"", "");
+                        finalArguments["--NSSFile"] = "\"" + System.IO.Path.Combine(nssFolder, name + ".nss") + "\"";
+                        finalArguments["--Name"] = "\"" + name + "\"";
+                        // finalArguments["--VisualizerIP"] = "\"" + "\""; // no visualization 
 
-                    RunSimulation(finalArguments);
-                }
-                catch (Exception ex)
+                        RunSimulation(finalArguments);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.Write("Error: " + ex.GetType().FullName + " - " + ex.Message + Environment.NewLine + ex.StackTrace);
+                    }
+                }, () =>
                 {
-                    Console.Error.Write("Error: " + ex.GetType().FullName + " - " + ex.Message);
-                }
-            });
+
+                });
+            }
+
+            factory.WaitAll();
+            //});
 
         }
 
@@ -77,10 +91,15 @@ namespace SimulationBuilder
             ProcessStartInfo ps = new ProcessStartInfo()
             {
                 FileName = ConfigurationManager.AppSettings["simulation"],
-                Arguments = "\"" + argsStr.Replace("\"", "\\\"") + "\""
+                Arguments = "\"" + argsStr.Replace("\"", "\\\"") + "\"",
+                UseShellExecute = System.Environment.OSVersion.Platform == PlatformID.Unix ? false : true,
             };
             var proc = Process.Start(ps);
-            proc.WaitForExit();
+            if (proc != null)
+                proc.WaitForExit();
+
+
+            Console.WriteLine("Simulation ended on " + DateTime.Now.ToString());
         }
 
         private static Dictionary<string, string> Merge(Dictionary<string, string> baseArgs, Dictionary<string, string> customArgs)
@@ -104,11 +123,14 @@ namespace SimulationBuilder
             var values = customArgs[keys[i]].Split(',');
             foreach (var val in values.Where(v => !string.IsNullOrEmpty(v)).Select(v => v.Replace("\"", "")))
             {
-                
+
                 var subCombinations = GetCombinations(customArgs, keys, i + 1);
                 foreach (var subCombo in subCombinations)
                 {
-                    subCombo[keys[i]] = "\"" + val + "\"";
+                    if (values.Contains("\""))
+                        subCombo[keys[i]] = "\"" + val + "\"";
+                    else
+                        subCombo[keys[i]] = val;
                     yield return subCombo;
                 }
             }
@@ -126,8 +148,8 @@ namespace SimulationBuilder
                     if (parts.Length >= 2)
                     {
                         string key = parts[0];
-                        string value = l.Substring(key.Length + 1).Replace("\"", "");
-                        args[key] = "\"" + value + "\"";
+                        string value = l.Substring(key.Length + 1);
+                        args[key] = value;
                     }
                 }
             }

@@ -22,8 +22,8 @@
 " --APScheduleTransmissionForNextSlotIfLessThan=5000"\
 " --NRawSta=96"\
 " --Nsta=5"\
-" --VisualizerIP=\"192.168.0.247\""\
-" --VisualizerPort=7707"\
+" --VisualizerIP=\"localhost\""\
+" --VisualizerPort=7000"\
 " --VisualizerSamplingInterval=1"\
 " --APPcapFile=\"appcap\""\
 " --NSSFile=\"/home/dwight/ns3ah/802.11ah-ns3/ns-3/test.nss\""\
