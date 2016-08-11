@@ -49,7 +49,12 @@ void SimulationEventManager::onStart(Configuration& config) {
 		  std::to_string(config.trafficIntervalDeviation),
 		  std::to_string(config.TCPSegmentSize),
 		  std::to_string(config.TCPInitialSlowStartThreshold),
-		  std::to_string(config.TCPInitialCwnd)
+		  std::to_string(config.TCPInitialCwnd),
+
+		  std::to_string(config.MaxTimeOfPacketsInQueue),
+		  std::to_string(config.ipcameraMotionPercentage),
+		  std::to_string(config.ipcameraMotionDuration),
+		  std::to_string(config.ipcameraDataRate)
 	});
 }
 
