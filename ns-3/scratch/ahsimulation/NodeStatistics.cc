@@ -36,3 +36,16 @@ Time NodeStatistics::getAverageRemainingWhenAPSendingPacketInSameSlot() {
 	else
 		return APTotalTimeRemainingWhenSendingPacketInSameSlot / NumberOfAPSentPacketForNodeImmediately;
 }
+
+
+int NodeStatistics::getTotalDrops() {
+	int sum = 0;
+	for(auto& pair : this-> NumberOfDropsByReason) {
+		sum += pair.second;
+	}
+
+	for(auto& pair : this-> NumberOfDropsByReasonAtAP) {
+		sum += pair.second;
+	}
+	return sum;
+}

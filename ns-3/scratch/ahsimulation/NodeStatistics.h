@@ -77,6 +77,8 @@ public:
     long NumberOfBeaconsMissed = 0;
 
     uint16_t NumberOfTransmissionsDuringRAWSlot = 0;
+
+    int getTotalDrops();
 };
 
 #endif /* NODESTATISTICS_H */
