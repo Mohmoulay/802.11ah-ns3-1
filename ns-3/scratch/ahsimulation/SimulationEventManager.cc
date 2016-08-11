@@ -151,7 +151,7 @@ void SimulationEventManager::send(vector<string> str) {
 	}
 	s << "\n";
 
-	if(this->filename != "") {
+	if(this->filename != "" && this->filename != "none") {
 		ofstream fileStream(filename,fstream::out|fstream::app);
 		if(fileStream.is_open())
 			fileStream << s.str();
@@ -159,7 +159,7 @@ void SimulationEventManager::send(vector<string> str) {
 		fileStream.close();
 	}
 
-	if(this->hostname != "") {
+	if(this->hostname != "" && this->hostname != "none") {
 
 		//int sockfd ;
 		if(socketDescriptor == -1) {
