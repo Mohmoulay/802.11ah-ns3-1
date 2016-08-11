@@ -5,7 +5,6 @@
 " --Rho=\"100\""\
 " --MaxTimeOfPacketsInQueue=1000"\
 " --SimulationTime=200"\
-" --TrafficPacketSize=500"\
 " --TrafficInterval=1000"\
 " --TrafficIntervalDeviation=1000"\
 " --TrafficType=\"tcpipcamera\""\
@@ -15,11 +14,11 @@
 " --BeaconInterval=102400"\
 " --MinRTO=819200000"\
 " --TCPConnectionTimeout=60000000"\
-" --TCPSegmentSize=1072"\
+" --TCPSegmentSize=536"\
 " --APAlwaysSchedulesForNextSlot=false"\
 " --APScheduleTransmissionForNextSlotIfLessThan=5000"\
 " --NRawSta=96"\
-" --Nsta=5"\
+" --Nsta=2"\
 " --VisualizerIP=\"192.168.0.247\""\
 " --VisualizerPort=7707"\
 " --VisualizerSamplingInterval=1"\

@@ -54,6 +54,8 @@ public:
  typedef void (* S1gBeaconTracedCallback)
       (S1gBeaconHeader beacon, RPS::RawAssignment raw);
 
+ typedef void (* RawSlotStartedCallback)
+      (uint16_t timGroup, uint16_t rawSlot);
 
 
   S1gApWifiMac ();
@@ -252,6 +254,8 @@ private:
 
 
   TracedCallback<S1gBeaconHeader, RPS::RawAssignment> m_transmitBeaconTrace;
+
+  TracedCallback<uint16_t,uint16_t> m_rawSlotStarted;
 
   TracedCallback<Ptr<const Packet>, Mac48Address, bool, bool, Time> m_packetToTransmitReceivedFromUpperLayer;
 

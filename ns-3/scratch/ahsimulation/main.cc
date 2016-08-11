@@ -10,6 +10,17 @@ int main(int argc, char** argv) {
 	Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpWestwood"));
 
     config = Configuration(argc, argv);
+
+    // calculate parameters
+    if(config.trafficPacketSize == -1)
+    	config.trafficPacketSize = ((int)config.TCPSegmentSize - 100) < 0 ? 100 : (config.TCPSegmentSize - 100);
+    if(config.NRawSlotCount == -1)
+    	config.NRawSlotCount = ceil(162 * 5 / config.NRawSlotNum);
+    if(config.SlotFormat == -1)
+    	config.SlotFormat = config.NRawSlotCount > 256 ? 1 : 0;
+
+
+
     stats = Statistics(config.Nsta);
 
     transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval = vector<long>(config.NGroup * config.NRawSlotNum, 0);
@@ -105,7 +116,7 @@ void configureChannel() {
 
 void onChannelTransmission(Ptr<NetDevice> senderDevice, Ptr<Packet> packet) {
 
-	int timGroup = (Simulator::Now().GetMicroSeconds() / config.BeaconInterval) % config.NGroup;
+/*	int timGroup = (Simulator::Now().GetMicroSeconds() / config.BeaconInterval) % config.NGroup;
 
 	uint16_t rawslotCount;
 	 if(config.NRawSlotCount == -1)
@@ -116,6 +127,9 @@ void onChannelTransmission(Ptr<NetDevice> senderDevice, Ptr<Packet> packet) {
 	S1gStrategy strategy;
 	auto slotDuration = strategy.GetSlotDuration(rawslotCount);
 	int slotIndex = (Simulator::Now().GetMicroSeconds() % config.BeaconInterval) / slotDuration.GetMicroSeconds();
+*/
+	int timGroup = currentTIMGroup;
+	int slotIndex = currentRawSlot;
 
 	//cout << "Transmission during tim group " << timGroup << ", slot: " << slotIndex << endl;
 
@@ -272,6 +286,11 @@ void OnAPPhyRxDrop(std::string context, Ptr<const Packet> packet, DropReason rea
 
 }
 
+void OnAPRAWSlotStarted(string context, uint16_t timGroup, uint16_t rawSlot) {
+	currentTIMGroup = timGroup;
+	currentRawSlot = rawSlot;
+}
+
 void OnAPPacketToTransmitReceived(string context, Ptr<const Packet> packet, Mac48Address to, bool isScheduled, bool isDuringSlotOfSTA, Time timeLeftInSlot) {
 
 	int staId = -1;
@@ -298,24 +317,6 @@ void configureAPNode(Ssid& ssid) {
 
     uint32_t NGroupStas = config.NRawSta / config.NGroup;
 
-
-    uint16_t rawslotCount;
-
-    if(config.NRawSlotCount == -1)
-    	rawslotCount = ceil(162 * 5 / config.NRawSlotNum);
-    else
-    	rawslotCount = config.NRawSlotCount;
-
-    uint16_t rawSlotFormat;
-
-    if(config.SlotFormat == -1)
-    	rawSlotFormat = rawslotCount > 256 ? 1 : 0;
-    else
-    	rawSlotFormat = config.SlotFormat;
-
-    cout << "Raw slot format " << rawSlotFormat << endl;
-    cout << "Raw slot count " << rawslotCount << endl;
-
     // setup mac
     S1gWifiMacHelper mac = S1gWifiMacHelper::Default();
     mac.SetType("ns3::S1gApWifiMac",
@@ -323,8 +324,8 @@ void configureAPNode(Ssid& ssid) {
             "BeaconInterval", TimeValue(MicroSeconds(config.BeaconInterval)),
             "NRawGroupStas", UintegerValue(NGroupStas),
             "NRawStations", UintegerValue(config.NRawSta),
-            "SlotFormat", UintegerValue(rawSlotFormat),
-            "SlotDurationCount", UintegerValue(rawslotCount),
+            "SlotFormat", UintegerValue(config.SlotFormat),
+            "SlotDurationCount", UintegerValue(config.NRawSlotCount),
             "SlotNum", UintegerValue(config.NRawSlotNum),
 			"ScheduleTransmissionForNextSlotIfLessThan", TimeValue(MicroSeconds(config.APScheduleTransmissionForNextSlotIfLessThan)),
 			"AlwaysScheduleForNextSlot", BooleanValue(config.APAlwaysSchedulesForNextSlot),
@@ -365,6 +366,9 @@ void configureAPNode(Ssid& ssid) {
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxBegin", MakeCallback(&OnAPPhyRxBegin));
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Phy/PhyRxDropWithReason", MakeCallback(&OnAPPhyRxDrop));
 	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::S1gApWifiMac/PacketToTransmitReceivedFromUpperLayer", MakeCallback(&OnAPPacketToTransmitReceived));
+
+	Config::Connect("/NodeList/" + std::to_string(config.Nsta) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::S1gApWifiMac/RAWSlotStarted", MakeCallback(&OnAPRAWSlotStarted));
+
 
 
 	if(config.APPcapFile != "") {

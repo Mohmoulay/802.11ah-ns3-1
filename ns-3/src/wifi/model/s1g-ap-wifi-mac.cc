@@ -114,6 +114,11 @@ TypeId S1gApWifiMac::GetTypeId(void) {
 					MakeTraceSourceAccessor(&S1gApWifiMac::m_transmitBeaconTrace),
 					"ns3::S1gApWifiMac::S1gBeaconTracedCallback")
 
+					.AddTraceSource("RAWSlotStarted",
+										"Fired when a RAW slot has started",
+										MakeTraceSourceAccessor(&S1gApWifiMac::m_rawSlotStarted),
+										"ns3::S1gApWifiMac::RawSlotStartedCallback")
+
 
 					.AddTraceSource(
 					"PacketToTransmitReceivedFromUpperLayer",
@@ -781,6 +786,8 @@ void S1gApWifiMac::SendOneBeacon(void) {
 void S1gApWifiMac::OnRAWSlotStart(uint8_t timGroup, uint8_t slot) {
 	LOG_TRAFFIC("AP RAW SLOT START FOR TIM GROUP " << std::to_string(timGroup) << " SLOT " << std::to_string(slot));
 	m_currentTIMGroupSlot = slot;
+
+	m_rawSlotStarted(timGroup, slot);
 
 	rawSlotsDCA[timGroup * m_slotNum + slot]->AccessAllowedIfRaw (true);
 	rawSlotsDCA[timGroup * m_slotNum + slot]->RawStart(strategy->GetSlotDuration(m_slotDurationCount));

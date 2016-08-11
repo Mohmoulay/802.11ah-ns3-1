@@ -25,8 +25,8 @@ struct Configuration {
 	uint32_t seed = 1;
 	uint32_t Nsta = 1;
 	uint32_t NRawSta = 96;
-	uint32_t SlotFormat = -1; //0;
-	uint32_t NRawSlotCount = -1; //162;
+	int SlotFormat = -1; //0;
+	int NRawSlotCount = -1; //162;
 	uint32_t NRawSlotNum = 5;
 	uint32_t NGroup = 4;
 	uint32_t BeaconInterval = 102400;
@@ -62,7 +62,7 @@ struct Configuration {
 	uint32_t trafficInterval = 10000;
 	uint32_t trafficIntervalDeviation = 1000;
 
-	uint16_t trafficPacketSize = 100;
+	int trafficPacketSize = -1;
 	string trafficType = "tcpecho";
 
 	double ipcameraMotionPercentage = 0.1;

@@ -25,7 +25,7 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("TrafficInterval", "Traffic interval time in ms", trafficInterval);
     cmd.AddValue("TrafficIntervalDeviation", "Traffic interval deviation time in ms, each interval will have a random deviation between - dev/2 and + dev/2", trafficIntervalDeviation);
 
-    cmd.AddValue("TrafficPacketSize", "Size of packets to send in bytes", trafficPacketSize);
+    cmd.AddValue("TrafficPacketSize", "Size of packets to send in bytes. Default of -1 means the TCP Segment size - 100 bytes will be used", trafficPacketSize);
     cmd.AddValue("TrafficType", "Kind of traffic (udp, udpecho, tcpecho)", trafficType);
 
     cmd.AddValue("MinRTO", "Minimum retransmission timeout for TCP sockets in microseconds", MinRTO);

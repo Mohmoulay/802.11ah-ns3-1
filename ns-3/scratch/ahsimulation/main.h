@@ -55,6 +55,8 @@ vector<NodeEntry*> nodes;
 vector<long> transmissionsPerTIMGroupAndSlotFromAPSinceLastInterval;
 vector<long> transmissionsPerTIMGroupAndSlotFromSTASinceLastInterval;
 
+uint16_t currentTIMGroup = 0;
+uint16_t currentRawSlot = 0;
 
 void configureChannel();
 
