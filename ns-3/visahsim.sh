@@ -1,8 +1,8 @@
 ./waf --run "scratch/ahsimulation/ahsimulation"\
 " --NGroup=4"\
-" --NRawSlotNum=5"\
+" --NRawSlotNum=1"\
 " --DataMode=\"MCS2_8\""\
-" --Rho=\"400\""\
+" --Rho=\"100\""\
 " --MaxTimeOfPacketsInQueue=1000"\
 " --SimulationTime=200"\
 " --TrafficInterval=1000"\
@@ -10,7 +10,7 @@
 " --TrafficType=\"tcpipcamera\""\
 " --IpCameraMotionPercentage=1"\
 " --IpCameraMotionDuration=10"\
-" --IpCameraDataRate=8"\
+" --IpCameraDataRate=100"\
 " --BeaconInterval=102400"\
 " --MinRTO=819200000"\
 " --TCPConnectionTimeout=60000000"\
@@ -18,7 +18,7 @@
 " --APAlwaysSchedulesForNextSlot=false"\
 " --APScheduleTransmissionForNextSlotIfLessThan=5000"\
 " --NRawSta=96"\
-" --Nsta=2"\
+" --Nsta=1"\
 " --VisualizerIP=\"192.168.0.247\""\
 " --VisualizerPort=7707"\
 " --VisualizerSamplingInterval=1"\
