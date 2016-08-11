@@ -44,7 +44,7 @@ struct Configuration {
 	bool APAlwaysSchedulesForNextSlot = false;
 	uint32_t APScheduleTransmissionForNextSlotIfLessThan = 2000;
 
-	string DataMode = "OfdmRate650KbpsBW2MHz";
+	string DataMode = "MCS2_1";
 	//double datarate = 0.65;
 	//double bandWidth = 2;
 
@@ -63,7 +63,7 @@ struct Configuration {
 	uint32_t trafficIntervalDeviation = 1000;
 
 	uint16_t trafficPacketSize = 100;
-	string trafficType = "tcpipcamera";
+	string trafficType = "tcpecho";
 
 	double ipcameraMotionPercentage = 0.1;
 	uint16_t ipcameraMotionDuration = 60;
