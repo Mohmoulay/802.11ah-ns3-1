@@ -2,14 +2,27 @@
 
 use strict;
 
+
+my $START_PORT = 7000;
+
 opendir my $dir, "." or die "Cannot open directory: $!";
-my @files = readdir $dir;
+my @files;
+
+if(scalar @ARGV == 0) {
+	@files = readdir $dir;
+}
+else {
+	@files = @ARGV;
+}
+
 closedir $dir;
 
 my %arguments;
 
 readArgs("common.conf", \%arguments);
 
+
+my $count = 0;
 for my $f (@files) {
 
 	if($f =~ /^.*?\.conf$/ && $f ne "common.conf") {
@@ -17,7 +30,11 @@ for my $f (@files) {
 		my %args = (%arguments);
 		readArgs($f, \%args);
 		
+		$args{"--VisualizerPort"} = $START_PORT + $count;
+
 		run($f, \%args);
+
+		$count++;
 	}
 }
 
@@ -46,11 +63,11 @@ sub run {
 	$argsString =~ s/\"/\\\"/g;
 
 	my $logFile = $file . ".log";
-	my $exec = '(cd ../ns-3/ && ./waf --run "scratch/ahsimulation/ahsimulation ' . $argsString . '") 1> ' . $logFile . ' 2>&1 &';
+	my $exec = '(cd ../ns-3/ && ./waf --run "scratch/ahsimulation/ahsimulation ' . $argsString . '") 1> ' . "/proj/wall2-ilabt-iminds-be/ns3ah/" . $logFile . ' 2>&1 &';
 
 	print "$exec\n";
 
 	system($exec);
 	# allow some time to finish the ./waf build json building
-	sleep 10 
+	sleep 1
 }
