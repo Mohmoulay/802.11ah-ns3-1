@@ -49,7 +49,12 @@ void SimulationEventManager::onStart(Configuration& config) {
 		  std::to_string(config.trafficIntervalDeviation),
 		  std::to_string(config.TCPSegmentSize),
 		  std::to_string(config.TCPInitialSlowStartThreshold),
-		  std::to_string(config.TCPInitialCwnd)
+		  std::to_string(config.TCPInitialCwnd),
+
+		  std::to_string(config.MaxTimeOfPacketsInQueue),
+		  std::to_string(config.ipcameraMotionPercentage),
+		  std::to_string(config.ipcameraMotionDuration),
+		  std::to_string(config.ipcameraDataRate)
 	});
 }
 
@@ -151,7 +156,7 @@ void SimulationEventManager::send(vector<string> str) {
 	}
 	s << "\n";
 
-	if(this->filename != "") {
+	if(this->filename != "" && this->filename != "none") {
 		ofstream fileStream(filename,fstream::out|fstream::app);
 		if(fileStream.is_open())
 			fileStream << s.str();
@@ -159,7 +164,7 @@ void SimulationEventManager::send(vector<string> str) {
 		fileStream.close();
 	}
 
-	if(this->hostname != "") {
+	if(this->hostname != "" && this->hostname != "none") {
 
 		//int sockfd ;
 		if(socketDescriptor == -1) {

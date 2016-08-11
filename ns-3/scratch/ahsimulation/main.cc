@@ -567,10 +567,10 @@ void configureTCPIPCameraClients() {
 }
 
 void wireTCPServer(ApplicationContainer serverApp) {
-	serverApp.Get(0)->GetObject<TcpServer>()->TraceConnectWithoutContext("Rx", MakeCallback(&tcpPacketReceivedAtServer));
-	serverApp.Get(0)->GetObject<TcpServer>()->TraceConnectWithoutContext("Retransmission", MakeCallback(&tcpRetransmissionAtServer));
-	serverApp.Get(0)->GetObject<TcpServer>()->TraceConnectWithoutContext("PacketDropped", MakeCallback(&tcpPacketDroppedAtServer));
-	serverApp.Get(0)->GetObject<TcpServer>()->TraceConnectWithoutContext("TCPStateChanged", MakeCallback(&tcpStateChangeAtServer));
+	serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&tcpPacketReceivedAtServer));
+	serverApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&tcpRetransmissionAtServer));
+	serverApp.Get(0)->TraceConnectWithoutContext("PacketDropped", MakeCallback(&tcpPacketDroppedAtServer));
+	serverApp.Get(0)->TraceConnectWithoutContext("TCPStateChanged", MakeCallback(&tcpStateChangeAtServer));
 }
 
 void wireTCPClient(ApplicationContainer clientApp, int i) {
