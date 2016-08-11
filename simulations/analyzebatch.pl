@@ -70,6 +70,8 @@ sub analyzeFile {
 			@configHeaders = (@parts);
 			$configHeaders[0] = "time";
 			$configHeaders[1] = "type";
+
+			resolveConfigIdxNames();
 		}
 		elsif($parts[1] eq "nodestatsheader") {
 			@statHeaders = (@parts);
@@ -120,6 +122,28 @@ sub analyzeFile {
      print "\n";
 }
 
+sub resolveConfigIdxNames {
+                        for(my $itm; $itm < scalar @configIdx; $itm++) {
+                                my $item = $configIdx[$itm];
+                                if($item =~ /[0-9]+/) {
+                                        # ok already index
+                                }
+                                else {
+                                        # try to find the matching index based on name
+                                        for(my $i = 0; $i < scalar @configHeaders; $i++) {
+                                                #print lc($statHeaders[$i]) . " <-> " . $item . "\n";
+                                                if(lc($configHeaders[$i]) eq lc($item)) {
+                                                        $configIdx[$itm] = $i; # update to index
+#                                                        print "updated $statsIdx[$item] to $i because its equal to $item\n";
+                                                        last;
+                                                }
+                                        }
+                                }
+                        }
+
+
+}
+
 sub resolveIdxNames {
                         for(my $itm; $itm < scalar @statsIdx; $itm++) {
                                 my $item = $statsIdx[$itm];
@@ -132,7 +156,7 @@ sub resolveIdxNames {
 						#print lc($statHeaders[$i]) . " <-> " . $item . "\n";
                                                 if(lc($statHeaders[$i]) eq lc($item)) {
                                                         $statsIdx[$itm] = $i; # update to index
-							print "updated $statsIdx[$item] to $i because its equal to $item\n";
+#							print "updated $statsIdx[$item] to $i because its equal to $item\n";
                                                         last;
                                                 }
                                         }
