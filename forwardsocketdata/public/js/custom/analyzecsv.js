@@ -41,7 +41,6 @@ function fillDropdowns() {
     ddls.empty();
     for (var _i = 0, _a = headers.sort(); _i < _a.length; _i++) {
         var header = _a[_i];
-        console.log(header);
         ddls.append($('<option></option>').val(header).html(header));
     }
     if (headers.indexOf("Name") != -1) {
@@ -52,12 +51,19 @@ function fillDropdowns() {
 function dropdownChanged() {
     //  fill fixed remaining properties
     var otherProperties = [];
-    var dynamicProperties = [$("#ddlXValues").val(), $("#ddlYValues").val(), $("#ddlSeries").val()];
-    for (var _i = 0; _i < headers.length; _i++) {
-        var h = headers[_i];
+    var dynamicProperties = [$("#ddlXValues").val(), $("#ddlYValues").val()];
+    var seriesVal = $("#ddlSeries").val();
+    if (!(seriesVal instanceof Array))
+        seriesVal = [seriesVal];
+    for (var _i = 0; _i < seriesVal.length; _i++) {
+        var h = seriesVal[_i];
+        dynamicProperties.push(h);
+    }
+    for (var _a = 0; _a < headers.length; _a++) {
+        var h = headers[_a];
         var isDynamicProp = false;
-        for (var _a = 0; _a < dynamicProperties.length; _a++) {
-            var p = dynamicProperties[_a];
+        for (var _b = 0; _b < dynamicProperties.length; _b++) {
+            var p = dynamicProperties[_b];
             if (h == p) {
                 isDynamicProp = true;
                 break;
@@ -75,17 +81,19 @@ function dropdownChanged() {
     }
     $("#frmFixedValues").empty();
     if (otherProperties.length > 0) {
-        for (var _b = 0, _c = otherProperties.sort(); _b < _c.length; _b++) {
-            var h = _c[_b];
+        for (var _c = 0, _d = otherProperties.sort(); _c < _d.length; _c++) {
+            var h = _d[_c];
             $("#frmFixedValues").append("<div class=\"form-group\">\n                        <label for=\"ddlFixedProp" + h + "\" class=\"col-sm-3 control-label\">" + h + "</label>\n                        <div class=\"col-sm-9\">\n                            <select id=\"ddlFixedProp" + h + "\" class=\"form-control ddlFixedProp\" data-prop=\"" + h + "\"></select>\n                        </div>\n                    </div>");
             var ddl = $("#ddlFixedProp" + h);
             var values = getDistinctValuesFor(h);
-            ddl.append($('<option></option>').val("").html("[Ignore]"));
-            console.log(values);
-            for (var _d = 0; _d < values.length; _d++) {
-                var v = values[_d];
-                ddl.append($('<option></option>').val(v).html(v));
+            var html = "";
+            html += "<option value=\"\">[Ignore]</option>";
+            //ddl.append($('<option></option>').val("").html("[Ignore]"));
+            for (var _e = 0; _e < values.length; _e++) {
+                var v = values[_e];
+                html += "<option value=\"" + v + "\">" + v + "</option>";
             }
+            ddl.append(html);
             if (values.length == 1)
                 ddl.closest(".form-group").hide();
         }
@@ -121,6 +129,7 @@ var SeriesValues = (function () {
         this.xValues = [];
         this.yValues = [];
         this.tags = [];
+        this.lines = [];
     }
     return SeriesValues;
 })();
@@ -160,44 +169,66 @@ $(document).on("click", "#btnRender", function (ev) {
     var selectedXValueIdx = $("#ddlXValues").val();
     var selectedYValueIdx = $("#ddlYValues").val();
     var selectedSeriesIdx = $("#ddlSeries").val();
+    // make it an array to be consistent
+    if (!(selectedSeriesIdx instanceof Array))
+        selectedSeriesIdx = [selectedSeriesIdx];
     var selectedTagIdx = $("#ddlTag").val();
     var distinctSeriesValues = {};
     var seriesValues = {};
     var sortedLines = lines.sort(function (a, b) { return a[selectedXValueIdx] - b[selectedXValueIdx]; });
-    console.log(sortedLines);
     for (var _i = 0; _i < sortedLines.length; _i++) {
         var l = sortedLines[_i];
-        var sv;
-        if (!distinctSeriesValues.hasOwnProperty(l[selectedSeriesIdx]) || !distinctSeriesValues[l[selectedSeriesIdx]]) {
-            distinctSeriesValues[l[selectedSeriesIdx]] = true;
-            sv = new SeriesValues();
-            sv.name = l[selectedSeriesIdx] + "";
-            seriesValues[l[selectedSeriesIdx]] = sv;
+        var isValid = true;
+        var nameParts = [];
+        var keyParts = [];
+        for (var _a = 0; _a < selectedSeriesIdx.length; _a++) {
+            var ss = selectedSeriesIdx[_a];
+            if (typeof l[ss] == "undefined") {
+                isValid = false;
+                break;
+            }
+            keyParts.push(l[ss]);
+            nameParts.push(ss + ":" + l[ss]);
         }
-        else {
-            sv = seriesValues[l[selectedSeriesIdx]];
-        }
-        if (matchesFixedValues(l)) {
-            sv.xValues.push(l[selectedXValueIdx]);
-            sv.yValues.push(l[selectedYValueIdx]);
-            sv.tags.push(l[selectedTagIdx]);
-            sv.line = l;
+        if (isValid) {
+            var key = keyParts.join("__");
+            var sv;
+            if (!distinctSeriesValues.hasOwnProperty(key) || !distinctSeriesValues[key]) {
+                distinctSeriesValues[key] = true;
+                sv = new SeriesValues();
+                sv.name = nameParts.join(",");
+                seriesValues[key] = sv;
+            }
+            else {
+                sv = seriesValues[key];
+            }
+            if (matchesFixedValues(l)) {
+                sv.xValues.push(l[selectedXValueIdx]);
+                sv.yValues.push(l[selectedYValueIdx]);
+                sv.tags.push(l[selectedTagIdx]);
+                sv.lines.push(l);
+            }
         }
     }
     var series = [];
+    var seriesKeys = [];
     for (var serieValue in seriesValues) {
-        if (serieValue != "undefined" && seriesValues.hasOwnProperty(serieValue)) {
-            // build series
-            var sv_1 = seriesValues[serieValue];
-            var tuples = [];
-            for (var i = 0; i < sv_1.xValues.length; i++) {
-                tuples.push({ x: sv_1.xValues[i], y: sv_1.yValues[i], tag: sv_1.tags[i], line: sv_1.line });
-            }
-            series.push({
-                name: sv_1.name,
-                data: tuples
-            });
+        if (typeof serieValue != "undefined" && seriesValues.hasOwnProperty(serieValue))
+            seriesKeys.push(serieValue);
+    }
+    // build series, sort by series names
+    console.log(seriesKeys.sort(function (a, b) { return seriesValues[a].name - seriesValues[b].name; }));
+    for (var _b = 0, _c = seriesKeys.sort(function (a, b) { return seriesValues[a].name - seriesValues[b].name; }); _b < _c.length; _b++) {
+        var serieValue = _c[_b];
+        var sv_1 = seriesValues[serieValue];
+        var tuples = [];
+        for (var i = 0; i < sv_1.xValues.length; i++) {
+            tuples.push({ x: sv_1.xValues[i], y: sv_1.yValues[i], tag: sv_1.tags[i], line: sv_1.lines[i] });
         }
+        series.push({
+            name: sv_1.name,
+            data: tuples
+        });
     }
     $('#chartContainer').highcharts({
         chart: {
@@ -207,6 +238,9 @@ $(document).on("click", "#btnRender", function (ev) {
         plotOptions: {
             scatter: {
                 lineWidth: $("#chkConnectPoints").prop("checked") ? 2 : 0
+            },
+            series: {
+                turboThreshold: 10000
             }
         },
         xAxis: {
@@ -230,5 +264,8 @@ $(document).on("change", "#csvFileInput", function (ev) {
 });
 $(document).on("change", ".ddl", function (ev) {
     dropdownChanged();
+});
+$(document).ready(function () {
+    $(".ddl").select2();
 });
 //# sourceMappingURL=analyzecsv.js.map

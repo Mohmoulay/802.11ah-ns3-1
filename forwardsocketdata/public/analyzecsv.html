@@ -10,11 +10,15 @@
     <script src="https://code.highcharts.com/highcharts-more.js"></script>
     <script src="/js/libs/highcharts/exporting.js"></script>
     <script src="/js/libs/highcharts/export-csv.js"></script>
+    <script src="/js/libs/select2.min.js"></script>
 
     <script src="/js/custom/analyzecsv.js"></script>
 
     <link rel="stylesheet" href="/css/bootstrap.css" />
     <link rel="stylesheet" href="/css/bootstrap-theme.css" />
+    <link rel="stylesheet" href="/css/select2.css" />
+    <!--<link rel="stylesheet" href="/css/select2-bootstrap.css" />-->
+
     <style>
         .highcharts-tooltip table {
             font-size:1em;
@@ -46,7 +50,7 @@
                                 <div class="form-group">
                                     <label for="ddlSeries" class="col-sm-3 control-label">Series</label>
                                     <div class="col-sm-9">
-                                        <select id="ddlSeries" class="form-control ddl"></select>
+                                        <select id="ddlSeries" class="form-control ddl" multiple></select>
                                     </div>
                                 </div>
                                 <div class="form-group">

@@ -51,14 +51,14 @@ function fillDropdowns() {
 
     ddls.empty();
     for (let header of headers.sort()) {
-        console.log(header);
+
         ddls.append($('<option></option>').val(header).html(header));
     }
-    
-    if(headers.indexOf("Name") != -1) {
+
+    if (headers.indexOf("Name") != -1) {
         $("#ddlTag").val("Name");
     }
-    
+
     dropdownChanged();
 }
 
@@ -67,7 +67,12 @@ function dropdownChanged() {
     //  fill fixed remaining properties
     var otherProperties = [];
 
-    var dynamicProperties = [$("#ddlXValues").val(), $("#ddlYValues").val(), $("#ddlSeries").val()];
+    var dynamicProperties = [$("#ddlXValues").val(), $("#ddlYValues").val()];
+    var seriesVal = $("#ddlSeries").val();
+    if (!(seriesVal instanceof Array))
+        seriesVal = [seriesVal];
+    for (let h of seriesVal)
+        dynamicProperties.push(h);
 
     for (let h of headers) {
         let isDynamicProp = false;
@@ -101,11 +106,16 @@ function dropdownChanged() {
 
             var ddl = $("#ddlFixedProp" + h);
             var values = getDistinctValuesFor(h);
-            ddl.append($('<option></option>').val("").html("[Ignore]"));
-            console.log(values);
+
+            let html = "";
+            html += `<option value="">[Ignore]</option>`;
+            //ddl.append($('<option></option>').val("").html("[Ignore]"));
             for (let v of values) {
-                ddl.append($('<option></option>').val(v).html(v));
+                html += `<option value="${v}">${v}</option>`;
+
+                //ddl.append($('<option></option>').val(v).html(v));
             }
+            ddl.append(html);
             if (values.length == 1)
                 ddl.closest(".form-group").hide();
         }
@@ -144,7 +154,7 @@ class SeriesValues {
     xValues: number[] = [];
     yValues: number[] = [];
     tags: string[] = [];
-    line: any;
+    lines: string[] = [];
 }
 
 function matchesFixedValues(line) {
@@ -192,51 +202,75 @@ $(document).on("click", "#btnRender", ev => {
     var selectedYValueIdx = $("#ddlYValues").val();
     var selectedSeriesIdx = $("#ddlSeries").val();
 
+    // make it an array to be consistent
+    if (!(selectedSeriesIdx instanceof Array))
+        selectedSeriesIdx = [selectedSeriesIdx];
+
     var selectedTagIdx = $("#ddlTag").val();
 
     var distinctSeriesValues: any = {};
     var seriesValues = {};
 
     var sortedLines = lines.sort((a, b) => { return a[selectedXValueIdx] - b[selectedXValueIdx]; });
-    console.log(sortedLines);
     for (let l of sortedLines) {
 
-        var sv: SeriesValues;
-        if (!distinctSeriesValues.hasOwnProperty(l[selectedSeriesIdx]) || !distinctSeriesValues[l[selectedSeriesIdx]]) {
-            distinctSeriesValues[l[selectedSeriesIdx]] = true;
-            sv = new SeriesValues();
-            sv.name = l[selectedSeriesIdx] + "";
-            seriesValues[l[selectedSeriesIdx]] = sv;
-        }
-        else {
-            sv = seriesValues[l[selectedSeriesIdx]];
+        let isValid: boolean = true;
+        let nameParts: string[] = [];
+        let keyParts: any[] = [];
+        for (let ss of selectedSeriesIdx) {
+            if (typeof l[ss] == "undefined") {
+                isValid = false;
+                break;
+            }
+            keyParts.push(l[ss]);
+            nameParts.push(ss + ":" + l[ss]);
         }
 
-        if (matchesFixedValues(l)) {
-            sv.xValues.push(l[selectedXValueIdx]);
-            sv.yValues.push(l[selectedYValueIdx]);
-            sv.tags.push(l[selectedTagIdx]);
-            sv.line = l;
+        if (isValid) {
+            let key: string = keyParts.join("__");
+
+            var sv: SeriesValues;
+            if (!distinctSeriesValues.hasOwnProperty(key) || !distinctSeriesValues[key]) {
+                distinctSeriesValues[key] = true;
+                sv = new SeriesValues();
+                sv.name = nameParts.join(",");
+                seriesValues[key] = sv;
+            }
+            else {
+                sv = seriesValues[key];
+            }
+
+            if (matchesFixedValues(l)) {
+                sv.xValues.push(l[selectedXValueIdx]);
+                sv.yValues.push(l[selectedYValueIdx]);
+                sv.tags.push(l[selectedTagIdx]);
+                sv.lines.push(l);
+            }
         }
     }
 
 
     var series = [];
-    for (let serieValue in seriesValues) {
-        if (serieValue != "undefined" && seriesValues.hasOwnProperty(serieValue)) {
-            // build series
 
-            let sv: SeriesValues = seriesValues[serieValue];
-            var tuples = [];
-            for (let i: number = 0; i < sv.xValues.length; i++) {
-                tuples.push({ x: sv.xValues[i], y: sv.yValues[i], tag: sv.tags[i], line: sv.line });
-            }
-            series.push({
-                name: sv.name,
-                data: tuples
-            });
-        }
+    let seriesKeys: string[] = [];
+    for (let serieValue in seriesValues) {
+        if (typeof serieValue != "undefined" && seriesValues.hasOwnProperty(serieValue))
+            seriesKeys.push(serieValue);
     }
+    // build series, sort by series names
+    console.log(seriesKeys.sort(function (a, b) { return seriesValues[a].name - seriesValues[b].name; }));
+    for (let serieValue of seriesKeys.sort(function (a, b) { return seriesValues[a].name - seriesValues[b].name; })) {
+        let sv: SeriesValues = seriesValues[serieValue];
+        var tuples = [];
+        for (let i: number = 0; i < sv.xValues.length; i++) {
+            tuples.push({ x: sv.xValues[i], y: sv.yValues[i], tag: sv.tags[i], line: sv.lines[i] });
+        }
+        series.push({
+            name: sv.name,
+            data: tuples
+        });
+    }
+
 
     $('#chartContainer').highcharts({
         chart: {
@@ -247,6 +281,9 @@ $(document).on("click", "#btnRender", ev => {
         plotOptions: {
             scatter: {
                 lineWidth: $("#chkConnectPoints").prop("checked") ? 2 : 0
+            },
+            series: {
+                turboThreshold: 10000
             }
         },
         xAxis: {
@@ -258,7 +295,7 @@ $(document).on("click", "#btnRender", ev => {
         },
         tooltip: {
             useHTML: true,
-            formatter: function() {
+            formatter: function () {
                 return this.point.tag + "<hr/>" + getFormattedPropertyValues(this.point.line);
             }
         },
@@ -267,10 +304,14 @@ $(document).on("click", "#btnRender", ev => {
     });
 });
 
-$(document).on("change", "#csvFileInput", function(ev) {
+$(document).on("change", "#csvFileInput", function (ev) {
     handleFiles(this.files);
 });
 
-$(document).on("change", ".ddl", function(ev) {
+$(document).on("change", ".ddl", function (ev) {
     dropdownChanged();
+});
+
+$(document).ready(function () {
+    $(".ddl").select2();
 });
