@@ -76,8 +76,16 @@ protected:
   virtual void StartApplication (void);
   virtual void StopApplication (void);
 
+  virtual void OnConnected(Address from);
   virtual void OnDataReceived(Address from);
 
+  /**
+   * Will read up to size bytes from the stream and convert it to a string
+   * might be smaller if data is not yet available, won't block
+   */
+  std::string ReadString(Address from, int size);
+
+  void WriteString(Address from, std::string, bool flush);
 
 private:
   void ReceivePacket(Ptr<Socket> socket);

@@ -303,4 +303,24 @@ void TcpClient::Flush() {
 	}
 }
 
+std::string TcpClient::ReadString(int size) {
+
+	char* buf = new char[1024];
+	int nrOfBytesRead = Read(buf, 1024);
+	auto msg = std::string(buf,nrOfBytesRead);
+	delete buf;
+
+	return msg;
+}
+
+void TcpClient::WriteString(std::string str, bool flush) {
+
+	char * buf = (char*)str.c_str();
+	Write(buf, (int)str.size());
+	if(flush)
+		Flush();
+}
+
+
+
 } // Namespace ns3

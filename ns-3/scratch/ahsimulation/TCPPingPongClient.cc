@@ -39,14 +39,8 @@ void TCPPingPongClient::StartApplication(void) {
 
 void TCPPingPongClient::Action() {
 
-	std::string str = "PING";
-
-	std::cout << "Sending to TCP Server: '" << str << "'" << std::endl;
-
-	char* buf = (char*)str.c_str();
-	Write(buf, (int)str.size());
-
-	Flush();
+	std::cout << "Sending to TCP Server:'" << "PING" << "'" << std::endl;
+	WriteString("PING", true);
 
 	ns3::Simulator::Schedule(m_interval, &TCPPingPongClient::Action, this);
 }
@@ -54,10 +48,7 @@ void TCPPingPongClient::Action() {
 
 void TCPPingPongClient::OnDataReceived() {
 
-	char* buf = new char[1024];
-	int nrOfBytesRead = Read(buf, 1024);
-	auto reply = std::string(buf,nrOfBytesRead);
-	delete buf;
+	std::string reply = ReadString(1024);
 
 	if(reply != "PONG") {
 		// something went wrong

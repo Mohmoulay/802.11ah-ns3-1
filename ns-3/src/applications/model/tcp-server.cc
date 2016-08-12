@@ -128,6 +128,10 @@ void TcpServer::StopApplication() {
 	}
 }
 
+void TcpServer::OnConnected(Address from) {
+
+}
+
 void TcpServer::OnDataReceived(Address from) {
 
 }
@@ -184,6 +188,7 @@ void TcpServer::HandleAccept(Ptr<Socket> s, const Address& from) {
 	s->SetCloseCallbacks(MakeCallback(&TcpServer::HandleSuccessClose, this),
 			MakeNullCallback<void, Ptr<Socket> >());
 
+	OnConnected(from);
 
 }
 
@@ -272,6 +277,25 @@ void TcpServer::Send(Address to, uint8_t* data, int size) {
 
 	NS_LOG_INFO("Sent " << m_size << " bytes to " << to);
 
+}
+
+
+std::string TcpServer:: ReadString(Address from, int size) {
+
+	char* buf = new char[1024];
+	int nrOfBytesRead = Read(from, buf, 1024);
+	auto msg = std::string(buf,nrOfBytesRead);
+	delete buf;
+
+	return msg;
+}
+
+void TcpServer::WriteString(Address from, std::string str, bool flush) {
+
+	char * buf = (char*)str.c_str();
+	Write(from, buf, (int)str.size());
+	if(flush)
+		Flush(from);
 }
 
 } // Namespace ns3

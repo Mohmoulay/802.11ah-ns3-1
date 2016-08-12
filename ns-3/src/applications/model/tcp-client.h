@@ -91,6 +91,13 @@ protected:
 
  virtual void  OnDataReceived();
 
+ /**
+   * Will read up to size bytes from the stream and convert it to a string
+   * might be smaller if data is not yet available, won't block
+   */
+  std::string ReadString(int size);
+  void WriteString(std::string, bool flush);
+
 private:
 
   virtual void ReceivePacket (Ptr<Socket> socket);
