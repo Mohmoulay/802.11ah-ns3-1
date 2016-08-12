@@ -95,6 +95,7 @@ void TCPFirmwareServer::SendFirmwareBlock(Address from) {
 		for(int i = 0; i < firmwareBlockSize; i++)
 			buf[i] = i % 256;
 		Write(from, buf, firmwareBlockSize);
+		delete buf;
 	}
 }
 

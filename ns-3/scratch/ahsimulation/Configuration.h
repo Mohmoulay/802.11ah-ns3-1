@@ -69,6 +69,12 @@ struct Configuration {
 	uint16_t ipcameraMotionDuration = 60;
 	uint16_t ipcameraDataRate = 20;
 
+	uint32_t firmwareSize = 1024 * 1024 *5;
+	uint16_t firmwareBlockSize = 1024;
+	double firmwareNewUpdateProbability = 0.01;
+	double firmwareCorruptionProbability = 0.01;
+
+
 	uint16_t MaxTimeOfPacketsInQueue = 100;
 
 	uint16_t CoolDownPeriod = 60;

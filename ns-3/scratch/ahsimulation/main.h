@@ -27,6 +27,11 @@
 #include "TCPPingPongServer.h"
 #include "TCPIPCameraClient.h"
 #include "TCPIPCameraServer.h"
+#include "TCPFirmwareClient.h"
+#include "TCPFirmwareServer.h"
+#include "TCPSensorClient.h"
+#include "TCPSensorServer.h"
+
 
 using namespace std;
 using namespace ns3;
@@ -83,6 +88,13 @@ void configureTCPPingPongClients();
 
 void configureTCPIPCameraServer();
 void configureTCPIPCameraClients();
+
+void configureTCPFirmwareServer();
+void configureTCPFirmwareClients();
+
+void configureTCPSensorServer();
+void configureTCPSensorClients();
+
 
 void wireTCPServer(ApplicationContainer serverApp);
 void wireTCPClient(ApplicationContainer clientApp, int i);

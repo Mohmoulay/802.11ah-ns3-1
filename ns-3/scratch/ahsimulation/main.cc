@@ -516,7 +516,7 @@ void configureTCPPingPongServer() {
 	// TCP ping pong is a test for the new base tcp-client and tcp-server applications
 	ObjectFactory factory;
 	factory.SetTypeId (TCPPingPongServer::GetTypeId ());
-	factory.Set("Port", UintegerValue (80));
+	factory.Set("Port", UintegerValue (81));
 
 	Ptr<Application> tcpServer = factory.Create<TCPPingPongServer>();
 	apNodes.Get(0)->AddApplication(tcpServer);
@@ -534,7 +534,7 @@ void configureTCPPingPongClients() {
 	factory.Set("PacketSize", UintegerValue(config.trafficPacketSize));
 
 	factory.Set("RemoteAddress", Ipv4AddressValue (apNodeInterfaces.GetAddress(0)));
-	factory.Set("RemotePort", UintegerValue (80));
+	factory.Set("RemotePort", UintegerValue (81));
 
 	Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable> ();
 
@@ -553,10 +553,9 @@ void configureTCPPingPongClients() {
 
 
 void configureTCPIPCameraServer() {
-	// TCP ping pong is a test for the new base tcp-client and tcp-server applications
 	ObjectFactory factory;
 	factory.SetTypeId (TCPIPCameraServer::GetTypeId ());
-	factory.Set("Port", UintegerValue (80));
+	factory.Set("Port", UintegerValue (82));
 
 	Ptr<Application> tcpServer = factory.Create<TCPIPCameraServer>();
 	apNodes.Get(0)->AddApplication(tcpServer);
@@ -579,7 +578,7 @@ void configureTCPIPCameraClients() {
 	factory.Set("PacketSize", UintegerValue(config.trafficPacketSize));
 
 	factory.Set("RemoteAddress", Ipv4AddressValue (apNodeInterfaces.GetAddress(0)));
-	factory.Set("RemotePort", UintegerValue (80));
+	factory.Set("RemotePort", UintegerValue (82));
 
 	Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable> ();
 
@@ -594,6 +593,93 @@ void configureTCPIPCameraClients() {
 		clientApp.Stop(Seconds(config.simulationTime));
 	}
 }
+
+
+
+void configureTCPFirmwareServer() {
+	ObjectFactory factory;
+	factory.SetTypeId (TCPFirmwareServer::GetTypeId ());
+	factory.Set("Port", UintegerValue (83));
+
+	factory.Set("FirmwareSize", UintegerValue (config.firmwareSize));
+	factory.Set("FirmwareBlockSize", UintegerValue (config.firmwareBlockSize));
+	factory.Set("FirmwareNewUpdateProbability", DoubleValue (config.firmwareNewUpdateProbability));
+
+	Ptr<Application> tcpServer = factory.Create<TCPFirmwareServer>();
+	apNodes.Get(0)->AddApplication(tcpServer);
+
+
+	auto serverApp = ApplicationContainer(tcpServer);
+	wireTCPServer(serverApp);
+	serverApp.Start(Seconds(0));
+//	serverApp.Stop(Seconds(config.simulationTime));
+}
+
+void configureTCPFirmwareClients() {
+
+	ObjectFactory factory;
+	factory.SetTypeId (TCPFirmwareClient::GetTypeId ());
+	factory.Set("CorruptionProbability", DoubleValue(config.firmwareCorruptionProbability));
+	factory.Set("VersionCheckInterval", UintegerValue(config.trafficInterval));
+
+	factory.Set("RemoteAddress", Ipv4AddressValue (apNodeInterfaces.GetAddress(0)));
+	factory.Set("RemotePort", UintegerValue (83));
+
+	Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable> ();
+
+	for (uint16_t i = 0; i < config.Nsta; i++) {
+
+		Ptr<Application> tcpClient = factory.Create<TCPFirmwareClient>();
+		staNodes.Get(i)->AddApplication(tcpClient);
+		auto clientApp = ApplicationContainer(tcpClient);
+		wireTCPClient(clientApp,i);
+
+		clientApp.Start(MilliSeconds(0));
+		clientApp.Stop(Seconds(config.simulationTime));
+	}
+}
+
+
+void configureTCPSensorServer() {
+	ObjectFactory factory;
+	factory.SetTypeId (TCPSensorServer::GetTypeId ());
+	factory.Set("Port", UintegerValue (83));
+
+	Ptr<Application> tcpServer = factory.Create<TCPSensorServer>();
+	apNodes.Get(0)->AddApplication(tcpServer);
+
+
+	auto serverApp = ApplicationContainer(tcpServer);
+	wireTCPServer(serverApp);
+	serverApp.Start(Seconds(0));
+//	serverApp.Stop(Seconds(config.simulationTime));
+}
+
+void configureTCPSensorClients() {
+
+	ObjectFactory factory;
+	factory.SetTypeId (TCPSensorClient::GetTypeId ());
+
+	factory.Set("Interval", TimeValue(MilliSeconds(config.trafficInterval)));
+	factory.Set("PacketSize", UintegerValue(config.trafficPacketSize));
+
+	factory.Set("RemoteAddress", Ipv4AddressValue (apNodeInterfaces.GetAddress(0)));
+	factory.Set("RemotePort", UintegerValue (83));
+
+	Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable> ();
+
+	for (uint16_t i = 0; i < config.Nsta; i++) {
+
+		Ptr<Application> tcpClient = factory.Create<TCPSensorClient>();
+		staNodes.Get(i)->AddApplication(tcpClient);
+		auto clientApp = ApplicationContainer(tcpClient);
+		wireTCPClient(clientApp,i);
+
+		clientApp.Start(MilliSeconds(0));
+		clientApp.Stop(Seconds(config.simulationTime));
+	}
+}
+
 
 void wireTCPServer(ApplicationContainer serverApp) {
 	serverApp.Get(0)->TraceConnectWithoutContext("Rx", MakeCallback(&tcpPacketReceivedAtServer));
@@ -718,6 +804,14 @@ void onSTAAssociated(int i) {
 			configureTCPIPCameraServer();
 			configureTCPIPCameraClients();
 		}
+    	else if(config.trafficType == "tcpfirmware") {
+			configureTCPFirmwareServer();
+			configureTCPFirmwareClients();
+		}
+    	else if(config.trafficType == "tcpsensor") {
+			configureTCPSensorServer();
+			configureTCPSensorClients();
+    	}
 
         updateNodesQueueLength();
     }
