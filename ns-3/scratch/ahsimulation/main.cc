@@ -643,7 +643,7 @@ void configureTCPFirmwareClients() {
 void configureTCPSensorServer() {
 	ObjectFactory factory;
 	factory.SetTypeId (TCPSensorServer::GetTypeId ());
-	factory.Set("Port", UintegerValue (83));
+	factory.Set("Port", UintegerValue (84));
 
 	Ptr<Application> tcpServer = factory.Create<TCPSensorServer>();
 	apNodes.Get(0)->AddApplication(tcpServer);
@@ -664,7 +664,7 @@ void configureTCPSensorClients() {
 	factory.Set("PacketSize", UintegerValue(config.trafficPacketSize));
 
 	factory.Set("RemoteAddress", Ipv4AddressValue (apNodeInterfaces.GetAddress(0)));
-	factory.Set("RemotePort", UintegerValue (83));
+	factory.Set("RemotePort", UintegerValue (84));
 
 	Ptr<UniformRandomVariable> m_rv = CreateObject<UniformRandomVariable> ();
 
