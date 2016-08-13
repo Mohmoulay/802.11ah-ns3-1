@@ -1,1 +1,1 @@
- mono --server ../SimulationBuilder.exe common.conf build.conf /usr/local/src/802.11ah-ns3/simulations/ipcamerabatch/outdir
+ mono --server ../SimulationBuilder.exe common.conf build.conf /proj/wall2-ilabt-iminds-be/ns3ah/ipcamera
