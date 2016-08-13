@@ -2,15 +2,15 @@
 #include "NodeStatistics.h"
 
 Time NodeStatistics::getAveragePacketSentReceiveTime() {
-	if(NumberOfSuccessfulPackets > 0)
-		return TotalPacketSentReceiveTime / NumberOfSuccessfulPackets;
+	if(NumberOfSuccessfulPacketsWithSeqHeader > 0)
+		return TotalPacketSentReceiveTime / NumberOfSuccessfulPacketsWithSeqHeader;
 	else
 		return Time();
 }
 
 Time NodeStatistics::getAveragePacketRoundTripTime() {
-	if(NumberOfSuccessfulRoundtripPackets > 0)
-		return TotalPacketRoundtripTime / NumberOfSuccessfulRoundtripPackets;
+	if(NumberOfSuccessfulRoundtripPacketsWithSeqHeader > 0)
+		return TotalPacketRoundtripTime / NumberOfSuccessfulRoundtripPacketsWithSeqHeader;
 	else
 		return Time();
 }

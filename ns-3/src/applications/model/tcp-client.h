@@ -11,8 +11,11 @@
 #include "ns3/random-variable-stream.h"
 #include "ns3/tcp-socket.h"
 #include "ns3/drop-reason.h"
+#include "ns3/tcp-header.h"
+#include "ns3/tcp-socket-base.h"
 
 #include <queue>
+
 
 namespace ns3 {
 
@@ -113,6 +116,7 @@ private:
   void OnTCPStateChanged(TcpSocket::TcpStates_t oldVal,TcpSocket::TcpStates_t newVal);
 
   void OnRetransmission(Address a);
+  void OnTCPDataPacketSent(Ptr<const Packet> packet, const TcpHeader& header, Ptr<const TcpSocketBase> tcpSocket, bool isRetransmission);
 
   void OnTCPSlowStartThresholdChanged(uint32_t oldVal,uint32_t newVal);
   void OnTCPEstimatedBWChanged(double oldVal, double newVal);
