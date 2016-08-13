@@ -117,6 +117,10 @@ void TcpClient::StartApplication(void) {
 				MakeCallback(&TcpClient::OnCongestionWindowChanged, this));
 		m_socket->TraceConnectWithoutContext("Retransmission",
 				MakeCallback(&TcpClient::OnRetransmission, this));
+
+		m_socket->TraceConnectWithoutContext("PacketSent",
+						MakeCallback(&TcpClient::OnTCPDataPacketSent, this));
+
 		m_socket->TraceConnectWithoutContext("RTO",
 				MakeCallback(&TcpClient::OnRTOChanged, this));
 		m_socket->TraceConnectWithoutContext("RTT",
@@ -140,6 +144,12 @@ void TcpClient::StartApplication(void) {
 
 void TcpClient::OnRetransmission(Address a) {
 	m_retransmission(a);
+}
+
+void TcpClient::OnTCPDataPacketSent(Ptr<const Packet> packet, const TcpHeader& header,
+        Ptr<const TcpSocketBase> tcpSocket, bool isRetransmission) {
+	if(!isRetransmission)
+		m_txTrace(packet);
 }
 
 void TcpClient::OnCongestionWindowChanged(uint32_t oldval, uint32_t newval) {
@@ -198,7 +208,13 @@ void TcpClient::Send(uint8_t* data, int size) {
 	Ptr<Packet> p;
 	p = Create<Packet>(data, size);
 
-	// add sequence header to the packet
+
+	// There's no point adding sequence numbers to packets because TCP packets are a stream
+	// which can be fragmented. It's impossible to track sequence numbers as soon as packets are fragmented
+	// Keep track of the number of data packets sent / received instead and possibly the TCP head sequence
+	// of the socket
+
+	// add sequence header to the packet, purely for the time diff calculation
 	SeqTsHeader seqTs;
 	seqTs.SetSeq(m_sent);
 
@@ -206,7 +222,7 @@ void TcpClient::Send(uint8_t* data, int size) {
 
 	// call to the trace sinks before the packet is actually sent,
 	// so that tags added to the packet can be sent as well
-	m_txTrace(p);
+	//	m_txTrace(p);
 
 	int retVal = m_socket->Send(p);
 	if(retVal == -1) {

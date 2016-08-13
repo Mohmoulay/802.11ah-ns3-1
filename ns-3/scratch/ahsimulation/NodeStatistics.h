@@ -29,9 +29,11 @@ public:
 
 
     long NumberOfSuccessfulPackets = 0;
+    long NumberOfSuccessfulPacketsWithSeqHeader = 0;
     long NumberOfSentPackets = 0;
     
     long NumberOfSuccessfulRoundtripPackets = 0;
+    long NumberOfSuccessfulRoundtripPacketsWithSeqHeader = 0;
 
     long getNumberOfDroppedPackets();
 

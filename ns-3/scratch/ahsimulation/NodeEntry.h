@@ -30,8 +30,8 @@ private:
     std::map<uint64_t, Time> txMap;
     std::map<uint64_t, Time> rxMap;
 
-    std::vector<bool> seqNrReceivedAtAP;
-    std::vector<bool> seqNrReceived;
+    //std::vector<bool> seqNrReceivedAtAP;
+    //std::vector<bool> seqNrReceived;
 
     uint16_t lastBeaconAIDStart = 0;
     uint16_t lastBeaconAIDEnd = 0;
