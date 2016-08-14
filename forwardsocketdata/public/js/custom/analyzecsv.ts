@@ -11,6 +11,8 @@ function getAsText(fileToRead) {
         var csv = (<any>ev).target.result;
         processData(csv);
         fillDropdowns();
+        loadConfigurationFromHash();
+
     };
 
     reader.onerror = ev => {
@@ -37,7 +39,7 @@ function processData(csv) {
             for (let j: number = 0; j < parts.length; j++) {
 
                 if (/^[-+]?(\d+|\d+\.\d*|\d*\.\d+)$/.test(parts[j]))
-                    obj[headers[j]] = parseFloat(parts[j]);
+                    obj[headers[j]] = Math.round(parseFloat(parts[j]) * 100) / 100;
                 else
                     obj[headers[j]] = parts[j];
             }
@@ -168,7 +170,7 @@ function matchesFixedValues(line) {
 
             var fixedValue;
             if (/^[-+]?(\d+|\d+\.\d*|\d*\.\d+)$/.test(prop.val()))
-                fixedValue = parseFloat(prop.val())
+                fixedValue = Math.round(parseFloat(prop.val()) * 100) / 100;
             else
                 fixedValue = prop.val();
             if (line[header] != fixedValue)
@@ -300,9 +302,83 @@ $(document).on("click", "#btnRender", ev => {
             }
         },
         series: series,
-        credits: false
+        credits: false,
+        exporting:{
+            chartOptions:{
+                title: {
+                    text:''
+                }
+            }
+        }
     });
 });
+
+function saveConfigurationInHash() {
+    var selectedXValueIdx = $("#ddlXValues").val();
+    var selectedYValueIdx = $("#ddlYValues").val();
+    var selectedSeriesIdx = $("#ddlSeries").val();
+    var selectedTagIdx = $("#ddlTag").val();
+
+    let obj:any = {};
+    obj.XValues = selectedXValueIdx;
+    obj.YValues = selectedYValueIdx;
+    obj.Series = selectedSeriesIdx;
+    obj.Tag = selectedTagIdx;
+
+    var fixedProps = $(".ddlFixedProp");
+    for (let i: number = 0; i < fixedProps.length; i++) {
+        var prop = $($(fixedProps).get(i));
+        obj[prop.attr("data-prop")] = prop.val();
+    }
+    window.location.hash = $.param(obj);
+}
+
+var QueryStringToHash = function QueryStringToHash  (query) {
+  var query_string = {};
+  var vars = query.split("&");
+  for (var i=0;i<vars.length;i++) {
+    var pair:string[] = vars[i].split("=");
+    pair[0] = decodeURIComponent(pair[0]);
+    pair[1] = decodeURIComponent(pair[1]);
+
+    pair[0] = pair[0].replace("[]", "");
+
+    // If first entry with this name
+    if (typeof query_string[pair[0]] === "undefined") {
+      query_string[pair[0]] = pair[1];
+    	// If second entry with this name
+    } else if (typeof query_string[pair[0]] === "string") {
+      var arr = [ query_string[pair[0]], pair[1] ];
+      query_string[pair[0]] = arr;
+    	// If third or later entry with this name
+    } else {
+      query_string[pair[0]].push(pair[1]);
+    }
+  } 
+  return query_string;
+};
+
+function loadConfigurationFromHash() {
+    if(window.location.hash !="") {
+        let obj:any = QueryStringToHash(window.location.hash.substr(1));
+        if(obj.XValues) $("#ddlXValues").val(obj.XValues);
+        if(obj.YValues) $("#ddlYValues").val(obj.YValues);
+        if(obj.Series) $("#ddlSeries").val(obj.Series);
+
+        // ensure visibility of correct fixed props 
+        dropdownChanged();
+
+        for(let p in obj) {
+            if(obj.hasOwnProperty(p) && p != "XValues" && p != "YValues" && p != "Series" && p != "Tag") {
+                $(".ddlFixedProp[data-prop='" + p + "']").val(obj[p]);
+            }
+        }
+    }
+}
+
+
+
+
 
 $(document).on("change", "#csvFileInput", function (ev) {
     handleFiles(this.files);
@@ -310,6 +386,11 @@ $(document).on("change", "#csvFileInput", function (ev) {
 
 $(document).on("change", ".ddl", function (ev) {
     dropdownChanged();
+    saveConfigurationInHash();
+});
+
+$(document).on("change", ".ddlFixedProp", function (ev) {
+    saveConfigurationInHash();
 });
 
 $(document).ready(function () {

@@ -331,9 +331,8 @@ class EventManager {
             nodeVal.numberOfDropsByReasonTCPTxBufferExceeded = parseInt(dropParts[13]);
         }
 
-        if (typeof numberOfDropsByReason != "undefined") {
+        if (typeof numberOfDropsByReasonAtAP != "undefined") {
             let dropParts = numberOfDropsByReasonAtAP.split(',');
-
             nodeVal.numberOfDropsFromAPByReasonUnknown = parseInt(dropParts[0]);
             nodeVal.numberOfDropsFromAPByReasonPhyInSleepMode = parseInt(dropParts[1]);
             nodeVal.numberOfDropsFromAPByReasonPhyNotEnoughSignalPower = parseInt(dropParts[2]);
