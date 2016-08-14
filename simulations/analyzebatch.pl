@@ -3,7 +3,7 @@ use strict;
 
 
 if(scalar @ARGV == 0) {
-	print "Usage: analyzebatch.pl nssfolder config=idx,idx,... stats=idx,idx,idx,... \n";
+	print "Usage: analyzebatch.pl nssfolder config=(idx|name),(idx|name),... stats=(idx|name),(idx|name),(idx|name),... \n";
 	exit();
 }
 
@@ -23,7 +23,12 @@ my @statsparts = split('=', $ARGV[2]);
 
 #print "Stats idx: " . join(" ", @statsIdx);
 
-
+for(my $i = 0; $i < scalar @statsIdx; $i++) {
+	if($statsIdx[$i] eq "DropTCPTxBufferExceeded") {
+		# special case, bit of a hack,
+		$statsIdx[$i] = 9999; # everything above 1000 idx should be treated as special i guess
+	}
+}
 
 my $count = 0;
 for my $f (@files) {
@@ -92,7 +97,24 @@ sub analyzeFile {
 			
 			my $i = 0;
 			for my $idx (@statsIdx) {
-				$statParts[$i] = $statParts[$i] + $parts[$idx];
+				my $val;
+        	                if($idx > 1000) {
+	                                # special case , handle manually here
+	                                if($idx == 9999) { # tcpTxDrop
+#						print $parts[25] . "\n" . $parts[26] . "\n";
+                        	                $val = 0;
+                	                        my @subParts = split(",",$parts[25]);
+        	                                $val += $subParts[13];
+	
+	                                        @subParts = split(",", $parts[26]);
+                                	        $val += $subParts[13];
+                        	        }
+                	        }
+        	                else {
+	                                $val = $parts[$idx];
+	                        }
+
+				$statParts[$i] = $statParts[$i] + $val;
 				$i+=1;
 			}
 			$nrOfSta+=1;
@@ -110,7 +132,13 @@ sub analyzeFile {
             push @headers, $configHeaders[$idx];
          }
          for my $idx (@statsIdx) {
-            push @headers, $statHeaders[$idx];
+
+		if($idx == 9999) {
+		    push @headers, "DropTCPTxBufferExceeded";
+		}
+		else {
+		    push @headers, $statHeaders[$idx];
+		}
          }
          print join(";", @headers);
          print "\n";
