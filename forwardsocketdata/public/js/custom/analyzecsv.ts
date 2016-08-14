@@ -1,3 +1,8 @@
+var headers: string[];
+var lines: any[];
+
+var chart: HighchartsChartObject;
+
 function handleFiles(files) {
     getAsText(files[0]);
 }
@@ -19,10 +24,6 @@ function getAsText(fileToRead) {
         alert("Unable to load csv file");
     };
 }
-
-var headers: string[];
-var lines: any[];
-
 
 function processData(csv) {
     var allTextLines = csv.split(/\r\n|\n/);
@@ -260,8 +261,7 @@ $(document).on("click", "#btnRender", ev => {
             seriesKeys.push(serieValue);
     }
     // build series, sort by series names
-    console.log(seriesKeys.sort(function (a, b) { return seriesValues[a].name - seriesValues[b].name; }));
-    for (let serieValue of seriesKeys.sort(function (a, b) { return seriesValues[a].name - seriesValues[b].name; })) {
+    for (let serieValue of seriesKeys.sort(function (a, b) { return seriesValues[a].name == seriesValues[b].name ? 0 : (seriesValues[a].name > seriesValues[b].name ? 1 : -1); })) {
         let sv: SeriesValues = seriesValues[serieValue];
         var tuples = [];
         for (let i: number = 0; i < sv.xValues.length; i++) {
@@ -273,11 +273,54 @@ $(document).on("click", "#btnRender", ev => {
         });
     }
 
+    chart.xAxis[0].setTitle({ text: selectedXValueIdx}, false);
+    chart.yAxis[0].setTitle({ text:selectedYValueIdx }, false);
+    chart.options.plotOptions.scatter.lineWidth =$("#chkConnectPoints").prop("checked") ? 2 : 0;
 
-    $('#chartContainer').highcharts({
+    if(chart.series.length <= series.length) {
+        // replace data of charts up to chart.series.length
+        for(let i = 0; i < chart.series.length; i++) {
+            chart.series[i].setData(series[i].data,false);
+            chart.series[i].name = series[i].name;
+        }
+        // add the remainder
+        for(let i = chart.series.length; i < series.length; i++)
+            chart.addSeries(series[i],false);
+    }
+    else if(chart.series.length > series.length) {
+        // replace data of charts up to chart.series.length
+        for(let i = 0; i < series.length; i++) {
+            chart.series[i].setData(series[i].data,false);
+            chart.series[i].name = series[i].name;
+        }
+        // remove series that are not applicable
+        for(let i = chart.series.length - 1; i >= series.length; i--) {
+            chart.series[i].remove(false);   
+        }
+    }
+    
+    // auto hide series without points
+    for(let i = 0; i< chart.series.length; i++) {
+        chart.series[i].update(<any>{ lineWidth: $("#chkConnectPoints").prop("checked") ? 2 : 0 },false);
+
+        if(series[i].data.length == 0) 
+            chart.series[i].hide();
+        else
+            chart.series[i].show();
+    }
+
+    chart.redraw(true);
+});
+
+
+
+
+function initChart() {
+    chart = new Highcharts.Chart({
         chart: {
             type: 'scatter',
-
+            renderTo: "chartContainer",
+            zoomType: "xy"
         },
         title: "",
         plotOptions: {
@@ -288,12 +331,13 @@ $(document).on("click", "#btnRender", ev => {
                 turboThreshold: 10000
             }
         },
+        colors: [ "#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#888888","#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#000000" ],
         xAxis: {
 
-            title: { text: selectedXValueIdx }
+            title: { text: "" }
         },
         yAxis: {
-            title: { text: selectedYValueIdx }
+            title: { text: "" }
         },
         tooltip: {
             useHTML: true,
@@ -301,17 +345,17 @@ $(document).on("click", "#btnRender", ev => {
                 return this.point.tag + "<hr/>" + getFormattedPropertyValues(this.point.line);
             }
         },
-        series: series,
+        series: [],
         credits: false,
-        exporting:{
-            chartOptions:{
+        exporting: {
+            chartOptions: {
                 title: {
-                    text:''
+                    text: ''
                 }
             }
         }
     });
-});
+}
 
 function saveConfigurationInHash() {
     var selectedXValueIdx = $("#ddlXValues").val();
@@ -319,7 +363,7 @@ function saveConfigurationInHash() {
     var selectedSeriesIdx = $("#ddlSeries").val();
     var selectedTagIdx = $("#ddlTag").val();
 
-    let obj:any = {};
+    let obj: any = {};
     obj.XValues = selectedXValueIdx;
     obj.YValues = selectedYValueIdx;
     obj.Series = selectedSeriesIdx;
@@ -333,43 +377,43 @@ function saveConfigurationInHash() {
     window.location.hash = $.param(obj);
 }
 
-var QueryStringToHash = function QueryStringToHash  (query) {
-  var query_string = {};
-  var vars = query.split("&");
-  for (var i=0;i<vars.length;i++) {
-    var pair:string[] = vars[i].split("=");
-    pair[0] = decodeURIComponent(pair[0]);
-    pair[1] = decodeURIComponent(pair[1]);
+var QueryStringToHash = function QueryStringToHash(query) {
+    var query_string = {};
+    var vars = query.split("&");
+    for (var i = 0; i < vars.length; i++) {
+        var pair: string[] = vars[i].split("=");
+        pair[0] = decodeURIComponent(pair[0]);
+        pair[1] = decodeURIComponent(pair[1]);
 
-    pair[0] = pair[0].replace("[]", "");
+        pair[0] = pair[0].replace("[]", "");
 
-    // If first entry with this name
-    if (typeof query_string[pair[0]] === "undefined") {
-      query_string[pair[0]] = pair[1];
-    	// If second entry with this name
-    } else if (typeof query_string[pair[0]] === "string") {
-      var arr = [ query_string[pair[0]], pair[1] ];
-      query_string[pair[0]] = arr;
-    	// If third or later entry with this name
-    } else {
-      query_string[pair[0]].push(pair[1]);
+        // If first entry with this name
+        if (typeof query_string[pair[0]] === "undefined") {
+            query_string[pair[0]] = pair[1];
+            // If second entry with this name
+        } else if (typeof query_string[pair[0]] === "string") {
+            var arr = [query_string[pair[0]], pair[1]];
+            query_string[pair[0]] = arr;
+            // If third or later entry with this name
+        } else {
+            query_string[pair[0]].push(pair[1]);
+        }
     }
-  } 
-  return query_string;
+    return query_string;
 };
 
 function loadConfigurationFromHash() {
-    if(window.location.hash !="") {
-        let obj:any = QueryStringToHash(window.location.hash.substr(1));
-        if(obj.XValues) $("#ddlXValues").val(obj.XValues);
-        if(obj.YValues) $("#ddlYValues").val(obj.YValues);
-        if(obj.Series) $("#ddlSeries").val(obj.Series);
+    if (window.location.hash != "") {
+        let obj: any = QueryStringToHash(window.location.hash.substr(1));
+        if (obj.XValues) $("#ddlXValues").val(obj.XValues);
+        if (obj.YValues) $("#ddlYValues").val(obj.YValues);
+        if (obj.Series) $("#ddlSeries").val(obj.Series);
 
         // ensure visibility of correct fixed props 
         dropdownChanged();
 
-        for(let p in obj) {
-            if(obj.hasOwnProperty(p) && p != "XValues" && p != "YValues" && p != "Series" && p != "Tag") {
+        for (let p in obj) {
+            if (obj.hasOwnProperty(p) && p != "XValues" && p != "YValues" && p != "Series" && p != "Tag") {
                 $(".ddlFixedProp[data-prop='" + p + "']").val(obj[p]);
             }
         }
@@ -395,4 +439,6 @@ $(document).on("change", ".ddlFixedProp", function (ev) {
 
 $(document).ready(function () {
     $(".ddl").select2();
+
+    initChart();
 });

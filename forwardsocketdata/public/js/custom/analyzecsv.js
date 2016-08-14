@@ -1,3 +1,6 @@
+var headers;
+var lines;
+var chart;
 function handleFiles(files) {
     getAsText(files[0]);
 }
@@ -16,8 +19,6 @@ function getAsText(fileToRead) {
         alert("Unable to load csv file");
     };
 }
-var headers;
-var lines;
 function processData(csv) {
     var allTextLines = csv.split(/\r\n|\n/);
     lines = [];
@@ -218,8 +219,7 @@ $(document).on("click", "#btnRender", function (ev) {
             seriesKeys.push(serieValue);
     }
     // build series, sort by series names
-    console.log(seriesKeys.sort(function (a, b) { return seriesValues[a].name - seriesValues[b].name; }));
-    for (var _b = 0, _c = seriesKeys.sort(function (a, b) { return seriesValues[a].name - seriesValues[b].name; }); _b < _c.length; _b++) {
+    for (var _b = 0, _c = seriesKeys.sort(function (a, b) { return seriesValues[a].name == seriesValues[b].name ? 0 : (seriesValues[a].name > seriesValues[b].name ? 1 : -1); }); _b < _c.length; _b++) {
         var serieValue = _c[_b];
         var sv_1 = seriesValues[serieValue];
         var tuples = [];
@@ -231,9 +231,46 @@ $(document).on("click", "#btnRender", function (ev) {
             data: tuples
         });
     }
-    $('#chartContainer').highcharts({
+    chart.xAxis[0].setTitle({ text: selectedXValueIdx }, false);
+    chart.yAxis[0].setTitle({ text: selectedYValueIdx }, false);
+    chart.options.plotOptions.scatter.lineWidth = $("#chkConnectPoints").prop("checked") ? 2 : 0;
+    if (chart.series.length <= series.length) {
+        // replace data of charts up to chart.series.length
+        for (var i = 0; i < chart.series.length; i++) {
+            chart.series[i].setData(series[i].data, false);
+            chart.series[i].name = series[i].name;
+        }
+        // add the remainder
+        for (var i = chart.series.length; i < series.length; i++)
+            chart.addSeries(series[i], false);
+    }
+    else if (chart.series.length > series.length) {
+        // replace data of charts up to chart.series.length
+        for (var i = 0; i < series.length; i++) {
+            chart.series[i].setData(series[i].data, false);
+            chart.series[i].name = series[i].name;
+        }
+        // remove series that are not applicable
+        for (var i = chart.series.length - 1; i >= series.length; i--) {
+            chart.series[i].remove(false);
+        }
+    }
+    // auto hide series without points
+    for (var i = 0; i < chart.series.length; i++) {
+        chart.series[i].update({ lineWidth: $("#chkConnectPoints").prop("checked") ? 2 : 0 }, false);
+        if (series[i].data.length == 0)
+            chart.series[i].hide();
+        else
+            chart.series[i].show();
+    }
+    chart.redraw(true);
+});
+function initChart() {
+    chart = new Highcharts.Chart({
         chart: {
             type: 'scatter',
+            renderTo: "chartContainer",
+            zoomType: "xy"
         },
         title: "",
         plotOptions: {
@@ -244,11 +281,12 @@ $(document).on("click", "#btnRender", function (ev) {
                 turboThreshold: 10000
             }
         },
+        colors: ["#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#888888", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#000000"],
         xAxis: {
-            title: { text: selectedXValueIdx }
+            title: { text: "" }
         },
         yAxis: {
-            title: { text: selectedYValueIdx }
+            title: { text: "" }
         },
         tooltip: {
             useHTML: true,
@@ -256,7 +294,7 @@ $(document).on("click", "#btnRender", function (ev) {
                 return this.point.tag + "<hr/>" + getFormattedPropertyValues(this.point.line);
             }
         },
-        series: series,
+        series: [],
         credits: false,
         exporting: {
             chartOptions: {
@@ -266,7 +304,7 @@ $(document).on("click", "#btnRender", function (ev) {
             }
         }
     });
-});
+}
 function saveConfigurationInHash() {
     var selectedXValueIdx = $("#ddlXValues").val();
     var selectedYValueIdx = $("#ddlYValues").val();
@@ -336,5 +374,6 @@ $(document).on("change", ".ddlFixedProp", function (ev) {
 });
 $(document).ready(function () {
     $(".ddl").select2();
+    initChart();
 });
 //# sourceMappingURL=analyzecsv.js.map
