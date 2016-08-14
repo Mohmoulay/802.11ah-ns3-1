@@ -314,13 +314,14 @@ SeqTsHeader GetSeqTSFromPacket(Ptr<const Packet> packet) {
 }
 
 void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
-	SeqTsHeader seqTs = GetSeqTSFromPacket(packet);
+
+	//SeqTsHeader seqTs = GetSeqTSFromPacket(packet);
 
 	if(showLog) cout << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
-			<< "TCP packet sent with seq nr " << seqTs.GetSeq() << endl;
+			<< "TCP packet sent " << endl;//with seq nr " << seqTs.GetSeq() << endl;
 
 
-
+/*
 	// the packet is just sent, so track if it's received by a list of booleans
 	// with the sequence number as index
 	if (seqTs.GetSeq() >= seqNrReceived.size()) {
@@ -333,7 +334,7 @@ void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
 			seqNrReceivedAtAP.push_back(false);
 		}
 	}
-
+*/
 	stats->get(this->id).NumberOfSentPackets++;
 
 
@@ -342,6 +343,16 @@ void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
 void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
 		Address from) {
 
+	SeqTsHeader seqTs = GetSeqTSFromPacket(packet);
+	if(seqTs.GetSeq() > 0) {
+		auto timeDiff = (Simulator::Now() - seqTs.GetTs());
+		stats->get(this->id).TotalPacketRoundtripTime += timeDiff;
+		stats->get(this->id).NumberOfSuccessfulRoundtripPacketsWithSeqHeader++;
+	}
+
+	stats->get(this->id).NumberOfSuccessfulRoundtripPackets++;
+
+	/*
 	try {
 		SeqTsHeader seqTs = GetSeqTSFromPacket(packet);
 
@@ -359,11 +370,11 @@ void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
 
 		auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
-		/*cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
+		cout << Simulator::Now().GetMicroSeconds() << " [" << this->id << "] "
 		 << " Echo packet received back from AP ("
 		 << InetSocketAddress::ConvertFrom(from).GetIpv4() << ") after "
 		 << std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
-		 */
+
 		stats->get(this->id).NumberOfSuccessfulRoundtripPackets++;
 		stats->get(this->id).TotalPacketRoundtripTime += timeDiff;
 
@@ -377,10 +388,26 @@ void NodeEntry::OnTcpEchoPacketReceived(Ptr<const Packet> packet,
 		//packet->Print(cout);
 		//exit(1);
 	}
+	*/
 }
 
 void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
-	auto pCopy = packet->Copy();
+
+	// due to TCP fragmentation not all sent/received packets will contain seq ts headers!
+	SeqTsHeader seqTs = GetSeqTSFromPacket(packet);
+	if(seqTs.GetSeq() > 0) {
+		auto timeDiff = (Simulator::Now() - seqTs.GetTs());
+		stats->get(this->id).TotalPacketSentReceiveTime += timeDiff;
+		stats->get(this->id).NumberOfSuccessfulPacketsWithSeqHeader++;
+		stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
+	}
+
+	stats->get(this->id).NumberOfSuccessfulPackets++;
+
+
+
+	/*auto pCopy = packet->Copy();
+
 	try {
 
 		SeqTsHeader seqTs = GetSeqTSFromPacket(packet);
@@ -410,10 +437,10 @@ void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 
 		auto timeDiff = (Simulator::Now() - seqTs.GetTs());
 
-		/*cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "] "
+		cout << Simulator::Now().GetMicroSeconds() << "[" << this->id << "] "
 		 << "TCP packet received at AP after "
 		 << std::to_string(timeDiff.GetMicroSeconds()) << "µs" << endl;
-		 */
+
 		stats->get(this->id).NumberOfSuccessfulPackets++;
 		stats->get(this->id).TotalPacketSentReceiveTime += timeDiff;
 		stats->get(this->id).TotalPacketPayloadSize += packet->GetSize();
@@ -423,6 +450,7 @@ void NodeEntry::OnTcpPacketReceivedAtAP(Ptr<const Packet> packet) {
 				<< "ERROR: unable to get the packet header at AP to determine the travel time"
 				<< endl;
 	}
+	*/
 }
 
 void NodeEntry::OnTcpCongestionWindowChanged(uint32_t oldval, uint32_t newval) {

@@ -186,6 +186,11 @@ TcpSocketBase::GetTypeId (void)
                      "Receive tcp packet from IP protocol",
                      MakeTraceSourceAccessor (&TcpSocketBase::m_rxTrace),
                      "ns3::TcpSocketBase::TcpTxRxTracedCallback")
+
+	 .AddTraceSource ("PacketSent",
+						  "Send data packet, also indicates if it was a retransmission or not",
+						  MakeTraceSourceAccessor (&TcpSocketBase::m_packetSent),
+						  "ns3::TcpSocketBase::PacketSentCallback")
 	 .AddTraceSource ("Retransmission",
 							 "Occurs when TCP socket does a retransmission",
 							  MakeTraceSourceAccessor (&TcpSocketBase::m_retransmission),
@@ -1322,6 +1327,7 @@ TcpSocketBase::DoForwardUp (Ptr<Packet> packet, const Address &fromAddress,
           h.SetWindowSize (AdvertisedWindowSize ());
           AddOptions (h);
           m_txTrace (p, h, this);
+
           m_tcp->SendPacket (p, h, toAddress, fromAddress, m_boundnetdevice);
         }
       break;
@@ -2223,6 +2229,7 @@ TcpSocketBase::SendEmptyPacket (uint8_t flags)
 
   m_txTrace (p, header, this);
 
+
   if (m_endPoint != 0)
     {
       m_tcp->SendPacket (p, header, m_endPoint->GetLocalAddress (),
@@ -2505,6 +2512,7 @@ TcpSocketBase::SendDataPacket (SequenceNumber32 seq, uint32_t maxSize, bool with
     }
 
   m_txTrace (p, header, this);
+  m_packetSent(p,header,this,isRetransmission);
 
   if (m_endPoint)
     {

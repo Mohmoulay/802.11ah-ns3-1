@@ -56,9 +56,6 @@ class RttHistory
 {
 public:
 
-	typedef void (* RetransmissionCallBack)
-	            (Address);
-
 
   /**
    * \brief Constructor - builds an RttHistory with the given parameters
@@ -247,6 +244,9 @@ public:
 class TcpSocketBase : public TcpSocket
 {
 public:
+
+
+
   /**
    * Get the type ID.
    * \brief Get the type ID.
@@ -407,6 +407,13 @@ public:
    */
   typedef void (* TcpTxRxTracedCallback)(const Ptr<const Packet> packet, const TcpHeader& header,
                                          const Ptr<const TcpSocketBase> socket);
+
+  typedef void (* PacketSentCallback)(const Ptr<const Packet> packet, const TcpHeader& header,
+                                           const Ptr<const TcpSocketBase> socket, bool isRetransmission);
+
+	typedef void (* RetransmissionCallBack)
+	            (Address);
+
 
   virtual uint32_t GetSegSize (void) const;
 
@@ -999,6 +1006,11 @@ protected:
   // The following two traces pass a packet with a TCP header
   TracedCallback<Ptr<const Packet>, const TcpHeader&,
                  Ptr<const TcpSocketBase> > m_txTrace; //!< Trace of transmitted packets
+
+
+  TracedCallback<Ptr<const Packet>, const TcpHeader&,
+                 Ptr<const TcpSocketBase>, bool> m_packetSent;
+
 
   TracedCallback<Ptr<const Packet>, const TcpHeader&,
                  Ptr<const TcpSocketBase> > m_rxTrace; //!< Trace of received packets
