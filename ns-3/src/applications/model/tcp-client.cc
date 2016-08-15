@@ -86,7 +86,6 @@ TcpClient::TcpClient() {
 	m_recv = 0;
 	m_bytesRecv = 0;
 	m_socket = 0;
-	m_sendEvent = EventId();
 	m_rv = CreateObject<UniformRandomVariable>();
 }
 
@@ -187,7 +186,7 @@ void TcpClient::StopApplication() {
 		m_socket = 0;
 	}
 
-	Simulator::Cancel(m_sendEvent);
+
 }
 
 void TcpClient::SetDataSize(uint32_t dataSize) {
@@ -203,7 +202,7 @@ uint32_t TcpClient::GetDataSize(void) const {
 void TcpClient::Send(uint8_t* data, int size) {
 	NS_LOG_FUNCTION_NOARGS ();
 
-	NS_ASSERT(m_sendEvent.IsExpired());
+
 
 	Ptr<Packet> p;
 	p = Create<Packet>(data, size);
@@ -215,6 +214,7 @@ void TcpClient::Send(uint8_t* data, int size) {
 	// of the socket
 
 	// add sequence header to the packet, purely for the time diff calculation
+	// TODO find better way to send SeqTs in the stream, it corrupts the stream when TCP fragmentation occurs
 	SeqTsHeader seqTs;
 	seqTs.SetSeq(m_sent);
 
@@ -321,15 +321,19 @@ void TcpClient::Flush() {
 
 std::string TcpClient::ReadString(int size) {
 
-	char* buf = new char[1024];
-	int nrOfBytesRead = Read(buf, 1024);
+
+	char* buf = new char[size];
+	int nrOfBytesRead = Read(buf, size);
 	auto msg = std::string(buf,nrOfBytesRead);
 	delete buf;
 
+	//std::cout << "C: Read string (length: " << std::to_string((int)msg.size()) << ") '" << msg << "' " << std::endl;
 	return msg;
 }
 
 void TcpClient::WriteString(std::string str, bool flush) {
+
+	//std::cout << "C: Write string (length: " << std::to_string((int)str.size()) << ") '" << str << "' " << std::endl;
 
 	char * buf = (char*)str.c_str();
 	Write(buf, (int)str.size());

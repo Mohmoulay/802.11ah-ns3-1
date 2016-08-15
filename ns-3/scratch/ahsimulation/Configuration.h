@@ -21,7 +21,7 @@ using namespace ns3;
 using namespace std;
 
 struct Configuration {
-	double simulationTime = 500;
+	double simulationTime = 200;
 	uint32_t seed = 1;
 	uint32_t Nsta = 1;
 	uint32_t NRawSta = 96;
@@ -31,7 +31,7 @@ struct Configuration {
 	uint32_t NGroup = 4;
 	uint32_t BeaconInterval = 102400;
 
-	uint32_t MinRTO = 200000;
+	uint32_t MinRTO = 819200;
 	uint32_t TCPConnectionTimeout = 6000000;
 	uint32_t TCPSegmentSize = 536;
 	uint32_t TCPInitialSlowStartThreshold = 0xffff;
@@ -42,9 +42,9 @@ struct Configuration {
 
 
 	bool APAlwaysSchedulesForNextSlot = false;
-	uint32_t APScheduleTransmissionForNextSlotIfLessThan = 2000;
+	uint32_t APScheduleTransmissionForNextSlotIfLessThan = 5000;
 
-	string DataMode = "MCS2_1";
+	string DataMode = "MCS2_8";
 	//double datarate = 0.65;
 	//double bandWidth = 2;
 
@@ -52,28 +52,29 @@ struct Configuration {
 	int visualizerPort = 7707;
 	double visualizerSamplingInterval = 1;
 
-	string rho = "500.0";
+	string rho = "100.0";
 
 	string name = "";
 
 	string APPcapFile = "";
-	string NSSFile = "";
+	string NSSFile = "test.nss";
 
-	uint32_t trafficInterval = 10000;
+	uint32_t trafficInterval = 1000;
 	uint32_t trafficIntervalDeviation = 1000;
 
 	int trafficPacketSize = -1;
-	string trafficType = "tcpecho";
+	string trafficType = "tcpfirmware";
 
 	double ipcameraMotionPercentage = 0.1;
 	uint16_t ipcameraMotionDuration = 60;
 	uint16_t ipcameraDataRate = 20;
 
-	uint32_t firmwareSize = 1024 * 1024 *5;
+	uint32_t firmwareSize = 1024 * 500;
 	uint16_t firmwareBlockSize = 1024;
 	double firmwareNewUpdateProbability = 0.01;
 	double firmwareCorruptionProbability = 0.01;
 
+	uint16_t sensorMeasurementSize = 1024;
 
 	uint16_t MaxTimeOfPacketsInQueue = 100;
 

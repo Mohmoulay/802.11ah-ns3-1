@@ -150,15 +150,17 @@ void TcpServer::ReceivePacket(Ptr<Socket> s) {
 			NS_LOG_INFO(
 					"Server Received " << packet->GetSize () << " bytes from " << InetSocketAddress::ConvertFrom (from).GetIpv4 ());
 
+			// TODO find better way to send SeqTs in the stream, it corrupts the stream when TCP fragmentation occurs
 			SeqTsHeader hdr;
 			packet->RemoveHeader(hdr);
+
 			packet->RemoveAllPacketTags();
 			packet->RemoveAllByteTags();
 
 			int remainingSize = packet->GetSize();
 
-
 			uint8_t* buf = new uint8_t[remainingSize];
+
 			packet->CopyData(buf, remainingSize);
 			for (int i = 0; i < remainingSize; i++) {
 				handles[from].rxBuffer.push((char) buf[i]);
@@ -282,15 +284,19 @@ void TcpServer::Send(Address to, uint8_t* data, int size) {
 
 std::string TcpServer:: ReadString(Address from, int size) {
 
-	char* buf = new char[1024];
-	int nrOfBytesRead = Read(from, buf, 1024);
+	char* buf = new char[size];
+	int nrOfBytesRead = Read(from, buf, size);
 	auto msg = std::string(buf,nrOfBytesRead);
 	delete buf;
+
+	//std::cout << "S: Read string (length: " << std::to_string((int)msg.size()) << ") '" << msg << "' " << std::endl;
 
 	return msg;
 }
 
 void TcpServer::WriteString(Address from, std::string str, bool flush) {
+
+	//std::cout << "S: Write string (length: " << std::to_string((int)str.size()) << ") '" << str << "' " << std::endl;
 
 	char * buf = (char*)str.c_str();
 	Write(from, buf, (int)str.size());

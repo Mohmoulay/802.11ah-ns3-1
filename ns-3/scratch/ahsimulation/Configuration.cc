@@ -40,6 +40,14 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("IpCameraMotionDuration", "Time in seconds to stream data when motion was detected", ipcameraMotionDuration);
     cmd.AddValue("IpCameraDataRate", "Data rate of the captured stream in kbps", ipcameraDataRate);
 
+    cmd.AddValue("FirmwareSize", "Size of the firmware that will be sent to clients for update", firmwareSize);
+    cmd.AddValue("FirmwareBlockSize", "The chunk size of a piece of firmware. The client has to acknowledge each chunk before the next will be sent", firmwareBlockSize);
+    cmd.AddValue("FirmwareCorruptionProbability", "The probability that a firmware chunk gets corrupted and the client has to ask for it again", firmwareNewUpdateProbability);
+    cmd.AddValue("FirmwareNewUpdateProbability", "The probability that a newer firmware version is available when the client polls the server (every trafficinterval)", firmwareNewUpdateProbability);
+
+    cmd.AddValue("SensorMeasurementSize", "The size of the measurements taken by the sensor", sensorMeasurementSize);
+
+
     cmd.AddValue("DataMode", "Date mode (check MCStoWifiMode for more details) (format: MCSbw_mcs, e.g. MCS1_0 is OfdmRate300KbpsBW1Mhz)", DataMode);
 //    cmd.AddValue("Datarate", "data rate in Mbps", datarate);
 //cmd.AddValue("BandWidth", "bandwidth in MHz", bandWidth);

@@ -486,7 +486,7 @@ void tcpStateChangeAtServer(TcpSocket::TcpStates_t oldState, TcpSocket::TcpState
 		else
 			cout << "*** Node could not be determined from received packet at AP " << endl;
 
-	cout << Simulator::Now().GetMicroSeconds() << " ********** TCP SERVER SOCKET STATE CHANGED FROM " << oldState << " TO " << newState << endl;
+	//cout << Simulator::Now().GetMicroSeconds() << " ********** TCP SERVER SOCKET STATE CHANGED FROM " << oldState << " TO " << newState << endl;
 }
 
 void configureUDPServer() {
@@ -602,8 +602,8 @@ void configureTCPFirmwareServer() {
 	factory.Set("Port", UintegerValue (83));
 
 	factory.Set("FirmwareSize", UintegerValue (config.firmwareSize));
-	factory.Set("FirmwareBlockSize", UintegerValue (config.firmwareBlockSize));
-	factory.Set("FirmwareNewUpdateProbability", DoubleValue (config.firmwareNewUpdateProbability));
+	factory.Set("BlockSize", UintegerValue (config.firmwareBlockSize));
+	factory.Set("NewUpdateProbability", DoubleValue (config.firmwareNewUpdateProbability));
 
 	Ptr<Application> tcpServer = factory.Create<TCPFirmwareServer>();
 	apNodes.Get(0)->AddApplication(tcpServer);
@@ -620,7 +620,8 @@ void configureTCPFirmwareClients() {
 	ObjectFactory factory;
 	factory.SetTypeId (TCPFirmwareClient::GetTypeId ());
 	factory.Set("CorruptionProbability", DoubleValue(config.firmwareCorruptionProbability));
-	factory.Set("VersionCheckInterval", UintegerValue(config.trafficInterval));
+	factory.Set("VersionCheckInterval", TimeValue(MilliSeconds(config.trafficInterval)));
+	factory.Set("PacketSize", UintegerValue(config.trafficPacketSize));
 
 	factory.Set("RemoteAddress", Ipv4AddressValue (apNodeInterfaces.GetAddress(0)));
 	factory.Set("RemotePort", UintegerValue (83));
@@ -662,6 +663,7 @@ void configureTCPSensorClients() {
 
 	factory.Set("Interval", TimeValue(MilliSeconds(config.trafficInterval)));
 	factory.Set("PacketSize", UintegerValue(config.trafficPacketSize));
+	factory.Set("MeasurementSize", UintegerValue(config.sensorMeasurementSize));
 
 	factory.Set("RemoteAddress", Ipv4AddressValue (apNodeInterfaces.GetAddress(0)));
 	factory.Set("RemotePort", UintegerValue (84));

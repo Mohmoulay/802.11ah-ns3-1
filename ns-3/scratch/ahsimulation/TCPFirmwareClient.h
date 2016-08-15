@@ -18,6 +18,7 @@ public:
 
 protected:
 	virtual void StartApplication(void);
+	virtual void StopApplication(void);
 	virtual void OnDataReceived();
 
 private:

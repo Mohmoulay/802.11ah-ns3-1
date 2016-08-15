@@ -37,7 +37,7 @@ private:
 	uint16_t firmwareBlockSize;
 	double newVersionProbability;
 
-	std::map<ns3::Address, uint16_t> curFirmwarePos;
+	std::map<ns3::Address, uint32_t> curFirmwarePos;
 
 	std::map<ns3::Address, std::string> stringBuffer;
 

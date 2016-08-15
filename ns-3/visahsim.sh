@@ -1,14 +1,13 @@
 ./waf --run "scratch/ahsimulation/ahsimulation"\
 " --NGroup=4"\
 " --NRawSlotNum=5"\
-" --NRawSlotNum=1"\
 " --DataMode=\"MCS2_8\""\
 " --Rho=\"100\""\
 " --MaxTimeOfPacketsInQueue=1000"\
 " --SimulationTime=200"\
 " --TrafficInterval=1000"\
 " --TrafficIntervalDeviation=1000"\
-" --TrafficType=\"tcpipcamera\""\
+" --TrafficType=\"tcpsensor\""\
 " --IpCameraMotionPercentage=1"\
 " --IpCameraMotionDuration=10"\
 " --IpCameraDataRate=100"\
@@ -20,9 +19,9 @@
 " --APScheduleTransmissionForNextSlotIfLessThan=5000"\
 " --NRawSta=96"\
 " --Nsta=1"\
-" --VisualizerIP=\"localhost\""\
+" --VisualizerIP=\"none\""\
 " --VisualizerPort=7000"\
 " --VisualizerSamplingInterval=1"\
 " --APPcapFile=\"appcap\""\
-" --NSSFile=\"/home/dwight/ns3ah/802.11ah-ns3/ns-3/test.nss\""\
+" --NSSFile=\"test.nss\""\
 " --Name=\"test\""

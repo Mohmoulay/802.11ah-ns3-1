@@ -18,13 +18,15 @@ public:
 
 protected:
 	virtual void StartApplication(void);
+	virtual void StopApplication(void);
 	virtual void OnDataReceived();
 
 private:
 	void Action();
 
 	ns3::Time m_interval;
-	uint16_t packetSize;
+	uint16_t measurementSize = 100;
+	ns3::EventId actionEvent;
 
 };
 

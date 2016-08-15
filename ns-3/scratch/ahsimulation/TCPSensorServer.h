@@ -11,6 +11,7 @@
 #include "ns3/application.h"
 #include "ns3/core-module.h"
 #include "ns3/tcp-server.h"
+#include <map>
 
 class TCPSensorServer: public ns3::TcpServer {
 public:
@@ -19,8 +20,12 @@ public:
 
 	static ns3::TypeId GetTypeId (void);
 
+
 protected:
 	virtual void OnDataReceived(ns3::Address from);
+
+private:
+	std::map<ns3::Address, std::string> partialBytesReceived;
 };
 
 #endif /* SCRATCH_AHSIMULATION_TCPSensorServer_H_ */
