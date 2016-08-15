@@ -234,7 +234,7 @@ var EventManager = (function () {
             nodeVal.numberOfDropsByReasonMacQueueSizeExceeded = parseInt(dropParts[12]);
             nodeVal.numberOfDropsByReasonTCPTxBufferExceeded = parseInt(dropParts[13]);
         }
-        if (typeof numberOfDropsByReason != "undefined") {
+        if (typeof numberOfDropsByReasonAtAP != "undefined") {
             var dropParts = numberOfDropsByReasonAtAP.split(',');
             nodeVal.numberOfDropsFromAPByReasonUnknown = parseInt(dropParts[0]);
             nodeVal.numberOfDropsFromAPByReasonPhyInSleepMode = parseInt(dropParts[1]);
