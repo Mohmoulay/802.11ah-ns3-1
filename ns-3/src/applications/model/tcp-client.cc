@@ -180,12 +180,14 @@ void TcpClient::OnTCPEstimatedBWChanged(double oldVal, double newVal) {
 void TcpClient::StopApplication() {
 	NS_LOG_FUNCTION_NOARGS ();
 
+	// leave the connection open in case there is remaining data
+	/*
 	if (m_socket != 0) {
 		m_socket->Close();
 		m_socket->SetRecvCallback(MakeNullCallback<void, Ptr<Socket> >());
 		m_socket = 0;
 	}
-
+	*/
 
 }
 
