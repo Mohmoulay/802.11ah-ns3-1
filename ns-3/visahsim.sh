@@ -7,7 +7,7 @@
 " --SimulationTime=200"\
 " --TrafficInterval=1000"\
 " --TrafficIntervalDeviation=1000"\
-" --TrafficType=\"tcpsensor\""\
+" --TrafficType=\"tcpfirmware\""\
 " --IpCameraMotionPercentage=1"\
 " --IpCameraMotionDuration=10"\
 " --IpCameraDataRate=100"\

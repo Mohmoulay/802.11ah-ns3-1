@@ -707,6 +707,10 @@ void wireTCPClient(ApplicationContainer clientApp, int i) {
 	clientApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&NodeEntry::OnTcpRetransmission, nodes[i]));
 
 	clientApp.Get(0)->TraceConnectWithoutContext("PacketDropped", MakeCallback(&NodeEntry::OnTcpPacketDropped, nodes[i]));
+
+	if(config.trafficType == "tcpfirmware") {
+		clientApp.Get(0)->TraceConnectWithoutContext("FirmwareUpdated", MakeCallback(&NodeEntry::OnTcpFirmwareUpdated, nodes[i]));
+	}
 }
 
 void configureTCPEchoClients() {

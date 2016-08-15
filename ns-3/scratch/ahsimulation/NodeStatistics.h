@@ -81,6 +81,8 @@ public:
     uint16_t NumberOfTransmissionsDuringRAWSlot = 0;
 
     int getTotalDrops();
+
+    Time FirmwareTransferTime;
 };
 
 #endif /* NODESTATISTICS_H */

@@ -39,6 +39,13 @@ ns3::TypeId TCPFirmwareClient::GetTypeId(void) {
 									   DoubleValue(0.01),
 									   MakeDoubleAccessor(&TCPFirmwareClient::corruptionProbability),
 									   MakeDoubleChecker<double>(0.0,1.0))
+
+
+		   .AddTraceSource("FirmwareUpdated",
+					"Occurs when a firmware is completely received",
+					MakeTraceSourceAccessor(&TCPFirmwareClient::firmwareUpdated),
+					"TCPFirmwareClient::FirmwareUpdatedCallback")
+
 	;
 	return tid;
 }
@@ -85,6 +92,8 @@ void TCPFirmwareClient::OnDataReceived() {
 			WriteString("READYTOUPDATE", false);
 			WriteString("~~~", true);
 
+			firmwareReceiveStarted = Simulator::Now();
+
 			// cancel version check until firmware is updated
 			ns3::Simulator::Cancel(actionEventId);
 		}
@@ -109,6 +118,9 @@ void TCPFirmwareClient::OnDataReceived() {
 		else if(msg.find("ENDOFUPDATE") == 0) {
 			NS_LOG_INFO("Server has completely sent the firmware, updating");
 			// schedule
+
+			firmwareUpdated(Simulator::Now() - firmwareReceiveStarted);
+
 			WriteString("UPDATED", false);
 			WriteString("~~~", true);
 			// restart version check

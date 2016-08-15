@@ -94,6 +94,8 @@ public:
     void OnTcpPacketSent(Ptr<const Packet> packet);
     void OnTcpPacketDropped(Ptr<Packet> packet, DropReason reason);
 
+    void OnTcpFirmwareUpdated(Time totalFirmwareTransferTime);
+
     void OnTcpEchoPacketReceived(Ptr<const Packet> packet, Address from);
     void OnTcpPacketReceivedAtAP(Ptr<const Packet> packet);
     void OnTcpCongestionWindowChanged(uint32_t oldval, uint32_t newval);

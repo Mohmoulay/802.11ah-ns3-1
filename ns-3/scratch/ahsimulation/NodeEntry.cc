@@ -571,6 +571,11 @@ void NodeEntry::OnTcpPacketDropped(Ptr<Packet> packet, DropReason reason) {
 }
 
 
+void NodeEntry::OnTcpFirmwareUpdated(Time totalFirmwareTransferTime) {
+	stats->get(this->id).FirmwareTransferTime = totalFirmwareTransferTime;
+}
+
+
 void NodeEntry::OnCollision(std::string context, uint32_t nrOfBackoffSlots) {
 	if(showLog) cout << "Collision sensed" << endl;
 
