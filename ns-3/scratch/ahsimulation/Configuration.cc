@@ -10,7 +10,7 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("SimulationTime", "Simulation time in seconds", simulationTime);
 
     cmd.AddValue("Nsta", "number of total stations", Nsta);
-    cmd.AddValue("NRawSta", "number of stations supporting RAW", NRawSta);
+    cmd.AddValue("NRawSta", "number of stations supporting RAW. If -1 it will be based on NSta, should be divisible by NGroup", NRawSta);
     cmd.AddValue("SlotFormat", "format of NRawSlotCount, -1 will auto calculate based on raw slot num", SlotFormat);
     cmd.AddValue("NRawSlotCount", "RAW slot duration, , -1 will auto calculate based on raw slot num", NRawSlotCount);
     cmd.AddValue("NRawSlotNum", "number of slots per RAW", NRawSlotNum);

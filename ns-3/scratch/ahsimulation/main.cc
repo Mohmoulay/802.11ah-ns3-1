@@ -18,6 +18,8 @@ int main(int argc, char** argv) {
     	config.NRawSlotCount = ceil(162 * 5 / config.NRawSlotNum);
     if(config.SlotFormat == -1)
     	config.SlotFormat = config.NRawSlotCount > 256 ? 1 : 0;
+    if(config.NRawSta == -1)
+    	config.NRawSta = config.Nsta;
 
     stats = Statistics(config.Nsta);
 

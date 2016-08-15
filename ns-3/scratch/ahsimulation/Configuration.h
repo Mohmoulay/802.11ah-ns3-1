@@ -24,7 +24,7 @@ struct Configuration {
 	double simulationTime = 200;
 	uint32_t seed = 1;
 	uint32_t Nsta = 1;
-	uint32_t NRawSta = 96;
+	uint32_t NRawSta = -1;
 	int SlotFormat = -1; //0;
 	int NRawSlotCount = -1; //162;
 	uint32_t NRawSlotNum = 5;
