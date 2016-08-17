@@ -9,6 +9,11 @@
 
 using namespace ns3;
 
+
+NS_LOG_COMPONENT_DEFINE("TCPSensorClient");
+NS_OBJECT_ENSURE_REGISTERED(TCPSensorClient);
+
+
 TCPSensorClient::TCPSensorClient() {
 
 }
@@ -28,10 +33,10 @@ ns3::TypeId TCPSensorClient::GetTypeId(void) {
 			                   MakeTimeAccessor (&TCPSensorClient::m_interval),
 			                   MakeTimeChecker ())
 
-		   .AddAttribute ("PacketSize",
+		   .AddAttribute ("MeasurementSize",
 						   "The size of a measurement",
-						   UintegerValue(1024),
-						   MakeUintegerAccessor(&TCPSensorClient::packetSize),
+						   UintegerValue(10),
+						   MakeUintegerAccessor(&TCPSensorClient::measurementSize),
 						   MakeUintegerChecker<uint16_t>())
 
 	;
@@ -41,25 +46,34 @@ ns3::TypeId TCPSensorClient::GetTypeId(void) {
 void TCPSensorClient::StartApplication(void) {
 	ns3::TcpClient::StartApplication();
 
-	ns3::Simulator::Schedule(m_interval, &TCPSensorClient::Action, this);
+	actionEvent = ns3::Simulator::Schedule(m_interval, &TCPSensorClient::Action, this);
+}
+
+void TCPSensorClient::StopApplication(void) {
+	ns3::TcpClient::StopApplication();
+	ns3::Simulator::Cancel(actionEvent);
 }
 
 void TCPSensorClient::Action() {
 
-	WriteString("MEASUREMENT", false);
+	NS_LOG_INFO("Sending measurement to server");
+	WriteString("STARTMEASUREMENT", false);
 
-	char* buf = new char[packetSize];
-	for(int i = 0; i < packetSize; i++)
-		buf[i] = i % 256;
-	Write(buf, packetSize);
+	char* buf = new char[measurementSize];
+	for(int i = 0; i < measurementSize; i++)
+		buf[i] = 'A' + (i % 20);//(i % 255)+1;
+	Write(buf, measurementSize);
 	delete buf;
 
-	ns3::Simulator::Schedule(m_interval, &TCPSensorClient::Action, this);
+	WriteString("~~~~~~~~~~~~~~~~~~", true); // take it long enough so SeqTsHeader can't corrupt it, ignore 0 sized parts between '~~~' and next '~~~'
+	Flush();
+
+	actionEvent = ns3::Simulator::Schedule(m_interval, &TCPSensorClient::Action, this);
 }
 
 
 void TCPSensorClient::OnDataReceived() {
 
-	std::string reply = ReadString(1024);
+	std::string reply = ReadString(4096);
 	std::cout << "Reply from TCP Server: '" << reply << "'" << std::endl;
 }

@@ -57,7 +57,14 @@ void SimulationEventManager::onStart(Configuration& config) {
 		  std::to_string(config.ipcameraMotionDuration),
 		  std::to_string(config.ipcameraDataRate),
 		  std::to_string(config.Nsta),
-		  std::to_string(config.CoolDownPeriod)
+		  std::to_string(config.CoolDownPeriod),
+		  std::to_string(config.firmwareSize),
+		  std::to_string(config.firmwareBlockSize),
+		  std::to_string(config.firmwareCorruptionProbability),
+		  std::to_string(config.firmwareNewUpdateProbability),
+		  std::to_string(config.sensorMeasurementSize),
+		  std::to_string(config.ContentionPerRAWSlot),
+		  std::to_string(config.ContentionPerRAWSlotOnlyInFirstGroup)
 	});
 }
 
@@ -146,7 +153,11 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 			std::to_string(stats.get(i).TCPRTTValue.GetMicroSeconds() == 0 ? -1 : stats.get(i).TCPRTTValue.GetMicroSeconds()),
 			std::to_string(stats.get(i).NumberOfBeaconsMissed),
 			std::to_string(stats.get(i).NumberOfTransmissionsDuringRAWSlot),
-			std::to_string(stats.get(i).getTotalDrops())
+			std::to_string(stats.get(i).getTotalDrops()),
+			std::to_string(stats.get(i).FirmwareTransferTime.GetMicroSeconds()),
+			std::to_string(stats.get(i).getIPCameraSendingRate()),
+			std::to_string(stats.get(i).getIPCameraAPReceivingRate()),
+
 		});
 	}
 }
@@ -218,7 +229,14 @@ void SimulationEventManager::onStartHeader() {
 		   "IPCameraMotionDuration",
 		   "IPCameraDataRate",
 		   "NSta",
-		   "CoolDownPeriod"
+		   "CoolDownPeriod",
+		   "FirmwareSize",
+		   "FirmwareBlockSize",
+		   "FirmwareCorruptionProbability",
+		   "FirmwareNewUpdateProbability",
+		   "SensorMeasurementSize",
+		   "ContentionPerRAWSlot",
+		   "ContentionPerRAWSlotOnlyInFirstGroup"
 		});
 }
 
@@ -260,7 +278,12 @@ void SimulationEventManager::onStatisticsHeader() {
 		"TCPRTTValue",
 		"NumberOfBeaconsMissed",
 		"NumberOfTransmissionsDuringRAWSlot",
-		"TotalNumberOfDrops"
+		"TotalNumberOfDrops",
+		"FirmwareTransferTime",
+		"IPCameraSendingRate",
+		"IPCameraReceivingRate"
+
+
 	});
 
 }

@@ -131,7 +131,6 @@ private:
   Ptr<Socket> m_socket;
   Ipv4Address m_peerAddress;
   uint16_t m_peerPort;
-  EventId m_sendEvent;
 
   TracedCallback<uint32_t,uint32_t>          m_cWnd;
 

@@ -47,6 +47,9 @@ private:
     bool tcpConnectedAtSTA = true;
     bool tcpConnectedAtAP = true;
 
+
+    Time timeStreamStarted;
+
 public:
     int id;
     
@@ -93,6 +96,12 @@ public:
 
     void OnTcpPacketSent(Ptr<const Packet> packet);
     void OnTcpPacketDropped(Ptr<Packet> packet, DropReason reason);
+
+    void OnTcpFirmwareUpdated(Time totalFirmwareTransferTime);
+
+    void OnTcpIPCameraStreamStateChanged(bool newStateIsStreaming);
+    void OnTcpIPCameraDataSent(uint16_t nrOfBytes);
+    void OnTcpIPCameraDataReceivedAtAP(uint16_t nrOfBytes);
 
     void OnTcpEchoPacketReceived(Ptr<const Packet> packet, Address from);
     void OnTcpPacketReceivedAtAP(Ptr<const Packet> packet);

@@ -39,6 +39,17 @@ ns3::TypeId TCPIPCameraClient::GetTypeId(void) {
 						   IntegerValue(200),
 						   MakeUintegerAccessor(&TCPIPCameraClient::m_datarate),
 						   MakeUintegerChecker<uint16_t>())
+
+
+		   .AddTraceSource("DataSent",
+										"Occurs when data is sent to the server",
+										MakeTraceSourceAccessor(&TCPIPCameraClient::dataSent),
+										"TCPIPCameraClient::DataSentCallback")
+
+			.AddTraceSource("StreamStateChanged",
+													"Occurs when either started or stopped streaming",
+													MakeTraceSourceAccessor(&TCPIPCameraClient::streamStateChanged),
+													"TCPIPCameraClient::StreamStateChangedCallback")
 	;
 	return tid;
 }
@@ -65,6 +76,7 @@ void TCPIPCameraClient::Action() {
 		if(!motionActive) {
 			//std::cout << "Motion detected, starting camera stream" << std::endl;
 			motionActive = true;
+			streamStateChanged(true);
 			Stream();
 		}else {
 			//std::cout << "Motion detected, resetting motion timer" << std::endl;
@@ -79,9 +91,9 @@ void TCPIPCameraClient::Stream() {
 	if((Simulator::Now() - motionStartedOn) > m_motionDuration) {
 		//std::cout << "No motion for " << m_motionDuration << ", stopping stream" << std::endl;
 		motionActive = false;
+		streamStateChanged(false);
 		return;
 	}
-
 
 	int msPerSend = 100;
 	// data to send every 100 ms is (DataRate * 1024 / 8) / 10 bytes
@@ -94,6 +106,8 @@ void TCPIPCameraClient::Stream() {
 	}
 	//std::cout << "Writing " << bytesToSend << " to buffer " << std::endl;
 	Write(buffer, bytesToSend);
+	dataSent(bytesToSend);
+
 	delete buffer;
 
 	ns3::Simulator::Schedule(MilliSeconds(msPerSend), &TCPIPCameraClient::Stream, this);

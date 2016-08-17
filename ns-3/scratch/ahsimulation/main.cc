@@ -14,10 +14,30 @@ int main(int argc, char** argv) {
     // calculate parameters
     if(config.trafficPacketSize == -1)
     	config.trafficPacketSize = ((int)config.TCPSegmentSize - 100) < 0 ? 100 : (config.TCPSegmentSize - 100);
+
+    if(config.ContentionPerRAWSlot != -1) {
+    	// override the NSta based on the TIM groups and raw slot count
+    	// to match the contention per slot.
+    	int totalNrOfSlots = config.NGroup * config.NRawSlotNum;
+    	int totalSta = totalNrOfSlots * (config.ContentionPerRAWSlot+1);
+
+    	// only fill the first TIM group RAW if true, to reduce the number of stations overall
+    	// to speed up the simulation. All the other TIM groups are behaving the same.
+    	// Note that this is different from specifying only 1 TIM group because the DTIM cycle is still
+    	// longer with more groups!
+    	if(config.ContentionPerRAWSlotOnlyInFirstGroup)
+    		config.Nsta = totalSta / config.NGroup;
+    	else
+    		config.Nsta = totalSta;
+
+    	config.NRawSta = totalSta;
+    }
     if(config.NRawSlotCount == -1)
     	config.NRawSlotCount = ceil(162 * 5 / config.NRawSlotNum);
     if(config.SlotFormat == -1)
     	config.SlotFormat = config.NRawSlotCount > 256 ? 1 : 0;
+    if(config.NRawSta == -1)
+    	config.NRawSta = config.Nsta;
 
     stats = Statistics(config.Nsta);
 
@@ -486,7 +506,15 @@ void tcpStateChangeAtServer(TcpSocket::TcpStates_t oldState, TcpSocket::TcpState
 		else
 			cout << "*** Node could not be determined from received packet at AP " << endl;
 
-	cout << Simulator::Now().GetMicroSeconds() << " ********** TCP SERVER SOCKET STATE CHANGED FROM " << oldState << " TO " << newState << endl;
+	//cout << Simulator::Now().GetMicroSeconds() << " ********** TCP SERVER SOCKET STATE CHANGED FROM " << oldState << " TO " << newState << endl;
+}
+
+void tcpIPCameraDataReceivedAtServer(Address from, uint16_t nrOfBytes) {
+    int staId = getSTAIdFromAddress(InetSocketAddress::ConvertFrom(from).GetIpv4());
+    if(staId != -1)
+			nodes[staId]->OnTcpIPCameraDataReceivedAtAP(nrOfBytes);
+		else
+			cout << "*** Node could not be determined from received packet at AP " << endl;
 }
 
 void configureUDPServer() {
@@ -602,8 +630,8 @@ void configureTCPFirmwareServer() {
 	factory.Set("Port", UintegerValue (83));
 
 	factory.Set("FirmwareSize", UintegerValue (config.firmwareSize));
-	factory.Set("FirmwareBlockSize", UintegerValue (config.firmwareBlockSize));
-	factory.Set("FirmwareNewUpdateProbability", DoubleValue (config.firmwareNewUpdateProbability));
+	factory.Set("BlockSize", UintegerValue (config.firmwareBlockSize));
+	factory.Set("NewUpdateProbability", DoubleValue (config.firmwareNewUpdateProbability));
 
 	Ptr<Application> tcpServer = factory.Create<TCPFirmwareServer>();
 	apNodes.Get(0)->AddApplication(tcpServer);
@@ -620,7 +648,8 @@ void configureTCPFirmwareClients() {
 	ObjectFactory factory;
 	factory.SetTypeId (TCPFirmwareClient::GetTypeId ());
 	factory.Set("CorruptionProbability", DoubleValue(config.firmwareCorruptionProbability));
-	factory.Set("VersionCheckInterval", UintegerValue(config.trafficInterval));
+	factory.Set("VersionCheckInterval", TimeValue(MilliSeconds(config.firmwareVersionCheckInterval)));
+	factory.Set("PacketSize", UintegerValue(config.trafficPacketSize));
 
 	factory.Set("RemoteAddress", Ipv4AddressValue (apNodeInterfaces.GetAddress(0)));
 	factory.Set("RemotePort", UintegerValue (83));
@@ -662,6 +691,7 @@ void configureTCPSensorClients() {
 
 	factory.Set("Interval", TimeValue(MilliSeconds(config.trafficInterval)));
 	factory.Set("PacketSize", UintegerValue(config.trafficPacketSize));
+	factory.Set("MeasurementSize", UintegerValue(config.sensorMeasurementSize));
 
 	factory.Set("RemoteAddress", Ipv4AddressValue (apNodeInterfaces.GetAddress(0)));
 	factory.Set("RemotePort", UintegerValue (84));
@@ -686,6 +716,10 @@ void wireTCPServer(ApplicationContainer serverApp) {
 	serverApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&tcpRetransmissionAtServer));
 	serverApp.Get(0)->TraceConnectWithoutContext("PacketDropped", MakeCallback(&tcpPacketDroppedAtServer));
 	serverApp.Get(0)->TraceConnectWithoutContext("TCPStateChanged", MakeCallback(&tcpStateChangeAtServer));
+
+	if(config.trafficType == "tcpipcamera") {
+		serverApp.Get(0)->TraceConnectWithoutContext("DataReceived", MakeCallback(&tcpIPCameraDataReceivedAtServer));
+	}
 }
 
 void wireTCPClient(ApplicationContainer clientApp, int i) {
@@ -703,6 +737,14 @@ void wireTCPClient(ApplicationContainer clientApp, int i) {
 	clientApp.Get(0)->TraceConnectWithoutContext("Retransmission", MakeCallback(&NodeEntry::OnTcpRetransmission, nodes[i]));
 
 	clientApp.Get(0)->TraceConnectWithoutContext("PacketDropped", MakeCallback(&NodeEntry::OnTcpPacketDropped, nodes[i]));
+
+	if(config.trafficType == "tcpfirmware") {
+		clientApp.Get(0)->TraceConnectWithoutContext("FirmwareUpdated", MakeCallback(&NodeEntry::OnTcpFirmwareUpdated, nodes[i]));
+	}
+	else if(config.trafficType == "tcpipcamera") {
+	    clientApp.Get(0)->TraceConnectWithoutContext("DataSent", MakeCallback(&NodeEntry::OnTcpIPCameraDataSent, nodes[i]));
+	    clientApp.Get(0)->TraceConnectWithoutContext("StreamStateChanged", MakeCallback(&NodeEntry::OnTcpIPCameraStreamStateChanged, nodes[i]));
+	}
 }
 
 void configureTCPEchoClients() {
@@ -865,6 +907,11 @@ void printStatistics() {
 
 		cout << "Average packet sent/receive time: " << std::to_string(stats.get(i).getAveragePacketSentReceiveTime().GetMicroSeconds()) << "µs" << endl;
 		cout << "Average packet roundtrip time: " << std::to_string(stats.get(i).getAveragePacketRoundTripTime().GetMicroSeconds()) << "µs" << endl;
+
+
+		cout << "IP Camera Data sending rate: " << std::to_string(stats.get(i).getIPCameraSendingRate()) << "kbps" << endl;
+		cout << "IP Camera Data receiving rate: " << std::to_string(stats.get(i).getIPCameraAPReceivingRate()) << "kbps" << endl;
+
 
 		cout << "" << endl;
 		cout << "Goodput: " << std::to_string(stats.get(i).getGoodputKbit()) << "Kbit" << endl;

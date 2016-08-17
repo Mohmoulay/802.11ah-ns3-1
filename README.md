@@ -11,6 +11,7 @@ Visit the wiki for more details:
 
 * [Step by step guide to add extra metrics](../../wiki/Adding-extra-statistics) 
 
+* [Overview of all the configuration parameters](../../wiki/Configuration-parameters)
 
 ![](http://i.imgur.com/bbrpIRO.png)
 

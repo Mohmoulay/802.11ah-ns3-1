@@ -16,6 +16,14 @@ public:
 
 	static ns3::TypeId GetTypeId (void);
 
+	typedef void (* DataSentCallback)
+		                      (uint16_t nrOfBytes);
+
+	typedef void (* StreamStateChangedCallback)
+			                      (bool newStateIsStreaming);
+
+
+
 protected:
 	virtual void StartApplication(void);
 	virtual void StopApplication(void);
@@ -37,6 +45,9 @@ private:
 
 	ns3::Ptr<ns3::UniformRandomVariable> m_rv;
 
+	ns3::TracedCallback<uint16_t> dataSent;
+
+	ns3::TracedCallback<bool> streamStateChanged;
 };
 
 #endif /* SCRATCH_APPLICATIONS_PINGPONG_TCPIPCameraClient_H_ */
