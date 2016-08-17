@@ -1,5 +1,16 @@
 var headers;
 var lines;
+var SeriesValues = (function () {
+    function SeriesValues() {
+        this.name = "";
+        this.xValues = [];
+        this.yValues = [];
+        this.tags = [];
+        this.lines = [];
+    }
+    return SeriesValues;
+})();
+var seriesValues = {};
 var chart;
 function handleFiles(files) {
     getAsText(files[0]);
@@ -19,22 +30,53 @@ function getAsText(fileToRead) {
         alert("Unable to load csv file");
     };
 }
+var Entry = (function () {
+    function Entry(line) {
+        var parts = line.split(",");
+        this.isNumber = /^[-+]?(\d+|\d+\.\d*|\d*\.\d+)$/.test(parts[0]);
+        if (this.isNumber)
+            this.value = Math.round(parseFloat(parts[0]) * 100) / 100;
+        else
+            this.value = parts[0];
+        if (parts.length > 1) {
+            this.hasDetails = true;
+            this.q1 = parseFloat(parts[1]);
+            this.median = parseFloat(parts[2]);
+            this.q3 = parseFloat(parts[3]);
+            this.min = parseFloat(parts[4]);
+            this.max = parseFloat(parts[5]);
+        }
+        else {
+            this.hasDetails = false;
+        }
+    }
+    Entry.prototype.compareTo = function (e) {
+        if (typeof e == "undefined")
+            return -1;
+        if (e.isNumber) {
+            return this.value - e.value;
+        }
+        else {
+            return this.value == e.value ? 0 : (this.value > e.value ? 1 : -1);
+        }
+    };
+    return Entry;
+})();
 function processData(csv) {
     var allTextLines = csv.split(/\r\n|\n/);
     lines = [];
     for (var i = 0; i < allTextLines.length; i++) {
-        if (i == 0)
-            headers = allTextLines[i].split(';');
-        else {
-            var parts = allTextLines[i].split(';');
-            var obj = {};
-            for (var j = 0; j < parts.length; j++) {
-                if (/^[-+]?(\d+|\d+\.\d*|\d*\.\d+)$/.test(parts[j]))
-                    obj[headers[j]] = Math.round(parseFloat(parts[j]) * 100) / 100;
-                else
-                    obj[headers[j]] = parts[j];
+        if (allTextLines[i] != "") {
+            if (i == 0)
+                headers = allTextLines[i].split(';');
+            else {
+                var parts = allTextLines[i].split(';');
+                var obj = {};
+                for (var j = 0; j < parts.length; j++) {
+                    obj[headers[j]] = new Entry(parts[j]);
+                }
+                lines.push(obj);
             }
-            lines.push(obj);
         }
     }
 }
@@ -115,7 +157,8 @@ function getDistinctValuesFor(header) {
     var distinctValues = {};
     for (var _i = 0; _i < lines.length; _i++) {
         var l = lines[_i];
-        distinctValues[l[header]] = true;
+        if (typeof l[header] != "undefined")
+            distinctValues[l[header].value] = true;
     }
     var arr = [];
     for (var p in distinctValues) {
@@ -125,16 +168,6 @@ function getDistinctValuesFor(header) {
     }
     return arr.sort();
 }
-var SeriesValues = (function () {
-    function SeriesValues() {
-        this.name = "";
-        this.xValues = [];
-        this.yValues = [];
-        this.tags = [];
-        this.lines = [];
-    }
-    return SeriesValues;
-})();
 function matchesFixedValues(line) {
     var fixedProps = $(".ddlFixedProp");
     for (var i = 0; i < fixedProps.length; i++) {
@@ -146,7 +179,7 @@ function matchesFixedValues(line) {
                 fixedValue = Math.round(parseFloat(prop.val()) * 100) / 100;
             else
                 fixedValue = prop.val();
-            if (line[header] != fixedValue)
+            if (line[header].value != fixedValue)
                 return false;
         }
     }
@@ -160,7 +193,7 @@ function getFormattedPropertyValues(line) {
         if (h != selectedTagIdx) {
             str += "<tr>";
             str += "<td>" + h + "</td>";
-            str += "<td>" + line[h] + "</td>";
+            str += "<td>" + line[h].value + "</td>";
             str += "</tr>";
         }
     }
@@ -171,13 +204,12 @@ $(document).on("click", "#btnRender", function (ev) {
     var selectedXValueIdx = $("#ddlXValues").val();
     var selectedYValueIdx = $("#ddlYValues").val();
     var selectedSeriesIdx = $("#ddlSeries").val();
+    seriesValues = {};
     // make it an array to be consistent
     if (!(selectedSeriesIdx instanceof Array))
         selectedSeriesIdx = [selectedSeriesIdx];
     var selectedTagIdx = $("#ddlTag").val();
-    var distinctSeriesValues = {};
-    var seriesValues = {};
-    var sortedLines = lines.sort(function (a, b) { return a[selectedXValueIdx] - b[selectedXValueIdx]; });
+    var sortedLines = lines.sort(function (a, b) { return a[selectedXValueIdx].compareTo(b[selectedXValueIdx]); });
     for (var _i = 0; _i < sortedLines.length; _i++) {
         var l = sortedLines[_i];
         var isValid = true;
@@ -189,14 +221,13 @@ $(document).on("click", "#btnRender", function (ev) {
                 isValid = false;
                 break;
             }
-            keyParts.push(l[ss]);
-            nameParts.push(ss + ":" + l[ss]);
+            keyParts.push(l[ss].value);
+            nameParts.push(ss + ":" + l[ss].value);
         }
         if (isValid) {
             var key = keyParts.join("__");
             var sv;
-            if (!distinctSeriesValues.hasOwnProperty(key) || !distinctSeriesValues[key]) {
-                distinctSeriesValues[key] = true;
+            if (!seriesValues.hasOwnProperty(key)) {
                 sv = new SeriesValues();
                 sv.name = nameParts.join(",");
                 seriesValues[key] = sv;
@@ -205,9 +236,9 @@ $(document).on("click", "#btnRender", function (ev) {
                 sv = seriesValues[key];
             }
             if (matchesFixedValues(l)) {
-                sv.xValues.push(l[selectedXValueIdx]);
-                sv.yValues.push(l[selectedYValueIdx]);
-                sv.tags.push(l[selectedTagIdx]);
+                sv.xValues.push(l[selectedXValueIdx].value);
+                sv.yValues.push(l[selectedYValueIdx].value);
+                sv.tags.push(l[selectedTagIdx].value);
                 sv.lines.push(l);
             }
         }
@@ -238,7 +269,6 @@ $(document).on("click", "#btnRender", function (ev) {
         // replace data of charts up to chart.series.length
         for (var i = 0; i < chart.series.length; i++) {
             chart.series[i].setData(series[i].data, false);
-            chart.series[i].name = series[i].name;
         }
         // add the remainder
         for (var i = chart.series.length; i < series.length; i++)
@@ -248,7 +278,6 @@ $(document).on("click", "#btnRender", function (ev) {
         // replace data of charts up to chart.series.length
         for (var i = 0; i < series.length; i++) {
             chart.series[i].setData(series[i].data, false);
-            chart.series[i].name = series[i].name;
         }
         // remove series that are not applicable
         for (var i = chart.series.length - 1; i >= series.length; i--) {
@@ -257,14 +286,63 @@ $(document).on("click", "#btnRender", function (ev) {
     }
     // auto hide series without points
     for (var i = 0; i < chart.series.length; i++) {
-        chart.series[i].update({ lineWidth: $("#chkConnectPoints").prop("checked") ? 2 : 0 }, false);
+        chart.series[i].update({ name: series[i].name, lineWidth: $("#chkConnectPoints").prop("checked") ? 2 : 0 }, false);
         if (series[i].data.length == 0)
             chart.series[i].hide();
         else
             chart.series[i].show();
     }
     chart.redraw(true);
+    $("#ddlBoxPlotSeries").empty();
+    for (var _d = 0, _e = seriesKeys.sort(function (a, b) { return seriesValues[a].name == seriesValues[b].name ? 0 : (seriesValues[a].name > seriesValues[b].name ? 1 : -1); }); _d < _e.length; _d++) {
+        var serieValue = _e[_d];
+        $("#ddlBoxPlotSeries").append($('<option></option>').val(serieValue).html(serieValue));
+    }
 });
+function buildBoxPlotChart() {
+    var selectedXValueIdx = $("#ddlXValues").val();
+    var selectedYValueIdx = $("#ddlYValues").val();
+    var selectedSeriesIdx = $("#ddlSeries").val();
+    var selectedSeries = $("#ddlBoxPlotSeries").val();
+    var sv = seriesValues[selectedSeries];
+    var data = [];
+    for (var i = 0; i < sv.lines.length; i++) {
+        var entry = sv.lines[i][selectedYValueIdx];
+        if (entry.hasDetails)
+            data.push([entry.min, entry.q1, entry.median, entry.q3, entry.max]);
+        else
+            data.push([]);
+    }
+    var categories = [];
+    for (var i = 0; i < sv.xValues.length; i++)
+        categories.push(sv.xValues[i]);
+    $('#boxPlotContainer').highcharts({
+        chart: {
+            type: 'boxplot'
+        },
+        title: {
+            text: 'Highcharts Box Plot Example'
+        },
+        legend: {
+            enabled: false
+        },
+        xAxis: {
+            categories: categories,
+            title: {
+                text: selectedXValueIdx
+            }
+        },
+        yAxis: {
+            title: {
+                text: selectedYValueIdx
+            }
+        },
+        series: [{
+                name: '',
+                data: data
+            }]
+    });
+}
 function initChart() {
     chart = new Highcharts.Chart({
         chart: {
@@ -371,6 +449,9 @@ $(document).on("change", ".ddl", function (ev) {
 });
 $(document).on("change", ".ddlFixedProp", function (ev) {
     saveConfigurationInHash();
+});
+$(document).on("change", "#ddlBoxPlotSeries", function (ev) {
+    buildBoxPlotChart();
 });
 $(document).ready(function () {
     $(".ddl").select2();

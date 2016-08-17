@@ -1,5 +1,22 @@
 var headers: string[];
-var lines: any[];
+
+interface Line {
+    [name: string]: Entry;
+}
+var lines: Line[];
+
+
+interface SeriesValuesCollection {
+    [key: string]: SeriesValues;
+}
+class SeriesValues {
+    name: string = "";
+    xValues: number[] = [];
+    yValues: number[] = [];
+    tags: string[] = [];
+    lines: Line[] = [];
+}
+var seriesValues: SeriesValuesCollection = {};
 
 var chart: HighchartsChartObject;
 
@@ -25,26 +42,71 @@ function getAsText(fileToRead) {
     };
 }
 
+class Entry {
+
+    constructor(line: string) {
+        var parts = line.split(",");
+
+        this.isNumber = /^[-+]?(\d+|\d+\.\d*|\d*\.\d+)$/.test(parts[0]);
+        if (this.isNumber)
+            this.value = Math.round(parseFloat(parts[0]) * 100) / 100;
+        else
+            this.value = parts[0];
+
+        if (parts.length > 1) {
+            this.hasDetails = true;
+            this.q1 = parseFloat(parts[1]);
+            this.median = parseFloat(parts[2]);
+            this.q3 = parseFloat(parts[3]);
+            this.min = parseFloat(parts[4]);
+            this.max = parseFloat(parts[5]);
+        }
+        else {
+            this.hasDetails = false;
+        }
+    }
+
+    compareTo(e: Entry): number {
+        if(typeof e == "undefined")
+            return -1;
+            
+        if (e.isNumber) {
+            return this.value - e.value;
+        }
+        else {
+            return this.value == e.value ? 0 : (this.value > e.value ? 1 : -1);
+        }
+    }
+
+    value: any;
+    isNumber: boolean;
+    hasDetails: boolean;
+
+    q1: number;
+    median: number;
+    q3: number;
+    min: number;
+    max: number;
+}
+
+
 function processData(csv) {
     var allTextLines = csv.split(/\r\n|\n/);
 
     lines = [];
     for (var i = 0; i < allTextLines.length; i++) {
 
-        if (i == 0)
-            headers = allTextLines[i].split(';');
-        else {
-            var parts: string[] = allTextLines[i].split(';');
-            var obj = {};
-
-            for (let j: number = 0; j < parts.length; j++) {
-
-                if (/^[-+]?(\d+|\d+\.\d*|\d*\.\d+)$/.test(parts[j]))
-                    obj[headers[j]] = Math.round(parseFloat(parts[j]) * 100) / 100;
-                else
-                    obj[headers[j]] = parts[j];
+        if (allTextLines[i] != "") {
+            if (i == 0)
+                headers = allTextLines[i].split(';');
+            else {
+                var parts: string[] = allTextLines[i].split(';');
+                var obj: Line = {};
+                for (let j: number = 0; j < parts.length; j++) {
+                    obj[headers[j]] = new Entry(parts[j]);
+                }
+                lines.push(obj);
             }
-            lines.push(obj);
         }
     }
 }
@@ -140,7 +202,8 @@ function dropdownChanged() {
 function getDistinctValuesFor(header: string): any[] {
     let distinctValues = {};
     for (let l of lines) {
-        distinctValues[l[header]] = true;
+        if(typeof l[header] != "undefined")
+            distinctValues[l[header].value] = true;
     }
 
     let arr: any[] = [];
@@ -152,15 +215,7 @@ function getDistinctValuesFor(header: string): any[] {
     return arr.sort();
 }
 
-class SeriesValues {
-    name: string = "";
-    xValues: number[] = [];
-    yValues: number[] = [];
-    tags: string[] = [];
-    lines: string[] = [];
-}
-
-function matchesFixedValues(line) {
+function matchesFixedValues(line: Line) {
 
     var fixedProps = $(".ddlFixedProp");
 
@@ -174,14 +229,14 @@ function matchesFixedValues(line) {
                 fixedValue = Math.round(parseFloat(prop.val()) * 100) / 100;
             else
                 fixedValue = prop.val();
-            if (line[header] != fixedValue)
+            if (line[header].value != fixedValue)
                 return false;
         }
     }
     return true;
 }
 
-function getFormattedPropertyValues(line) {
+function getFormattedPropertyValues(line: Line) {
     var selectedTagIdx = $("#ddlTag").val();
 
 
@@ -191,7 +246,7 @@ function getFormattedPropertyValues(line) {
             str += "<tr>";
 
             str += "<td>" + h + "</td>";
-            str += "<td>" + line[h] + "</td>";
+            str += "<td>" + line[h].value + "</td>";
             str += "</tr>";
         }
     }
@@ -199,11 +254,14 @@ function getFormattedPropertyValues(line) {
     return str;
 }
 
+
 $(document).on("click", "#btnRender", ev => {
 
     var selectedXValueIdx = $("#ddlXValues").val();
     var selectedYValueIdx = $("#ddlYValues").val();
     var selectedSeriesIdx = $("#ddlSeries").val();
+
+    seriesValues = {};
 
     // make it an array to be consistent
     if (!(selectedSeriesIdx instanceof Array))
@@ -211,10 +269,7 @@ $(document).on("click", "#btnRender", ev => {
 
     var selectedTagIdx = $("#ddlTag").val();
 
-    var distinctSeriesValues: any = {};
-    var seriesValues = {};
-
-    var sortedLines = lines.sort((a, b) => { return a[selectedXValueIdx] - b[selectedXValueIdx]; });
+    var sortedLines = lines.sort((a, b) => { return a[selectedXValueIdx].compareTo(b[selectedXValueIdx]); });
     for (let l of sortedLines) {
 
         let isValid: boolean = true;
@@ -225,16 +280,15 @@ $(document).on("click", "#btnRender", ev => {
                 isValid = false;
                 break;
             }
-            keyParts.push(l[ss]);
-            nameParts.push(ss + ":" + l[ss]);
+            keyParts.push(l[ss].value);
+            nameParts.push(ss + ":" + l[ss].value);
         }
 
         if (isValid) {
             let key: string = keyParts.join("__");
 
             var sv: SeriesValues;
-            if (!distinctSeriesValues.hasOwnProperty(key) || !distinctSeriesValues[key]) {
-                distinctSeriesValues[key] = true;
+            if (!seriesValues.hasOwnProperty(key)) {
                 sv = new SeriesValues();
                 sv.name = nameParts.join(",");
                 seriesValues[key] = sv;
@@ -244,9 +298,9 @@ $(document).on("click", "#btnRender", ev => {
             }
 
             if (matchesFixedValues(l)) {
-                sv.xValues.push(l[selectedXValueIdx]);
-                sv.yValues.push(l[selectedYValueIdx]);
-                sv.tags.push(l[selectedTagIdx]);
+                sv.xValues.push(l[selectedXValueIdx].value);
+                sv.yValues.push(l[selectedYValueIdx].value);
+                sv.tags.push(l[selectedTagIdx].value);
                 sv.lines.push(l);
             }
         }
@@ -260,6 +314,7 @@ $(document).on("click", "#btnRender", ev => {
         if (typeof serieValue != "undefined" && seriesValues.hasOwnProperty(serieValue))
             seriesKeys.push(serieValue);
     }
+
     // build series, sort by series names
     for (let serieValue of seriesKeys.sort(function (a, b) { return seriesValues[a].name == seriesValues[b].name ? 0 : (seriesValues[a].name > seriesValues[b].name ? 1 : -1); })) {
         let sv: SeriesValues = seriesValues[serieValue];
@@ -273,46 +328,106 @@ $(document).on("click", "#btnRender", ev => {
         });
     }
 
-    chart.xAxis[0].setTitle({ text: selectedXValueIdx}, false);
-    chart.yAxis[0].setTitle({ text:selectedYValueIdx }, false);
-    chart.options.plotOptions.scatter.lineWidth =$("#chkConnectPoints").prop("checked") ? 2 : 0;
+    chart.xAxis[0].setTitle({ text: selectedXValueIdx }, false);
+    chart.yAxis[0].setTitle({ text: selectedYValueIdx }, false);
+    chart.options.plotOptions.scatter.lineWidth = $("#chkConnectPoints").prop("checked") ? 2 : 0;
 
-    if(chart.series.length <= series.length) {
+    if (chart.series.length <= series.length) {
         // replace data of charts up to chart.series.length
-        for(let i = 0; i < chart.series.length; i++) {
-            chart.series[i].setData(series[i].data,false);
-            chart.series[i].name = series[i].name;
+        for (let i = 0; i < chart.series.length; i++) {
+            chart.series[i].setData(series[i].data, false);
         }
         // add the remainder
-        for(let i = chart.series.length; i < series.length; i++)
-            chart.addSeries(series[i],false);
+        for (let i = chart.series.length; i < series.length; i++)
+            chart.addSeries(series[i], false);
     }
-    else if(chart.series.length > series.length) {
+    else if (chart.series.length > series.length) {
         // replace data of charts up to chart.series.length
-        for(let i = 0; i < series.length; i++) {
-            chart.series[i].setData(series[i].data,false);
-            chart.series[i].name = series[i].name;
+        for (let i = 0; i < series.length; i++) {
+            chart.series[i].setData(series[i].data, false);
         }
         // remove series that are not applicable
-        for(let i = chart.series.length - 1; i >= series.length; i--) {
-            chart.series[i].remove(false);   
+        for (let i = chart.series.length - 1; i >= series.length; i--) {
+            chart.series[i].remove(false);
         }
     }
-    
-    // auto hide series without points
-    for(let i = 0; i< chart.series.length; i++) {
-        chart.series[i].update(<any>{ lineWidth: $("#chkConnectPoints").prop("checked") ? 2 : 0 },false);
 
-        if(series[i].data.length == 0) 
+    // auto hide series without points
+    for (let i = 0; i < chart.series.length; i++) {
+        chart.series[i].update(<any>{ name: series[i].name, lineWidth: $("#chkConnectPoints").prop("checked") ? 2 : 0 }, false);
+
+        if (series[i].data.length == 0)
             chart.series[i].hide();
         else
             chart.series[i].show();
     }
 
     chart.redraw(true);
+
+    $("#ddlBoxPlotSeries").empty();
+    for (let serieValue of seriesKeys.sort(function (a, b) { return seriesValues[a].name == seriesValues[b].name ? 0 : (seriesValues[a].name > seriesValues[b].name ? 1 : -1); }))
+        $("#ddlBoxPlotSeries").append($('<option></option>').val(serieValue).html(serieValue));
 });
 
 
+function buildBoxPlotChart() {
+
+    var selectedXValueIdx = $("#ddlXValues").val();
+    var selectedYValueIdx = $("#ddlYValues").val();
+    var selectedSeriesIdx = $("#ddlSeries").val();
+
+
+    var selectedSeries = $("#ddlBoxPlotSeries").val();
+
+    var sv: SeriesValues = seriesValues[selectedSeries];
+
+    var data = [];
+    for (let i = 0; i < sv.lines.length; i++) {
+        let entry = sv.lines[i][selectedYValueIdx];
+        if(entry.hasDetails)
+            data.push([entry.min, entry.q1, entry.median, entry.q3, entry.max]);
+        else
+            data.push([]);
+    }
+
+    var categories = [];
+    for (let i = 0; i < sv.xValues.length; i++)
+        categories.push(sv.xValues[i]);
+
+    $('#boxPlotContainer').highcharts({
+        chart: {
+            type: 'boxplot'
+        },
+        title: {
+            text: 'Highcharts Box Plot Example'
+        },
+        legend: {
+            enabled: false
+        },
+        xAxis: {
+            categories: categories,
+            title: {
+                text: selectedXValueIdx
+            }
+        },
+        yAxis: {
+            title: {
+                text: selectedYValueIdx
+            }
+        },
+        series: [{
+            name: '',
+            data: data
+            /*[
+                [760, 801, 848, 895, 965],
+                [733, 853, 939, 980, 1080],
+                [714, 762, 817, 870, 918],
+                [724, 802, 806, 871, 950],
+                [834, 836, 864, 882, 910]
+            ]*/
+        }]
+    });
+}
 
 
 function initChart() {
@@ -331,7 +446,7 @@ function initChart() {
                 turboThreshold: 10000
             }
         },
-        colors: [ "#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#888888","#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#000000" ],
+        colors: ["#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#888888", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#000000"],
         xAxis: {
 
             title: { text: "" }
@@ -437,8 +552,13 @@ $(document).on("change", ".ddlFixedProp", function (ev) {
     saveConfigurationInHash();
 });
 
+$(document).on("change", "#ddlBoxPlotSeries", function (ev) {
+    buildBoxPlotChart();
+});
+
 $(document).ready(function () {
     $(".ddl").select2();
 
     initChart();
 });
+
