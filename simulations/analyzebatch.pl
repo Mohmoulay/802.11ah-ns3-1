@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use strict;
-
+use List::Util qw( min max );
 
 if(scalar @ARGV == 0) {
 	print "Usage: analyzebatch.pl nssfolder config=(idx|name),(idx|name),... stats=(idx|name),(idx|name),(idx|name),... \n";
@@ -43,8 +43,8 @@ for my $f (@files) {
 
 
 
-     my @statHeaders;
-     my @configHeaders;
+my @statHeaders;
+my @configHeaders;
 
 
 
@@ -90,7 +90,7 @@ sub analyzeFile {
 				# start of new nodestats batch
 				@statParts = ();
 				for my $idx (@statsIdx) {
-					push @statParts, 0;
+					push @statParts, [];
 				}
 				$nrOfSta=0;
 			}
@@ -114,7 +114,7 @@ sub analyzeFile {
 	                                $val = $parts[$idx];
 	                        }
 
-				$statParts[$i] = $statParts[$i] + $val;
+				push @{ $statParts[$i]}, $val;
 				$i+=1;
 			}
 			$nrOfSta+=1;
@@ -122,9 +122,9 @@ sub analyzeFile {
      }
      close $info;
 
-     for(my $i = 0; $i < scalar @statParts; $i++) {
-  	$statParts[$i] /= $nrOfSta;
-     }
+#     for(my $i = 0; $i < scalar @statParts; $i++) {
+#  	$statParts[$i] /= $nrOfSta;
+#     }
 
      if($printHeaders) {
          my @headers;
@@ -146,8 +146,51 @@ sub analyzeFile {
 
      print join(";", @configParts);
      print ";";
-     print join(";", @statParts);
+     print join(";", map { getStatData($_) } @statParts);
      print "\n";
+}
+
+sub getStatData {
+	my @arr = @{ @_[0] };
+
+	my @sortedArray = sort { $a <=> $b } @arr;
+	
+	my $q1 = quartile(\@sortedArray, 0.25);
+	my $q2 = quartile(\@sortedArray, 0.5);
+	my $q3 = quartile(\@sortedArray, 0.75);
+
+	my $maxVal = max @sortedArray;
+	my $minVal = min @sortedArray;
+
+	my $avg = mean(\@sortedArray);
+	return "$avg,$q1,$q2,$q3,$minVal,$maxVal";
+}
+
+sub quartile {
+	my @arr = @{ @_[0] };
+	my $perc = @_[1];
+
+	my $idx = (scalar @arr-1) * $perc;
+
+
+        my $lower = int($idx);
+        my $upper = $lower + 1,
+        my $weight = $idx - $lower;
+
+    	if ($upper >= scalar @arr) {
+		return $arr[$lower];
+	}
+	return $arr[$lower] * (1 - $weight) + $arr[$upper] * $weight;
+}
+
+sub mean {
+	my @arr = @{ @_[0] };
+
+	my $sum = 0;
+	for(my $i = 0; $i < scalar @arr; $i++) {
+		$sum += $arr[$i];
+	}
+	return $sum /= scalar @arr;
 }
 
 sub resolveConfigIdxNames {
