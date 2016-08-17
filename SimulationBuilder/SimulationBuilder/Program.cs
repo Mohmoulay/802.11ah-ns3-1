@@ -15,7 +15,7 @@ namespace SimulationBuilder
         static void Main(string[] args)
         {
             //if (System.Diagnostics.Debugger.IsAttached)
-                //args = new string[] { "--slave", "http://localhost:12345/SimulationHost/" };
+            //args = new string[] { "--slave", "http://localhost:12345/SimulationHost/" };
             if (args.Any(a => a.Contains("--slave")))
             {
                 MainSlave(args);
@@ -116,7 +116,7 @@ namespace SimulationBuilder
             //    }
             //}
 
-            
+
 
             var baseArgs = GetArguments(baseConfig);
 
@@ -205,10 +205,14 @@ namespace SimulationBuilder
                 Arguments = "\"" + argsStr.Replace("\"", "\\\"") + "\"",
                 UseShellExecute = System.Environment.OSVersion.Platform == PlatformID.Unix ? false : true,
             };
+
+            Console.WriteLine("Starting process " + ps.FileName + " " + ps.Arguments);
             var proc = Process.Start(ps);
             if (proc != null)
             {
                 proc.WaitForExit();
+
+                Console.WriteLine("Process ended with exit code " + proc.ExitCode);
                 proc.Dispose();
             }
         }
