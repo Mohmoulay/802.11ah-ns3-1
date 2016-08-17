@@ -83,6 +83,15 @@ public:
     int getTotalDrops();
 
     Time FirmwareTransferTime;
+
+    Time TimeStreamStarted = Time(0);
+    long IPCameraTotalDataSent = 0;
+    long IPCameraTotalDataReceivedAtAP = 0;
+    Time IPCameraTotalTimeSent = Time(0);
+
+    double getIPCameraSendingRate();
+    double getIPCameraAPReceivingRate();
+
 };
 
 #endif /* NODESTATISTICS_H */

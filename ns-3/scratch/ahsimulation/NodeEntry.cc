@@ -576,6 +576,29 @@ void NodeEntry::OnTcpFirmwareUpdated(Time totalFirmwareTransferTime) {
 }
 
 
+void NodeEntry::OnTcpIPCameraStreamStateChanged(bool newStateIsStreaming) {
+	if(newStateIsStreaming) {
+		stats->get(this->id).TimeStreamStarted = Simulator::Now();
+		stats->get(this->id).IPCameraTotalDataSent = 0;
+		stats->get(this->id).IPCameraTotalDataReceivedAtAP = 0;
+		stats->get(this->id).IPCameraTotalTimeSent = Time(0);
+	}
+	else {
+		// stopped stream
+		stats->get(this->id).IPCameraTotalTimeSent = (Simulator::Now() - stats->get(this->id).TimeStreamStarted);
+	}
+}
+
+void NodeEntry::OnTcpIPCameraDataSent(uint16_t nrOfBytes) {
+	stats->get(this->id).IPCameraTotalDataSent += nrOfBytes;
+}
+
+void NodeEntry::OnTcpIPCameraDataReceivedAtAP(uint16_t nrOfBytes) {
+	stats->get(this->id).IPCameraTotalDataReceivedAtAP += nrOfBytes;
+}
+
+
+
 void NodeEntry::OnCollision(std::string context, uint32_t nrOfBackoffSlots) {
 	if(showLog) cout << "Collision sensed" << endl;
 

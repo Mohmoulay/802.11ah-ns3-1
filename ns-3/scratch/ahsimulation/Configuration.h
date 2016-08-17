@@ -37,6 +37,9 @@ struct Configuration {
 	uint32_t TCPInitialSlowStartThreshold = 0xffff;
 	uint32_t TCPInitialCwnd = 1;
 
+	int ContentionPerRAWSlot = -1;
+	bool ContentionPerRAWSlotOnlyInFirstGroup = false;
+
 	double propagationLossExponent = 3.76;
 	double propagationLossReferenceLoss = 8;
 
@@ -73,6 +76,8 @@ struct Configuration {
 	uint16_t firmwareBlockSize = 1024;
 	double firmwareNewUpdateProbability = 0.01;
 	double firmwareCorruptionProbability = 0.01;
+	uint32_t firmwareVersionCheckInterval = 1000;
+
 
 	uint16_t sensorMeasurementSize = 1024;
 

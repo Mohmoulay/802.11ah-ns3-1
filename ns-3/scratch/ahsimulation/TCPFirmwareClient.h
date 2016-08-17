@@ -21,6 +21,9 @@ public:
 	typedef void (* FirmwareUpdatedCallback)
 	                      (ns3::Time totalFirmwareTransferTime);
 
+
+
+
 protected:
 	virtual void StartApplication(void);
 	virtual void StopApplication(void);

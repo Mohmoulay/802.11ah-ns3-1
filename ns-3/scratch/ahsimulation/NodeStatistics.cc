@@ -49,3 +49,34 @@ int NodeStatistics::getTotalDrops() {
 	}
 	return sum;
 }
+
+double NodeStatistics::getIPCameraSendingRate() {
+	if(TimeStreamStarted == Time(0))
+		return -1;
+	else {
+
+		double elapsedSeconds;
+		if(IPCameraTotalTimeSent == Time(0))
+			elapsedSeconds = (Simulator::Now() -TimeStreamStarted).GetSeconds();
+		else
+			elapsedSeconds = IPCameraTotalTimeSent.GetSeconds();
+
+		return (IPCameraTotalDataSent / elapsedSeconds) / 1024 * 8;
+	}
+}
+
+double NodeStatistics::getIPCameraAPReceivingRate() {
+	if(TimeStreamStarted == Time(0))
+			return -1;
+	else {
+
+		double elapsedSeconds;
+		if(IPCameraTotalTimeSent == Time(0))
+			elapsedSeconds = (Simulator::Now() -TimeStreamStarted).GetSeconds();
+		else
+			elapsedSeconds = IPCameraTotalTimeSent.GetSeconds();
+
+		return (IPCameraTotalDataReceivedAtAP / elapsedSeconds) / 1024 * 8;
+	}
+}
+

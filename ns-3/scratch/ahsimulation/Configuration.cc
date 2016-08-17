@@ -14,7 +14,10 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("SlotFormat", "format of NRawSlotCount, -1 will auto calculate based on raw slot num", SlotFormat);
     cmd.AddValue("NRawSlotCount", "RAW slot duration, , -1 will auto calculate based on raw slot num", NRawSlotCount);
     cmd.AddValue("NRawSlotNum", "number of slots per RAW", NRawSlotNum);
-    cmd.AddValue("NGroup", "number of RAW group", NGroup);
+    cmd.AddValue("NGroup", "number of RAW groups", NGroup);
+
+    cmd.AddValue("ContentionPerRAWSlot", "Calculate the NSta and NRawSta based on the amount of contention there has to be in a RAW slot. A contention of 0 means stations are uncontended. If -1 then the specified NSta will be used", ContentionPerRAWSlot);
+    cmd.AddValue("ContentionPerRAWSlotOnlyInFirstGroup", "If true only the first TIM group will contain stations, this is to prevent huge simulation times while every TIM group behaves the same (true/false)", ContentionPerRAWSlotOnlyInFirstGroup);
 
     cmd.AddValue("MaxTimeOfPacketsInQueue", "Max nr of seconds packets can remain in the DCA queue", MaxTimeOfPacketsInQueue);
 
@@ -26,7 +29,7 @@ Configuration::Configuration(int argc, char** argv) {
     cmd.AddValue("TrafficIntervalDeviation", "Traffic interval deviation time in ms, each interval will have a random deviation between - dev/2 and + dev/2", trafficIntervalDeviation);
 
     cmd.AddValue("TrafficPacketSize", "Size of packets to send in bytes. Default of -1 means the TCP Segment size - 100 bytes will be used", trafficPacketSize);
-    cmd.AddValue("TrafficType", "Kind of traffic (udp, udpecho, tcpecho)", trafficType);
+    cmd.AddValue("TrafficType", "Kind of traffic (udp, udpecho, tcpecho,tcpipcamera,tcpfirmware,tcpsensor)", trafficType);
 
     cmd.AddValue("MinRTO", "Minimum retransmission timeout for TCP sockets in microseconds", MinRTO);
     cmd.AddValue("TCPConnectionTimeout", "TCP Connection timeout to use for all Tcp Sockets", TCPConnectionTimeout);
