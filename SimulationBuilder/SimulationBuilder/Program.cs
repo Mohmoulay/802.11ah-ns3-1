@@ -14,8 +14,8 @@ namespace SimulationBuilder
 
         static void Main(string[] args)
         {
-            if (System.Diagnostics.Debugger.IsAttached)
-                args = new string[] { "--slave", "http://localhost:12345/SimulationHost/" };
+            //if (System.Diagnostics.Debugger.IsAttached)
+            //args = new string[] { "--slave", "http://localhost:12345/SimulationHost/" };
             if (args.Any(a => a.Contains("--slave")))
             {
                 MainSlave(args);
@@ -93,6 +93,8 @@ namespace SimulationBuilder
             string buildConfig = args[1];
             string nssFolder = args[2];
 
+            Console.WriteLine("Args: " + Environment.NewLine + string.Join(Environment.NewLine, args));
+
             if (!System.IO.File.Exists(baseConfig))
             {
                 Console.Error.WriteLine("Base configuration file " + baseConfig + " not found");
@@ -104,11 +106,16 @@ namespace SimulationBuilder
                 Console.Error.WriteLine("Build configuration file " + baseConfig + " not found");
                 return;
             }
-            if (!System.IO.Directory.Exists(nssFolder))
-            {
-                Console.Error.WriteLine("Output nss folder " + nssFolder + " not found");
-                return;
-            }
+
+            //if (args.Any(a => a == "--host"))
+            //{
+            //    if (!System.IO.Directory.Exists(nssFolder))
+            //    {
+            //        Console.Error.WriteLine("Output nss folder " + nssFolder + " not found");
+            //        return;
+            //    }
+            //}
+
 
 
             var baseArgs = GetArguments(baseConfig);
@@ -118,7 +125,7 @@ namespace SimulationBuilder
             Console.WriteLine("Building combinations");
             var combos = GetCombinations(customArgs, customArgs.Keys.ToList()).ToList();
 
-            if (args.Any(a => a == "--host"))
+            if (args.Any(a => a.Contains("--host")))
             {
                 Console.WriteLine(combos.Count + " combinations build, hosting WCF");
                 SimulationHost simhost = new SimulationHost(nssFolder, baseArgs, combos);
@@ -198,10 +205,14 @@ namespace SimulationBuilder
                 Arguments = "\"" + argsStr.Replace("\"", "\\\"") + "\"",
                 UseShellExecute = System.Environment.OSVersion.Platform == PlatformID.Unix ? false : true,
             };
+
+            Console.WriteLine("Starting process " + ps.FileName + " " + ps.Arguments);
             var proc = Process.Start(ps);
             if (proc != null)
             {
                 proc.WaitForExit();
+
+                Console.WriteLine("Process ended with exit code " + proc.ExitCode);
                 proc.Dispose();
             }
         }
