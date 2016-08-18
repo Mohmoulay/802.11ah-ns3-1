@@ -321,7 +321,7 @@ function buildBoxPlotChart() {
             type: 'boxplot'
         },
         title: {
-            text: 'Highcharts Box Plot Example'
+            text: ''
         },
         legend: {
             enabled: false

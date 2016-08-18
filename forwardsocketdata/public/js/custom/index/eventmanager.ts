@@ -30,7 +30,8 @@ class EventManager {
                         parseInt(ev.parts[10]), parseInt(ev.parts[11]), parseInt(ev.parts[12]), ev.parts[13],
                         parseFloat(ev.parts[14]), parseFloat(ev.parts[15]), ev.parts[16], parseInt(ev.parts[17]), parseInt(ev.parts[18]), ev.parts[19], parseInt(ev.parts[20]),
                         parseInt(ev.parts[21]), parseInt(ev.parts[22]), parseInt(ev.parts[23]), parseInt(ev.parts[24]), parseInt(ev.parts[25]), parseInt(ev.parts[26]), parseInt(ev.parts[27]),
-                        parseInt(ev.parts[28]), parseInt(ev.parts[29]));
+                        parseInt(ev.parts[28]), parseInt(ev.parts[29]), parseInt(ev.parts[30]), parseInt(ev.parts[31]), parseFloat(ev.parts[32]), parseFloat(ev.parts[33]),
+                        parseInt(ev.parts[34]), parseInt(ev.parts[35]), parseInt(ev.parts[36]));
                     break;
 
                 case 'stanodeadd':
@@ -61,7 +62,8 @@ class EventManager {
                         parseInt(ev.parts[28]), parseInt(ev.parts[29]), parseFloat(ev.parts[30]),
                         parseInt(ev.parts[31]), parseInt(ev.parts[32]), parseInt(ev.parts[33]),
                         parseInt(ev.parts[34]), parseFloat(ev.parts[35]), parseInt(ev.parts[36]),
-                        parseInt(ev.parts[37]), parseInt(ev.parts[38]), parseInt(ev.parts[39]));
+                        parseInt(ev.parts[37]), parseInt(ev.parts[38]), parseInt(ev.parts[39]),
+                        parseInt(ev.parts[40]), parseFloat(ev.parts[41]), parseFloat(ev.parts[42]), parseInt(ev.parts[43]));
                     break;
 
                 case 'slotstatsSTA':
@@ -101,7 +103,7 @@ class EventManager {
             this.onReceive({ stream: entry.stream, line: l });
         }
 
-        if(this.events.length > 10000) // prevent epic memory build up
+        if (this.events.length > 10000) // prevent epic memory build up
             this.processEvents();
     }
 
@@ -117,9 +119,10 @@ class EventManager {
     onStart(stream: string, aidRAWRange: number, numberOfRAWGroups: number, RAWSlotFormat: string, RAWSlotDuration: number, numberOfRAWSlots: number,
         dataMode: string, dataRate: number, bandwidth: number, trafficInterval: number, trafficPacketsize: number, beaconInterval: number,
         name: string, propagationLossExponent: number, propagationLossReferenceLoss: number, apAlwaysSchedulesForNextSlot: string, minRTO: number, simulationTime: number,
-        trafficType:string, trafficIntervalDeviation:number, tcpSegmentSize:number, tcpInitialSlowStartThreshold:number, tcpInitialCWnd:number,
-        maxTimeOfPacketsInQueue:number, ipCameraMotionPercentage:number, ipCameraMotionDuration:number, ipCameraDataRate:number, nsta:number, cooldownPeriod:number) {
-
+        trafficType: string, trafficIntervalDeviation: number, tcpSegmentSize: number, tcpInitialSlowStartThreshold: number, tcpInitialCWnd: number,
+        maxTimeOfPacketsInQueue: number, ipCameraMotionPercentage: number, ipCameraMotionDuration: number, ipCameraDataRate: number, nsta: number, cooldownPeriod: number,
+        firmwareSize: number, firmwareBlockSize: number, firmwareCorruptionProbability: number, firmwareNewUpdateProbability: number, sensorMeasurementSize: number,
+        contentionPerRAWSlot: number, contentionPerRAWSlotOnlyInFirstGroup: number) {
         let simulation = this.sim.simulationContainer.getSimulation(stream);
         if (typeof simulation == "undefined") {
             simulation = new Simulation();
@@ -161,14 +164,19 @@ class EventManager {
         config.tcpInitialCWnd = tcpInitialCWnd;
 
         config.maxTimeOfPacketsInQueue = maxTimeOfPacketsInQueue;
-        config.ipCameraMotionPercentage  = ipCameraMotionPercentage; 
+        config.ipCameraMotionPercentage = ipCameraMotionPercentage;
         config.ipCameraMotionDuration = ipCameraMotionDuration;
         config.ipCameraDataRate = ipCameraDataRate;
         config.nrSta = nsta;
         config.cooldownPeriod = cooldownPeriod;
 
+        config.firmwareSize = firmwareSize;
+        config.firmwareBlockSize = firmwareBlockSize;
+        config.firmwareCorruptionProbability = firmwareCorruptionProbability;
+        config.firmwareNewUpdateProbability = firmwareNewUpdateProbability;
 
-
+        config.contentionPerRAWSlot = contentionPerRAWSlot;
+        config.contentionPerRAWSlotOnlyInFirstGroup = contentionPerRAWSlotOnlyInFirstGroup;
     }
 
 
@@ -216,7 +224,7 @@ class EventManager {
         n.aId = aId;
 
         this.sim.simulationContainer.getSimulation(stream).nodes.push(n);
-        if(!isSTA) 
+        if (!isSTA)
             this.sim.simulationContainer.getSimulation(stream).apNode = <APNode>n;
         // this.sim.onNodeAdded(stream, id);
     }
@@ -265,10 +273,11 @@ class EventManager {
         numberOfTCPRetransmissions: number, numberOfTCPRetransmissionsFromAP: number, nrOfReceivesDroppedByDestination: number,
         numberOfMACTxRTSFailed: number, numberOfMACTxMissedACK: number, numberOfDropsByReason: string, numberOfDropsByReasonAtAP: string,
         tcpRtoValue: number, numberOfAPScheduledPacketForNodeInNextSlot: number, numberOfAPSentPacketForNodeImmediately: number, avgRemainingSlotTimeWhenAPSendingInSameSlot: number,
-        numberOfCollisions: number, numberofMACTxMissedACKAndDroppedPacket: number, tcpConnected:number, 
-        tcpSlowStartThreshold:number, tcpEstimatedBandwidth:number,tcpRTT:number, numberOfBeaconsMissed:number, numberOfTransmissionsDuringRAWSlot:number,
-        totalNumberOfDrops:number) {
+        numberOfCollisions: number, numberofMACTxMissedACKAndDroppedPacket: number, tcpConnected: number,
+        tcpSlowStartThreshold: number, tcpEstimatedBandwidth: number, tcpRTT: number, numberOfBeaconsMissed: number, numberOfTransmissionsDuringRAWSlot: number,
+        totalNumberOfDrops: number, firmwareTransferTime: number, ipCameraSendingRate: number, ipCameraReceivingRate: number, numberOfTransmissionsCancelledDueToCrossingRAWBoundary: number) {
         // ^- it's getting awfully crowded around here
+
 
         let simulation = this.sim.simulationContainer.getSimulation(stream);
 
@@ -366,10 +375,15 @@ class EventManager {
         nodeVal.tcpRTT = tcpRTT;
 
         nodeVal.numberOfBeaconsMissed = numberOfBeaconsMissed;
-    
+
         nodeVal.numberOfTransmissionsDuringRAWSlot = numberOfTransmissionsDuringRAWSlot;
 
         nodeVal.totalNumberOfDrops = totalNumberOfDrops;
+
+        nodeVal.firmwareTransferTime = firmwareTransferTime;
+        nodeVal.ipCameraSendingRate = ipCameraSendingRate;
+        nodeVal.ipCameraReceivingRate = ipCameraReceivingRate;
+        nodeVal.numberOfTransmissionsCancelledDueToCrossingRAWBoundary = numberOfTransmissionsCancelledDueToCrossingRAWBoundary;
 
         if (this.updateGUI && stream == this.sim.selectedStream) {
             if (this.hasIncreased(n, "totalTransmitTime")) {

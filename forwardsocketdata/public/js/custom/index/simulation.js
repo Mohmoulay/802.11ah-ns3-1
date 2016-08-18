@@ -81,6 +81,10 @@ var NodeValue = (function () {
         this.numberOfBeaconsMissed = 0;
         this.numberOfTransmissionsDuringRAWSlot = 0;
         this.totalNumberOfDrops = 0;
+        this.firmwareTransferTime = 0;
+        this.ipCameraSendingRate = 0;
+        this.ipCameraReceivingRate = 0;
+        this.numberOfTransmissionsCancelledDueToCrossingRAWBoundary = 0;
     }
     return NodeValue;
 })();

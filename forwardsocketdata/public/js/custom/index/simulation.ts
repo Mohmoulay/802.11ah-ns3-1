@@ -61,7 +61,7 @@ class NodeValue {
     numberOfDropsByReasonMacAPToAPFrame: number = 0;
     numberOfDropsByReasonMacQueueDelayExceeded: number = 0;
     numberOfDropsByReasonMacQueueSizeExceeded: number = 0;
-    numberOfDropsByReasonTCPTxBufferExceeded:number = 0;
+    numberOfDropsByReasonTCPTxBufferExceeded: number = 0;
 
     numberOfDropsFromAPByReasonUnknown: number = 0;
     numberOfDropsFromAPByReasonPhyInSleepMode: number = 0;
@@ -74,9 +74,9 @@ class NodeValue {
     numberOfDropsFromAPByReasonPhyAlreadyPlcpReceptionFailed: number = 0;
     numberOfDropsFromAPByReasonMacNotForAP: number = 0;
     numberOfDropsFromAPByReasonMacAPToAPFrame: number = 0;
-    numberOfDropsFromAPByReasonMacQueueDelayExceeded:number = 0;
-    numberOfDropsFromAPByReasonMacQueueSizeExceeded:number = 0;
-    numberOfDropsFromAPByReasonTCPTxBufferExceeded:number = 0;
+    numberOfDropsFromAPByReasonMacQueueDelayExceeded: number = 0;
+    numberOfDropsFromAPByReasonMacQueueSizeExceeded: number = 0;
+    numberOfDropsFromAPByReasonTCPTxBufferExceeded: number = 0;
 
     tcpRTO: number = 0;
 
@@ -92,10 +92,16 @@ class NodeValue {
     tcpEstimatedBandwidth: number = 0;
     tcpRTT: number = 0;
 
-    numberOfBeaconsMissed:number = 0;
+    numberOfBeaconsMissed: number = 0;
 
-    numberOfTransmissionsDuringRAWSlot:number = 0;
-    totalNumberOfDrops:number = 0;
+    numberOfTransmissionsDuringRAWSlot: number = 0;
+    totalNumberOfDrops: number = 0;
+
+    firmwareTransferTime: number = 0;
+    ipCameraSendingRate: number = 0;
+    ipCameraReceivingRate: number = 0;
+    numberOfTransmissionsCancelledDueToCrossingRAWBoundary: number = 0;
+
 }
 
 class APNode extends SimulationNode {
@@ -142,18 +148,27 @@ class SimulationConfiguration {
     tcpSegmentSize: number;
     tcpInitialSlowStartThreshold: number;
     tcpInitialCWnd: number;
-    maxTimeOfPacketsInQueue:number;
-    ipCameraMotionPercentage:number;
-    ipCameraMotionDuration:number;
-    ipCameraDataRate:number;
-    nrSta:number;
-    cooldownPeriod:number;
+    maxTimeOfPacketsInQueue: number;
+    ipCameraMotionPercentage: number;
+    ipCameraMotionDuration: number;
+    ipCameraDataRate: number;
+    nrSta: number;
+    cooldownPeriod: number;
+
+    firmwareSize: number;
+    firmwareBlockSize: number;
+    firmwareCorruptionProbability: number;
+    firmwareNewUpdateProbability: number;
+    sensorMeasurementSize: number;
+    contentionPerRAWSlot: number;
+    contentionPerRAWSlotOnlyInFirstGroup: number;
+
 }
 
 class Simulation {
 
     nodes: SimulationNode[] = [];
-    apNode:APNode;
+    apNode: APNode;
 
     slotUsageSTA: number[][] = [];
     slotUsageAP: number[][] = [];

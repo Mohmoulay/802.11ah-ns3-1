@@ -1,6 +1,6 @@
-/// <reference path="../../../typings/globals/jquery/index.d.ts" />
-/// <reference path="../../../typings/globals/socket.io/index.d.ts" />
-/// <reference path="../../../typings/globals/highcharts/index.d.ts" />
+/// <reference path="../../../../typings/globals/jquery/index.d.ts" />
+/// <reference path="../../../../typings/globals/socket.io/index.d.ts" />
+/// <reference path="../../../../typings/globals/highcharts/index.d.ts" />
 
 declare namespace io {
     class Options {
