@@ -37,13 +37,17 @@ namespace SimulationBuilder
                 maxParallel = Environment.ProcessorCount;
             TaskFactory factory = new TaskFactory(maxParallel, System.Threading.ThreadPriority.Normal);
 
+            Console.WriteLine("Starting threads");
+
+
+            HostProxy.SimulationHostClient proxy = new HostProxy.SimulationHostClient("BasicHttpBinding_ISimulationHost", args[1]);
+
             for (int i = 0; i < maxParallel; i++)
             {
                 factory.StartTask(() =>
                 {
                     try
                     {
-                        HostProxy.SimulationHostClient proxy = new HostProxy.SimulationHostClient("BasicHttpBinding_ISimulationHost", args[1]);
                         DateTime cur = DateTime.MinValue;
                         while (true)
                         {
@@ -51,7 +55,9 @@ namespace SimulationBuilder
                             {
                                 try
                                 {
-                                    var simJob = proxy.GetSimulationJob(Environment.MachineName);
+                                    HostProxy.SimulationJob simJob;
+                                    lock(proxy)
+                                        simJob = proxy.GetSimulationJob(Environment.MachineName);
                                     try
                                     {
 
@@ -59,7 +65,8 @@ namespace SimulationBuilder
                                         {
                                             Console.WriteLine("Received simulation job " + simJob.Index + ", running simulation");
                                             RunSimulation(simJob.FinalArguments);
-                                            proxy.SimulationJobDone(Environment.MachineName, simJob.Index);
+                                            lock (proxy)
+                                                proxy.SimulationJobDone(Environment.MachineName, simJob.Index);
                                         }
                                     }
                                     catch (Exception ex)
