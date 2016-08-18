@@ -15,7 +15,7 @@ namespace SimulationBuilder
         static void Main(string[] args)
         {
             if (System.Diagnostics.Debugger.IsAttached)
-            args = new string[] { "--slave", "http://localhost:12345/SimulationHost/" };
+                args = new string[] { "--slave", "http://localhost:12345/SimulationHost/" };
             if (args.Any(a => a.Contains("--slave")))
             {
                 MainSlave(args);
@@ -35,7 +35,6 @@ namespace SimulationBuilder
             int maxParallel;
             if (!int.TryParse(ConfigurationManager.AppSettings["maxParallel"], out maxParallel))
                 maxParallel = Environment.ProcessorCount;
-            TaskFactory factory = new TaskFactory(maxParallel, System.Threading.ThreadPriority.Normal);
 
             Console.WriteLine("Starting threads");
 
@@ -44,19 +43,23 @@ namespace SimulationBuilder
 
             for (int i = 0; i < maxParallel; i++)
             {
-                factory.StartTask(() =>
+                var t = new System.Threading.Thread(() =>
                 {
+                    // make to not hammer the host all at the same time
+                    Random rnd = new Random(System.Guid.NewGuid().GetHashCode());
+                    System.Threading.Thread.Sleep(rnd.Next(5000));
+
                     try
                     {
                         DateTime cur = DateTime.MinValue;
                         while (true)
                         {
-                            if ((DateTime.UtcNow - cur).TotalSeconds > 1)
+                            if ((DateTime.UtcNow - cur).TotalSeconds > 5)
                             {
                                 try
                                 {
                                     HostProxy.SimulationJob simJob;
-                                    lock(proxy)
+                                    lock (proxy)
                                         simJob = proxy.GetSimulationJob(Environment.MachineName);
                                     try
                                     {
@@ -90,10 +93,8 @@ namespace SimulationBuilder
                     {
                         Console.Error.Write("Error: " + ex.GetType().FullName + " - " + ex.Message + Environment.NewLine + ex.StackTrace);
                     }
-                }, () =>
-                {
-
                 });
+                t.Start();
             }
         }
 
