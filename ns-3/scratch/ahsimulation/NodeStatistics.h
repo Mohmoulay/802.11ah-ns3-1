@@ -67,6 +67,7 @@ public:
     Time getAverageRemainingWhenAPSendingPacketInSameSlot();
 
     long NumberOfCollisions = 0;
+    long NumberOfTransmissionsCancelledDueToCrossingRAWBoundary = 0;
 
     long TotalNumberOfBackedOffSlots = 0;
 

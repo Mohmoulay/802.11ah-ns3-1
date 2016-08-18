@@ -261,6 +261,10 @@ EdcaTxopN::GetTypeId (void)
 
 	 .AddTraceSource("Collision", "Fired when a collision occurred",
 				MakeTraceSourceAccessor(&EdcaTxopN::m_collisionTrace), "ns3::EdcaTxopN::CollisionCallback")
+
+	.AddTraceSource("TransmissionWillCrossRAWBoundary", "Fired when a transmission is held off because it won't fit inside the RAW slot",
+				MakeTraceSourceAccessor(&EdcaTxopN::m_transmissionWillCrossRAWBoundary), "ns3::EdcaTxopN::TransmissionWillCrossRAWBoundaryCallback")
+
   ;
   return tid;
 }
@@ -564,6 +568,7 @@ EdcaTxopN::NotifyAccessGranted (void)
       			&m_currentHdr, params);
       	if (txDuration > remainingRawTime) { // don't transmit if it can't be done inside RAW window, the ACK won't be received anyway
       		NS_LOG_DEBUG("TX will take longer (" << txDuration << ") than the remaining RAW time (" << remainingRawTime << "), not transmitting");
+      		m_transmissionWillCrossRAWBoundary(txDuration,remainingRawTime);
       		return;
       	}
       	else {
@@ -619,6 +624,7 @@ EdcaTxopN::NotifyAccessGranted (void)
                 			&hdr, params);
 			if (txDuration > remainingRawTime) { // don't transmit if it can't be done inside RAW window, the ACK won't be received anyway
 				NS_LOG_DEBUG("TX will take longer than the remaining RAW time, not transmitting");
+				m_transmissionWillCrossRAWBoundary(txDuration,remainingRawTime);
 				return;
 			}
 			else
@@ -691,6 +697,7 @@ EdcaTxopN::NotifyAccessGranted (void)
                          			&m_currentHdr, params);
 	      if (txDuration > remainingRawTime) { // don't transmit if it can't be done inside RAW window, the ACK won't be received anyway
 			NS_LOG_DEBUG("TX will take longer (" << txDuration << ") than the remaining RAW time (" << remainingRawTime << "), not transmitting");
+			m_transmissionWillCrossRAWBoundary(txDuration,remainingRawTime);
 			return;
 		  }
 	      else
@@ -1495,6 +1502,7 @@ EdcaTxopN::SendBlockAckRequest (const struct Bar &bar)
   Time remainingRawTime =  rawDuration -  (Simulator::Now() - rawStartedAt);
   if(txDuration > remainingRawTime) {  // don't transmit if it can't be done inside RAW window, the ACK won't be received anyway
       NS_LOG_DEBUG("TX will take longer (" << txDuration << ") than the remaining RAW time (" << remainingRawTime << "), not transmitting");
+      m_transmissionWillCrossRAWBoundary(txDuration,remainingRawTime);
 	  return;
   }
 
@@ -1597,6 +1605,7 @@ EdcaTxopN::SendAddBaRequest (Mac48Address dest, uint8_t tid, uint16_t startSeq,
 	Time remainingRawTime = rawDuration - (Simulator::Now() - rawStartedAt);
 	if (txDuration > remainingRawTime) { // don't transmit if it can't be done inside RAW window, the ACK won't be received anyway
 		NS_LOG_DEBUG("TX will take longer (" << txDuration << ") than the remaining RAW time (" << remainingRawTime << "), not transmitting");
+		m_transmissionWillCrossRAWBoundary(txDuration,remainingRawTime);
 		return;
 	}
 	else

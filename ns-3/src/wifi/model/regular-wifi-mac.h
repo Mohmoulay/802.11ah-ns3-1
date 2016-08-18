@@ -57,6 +57,7 @@ public:
                     (Ptr<const Packet> packet, DropReason reason);
 
   typedef void (* CollisionCallback)(uint32_t nrOfSlotsToBackOff);
+  typedef void (* TransmissionWillCrossRAWBoundaryCallback)(Time txDuration, Time remainingRawTime);
 
   RegularWifiMac ();
   virtual ~RegularWifiMac ();
@@ -279,6 +280,9 @@ protected:
 
   virtual void OnCollision(std::string context, uint32_t nrOfBackOffSlots);
 
+  virtual void OnTransmissionWillCrossRAWBoundary(std::string context, Time txDuration, Time remainingTimeInRAWSlot);
+
+
   /**
    * Accessor for the DCF object
    *
@@ -440,6 +444,7 @@ protected:
 
   TracedCallback<Ptr<const Packet>, DropReason> m_packetdropped;
   TracedCallback<uint32_t> m_collisionTrace;
+  TracedCallback<Time,Time> m_transmissionWillCrossRAWBoundary;
 
 
   /**

@@ -320,7 +320,6 @@ void NodeEntry::OnTcpPacketSent(Ptr<const Packet> packet) {
 	if(showLog) cout << Simulator::Now().GetMicroSeconds() << " [" << this->aId << "] "
 			<< "TCP packet sent " << endl;//with seq nr " << seqTs.GetSeq() << endl;
 
-
 /*
 	// the packet is just sent, so track if it's received by a list of booleans
 	// with the sequence number as index
@@ -604,6 +603,10 @@ void NodeEntry::OnCollision(std::string context, uint32_t nrOfBackoffSlots) {
 
 	stats->get(this->id).NumberOfCollisions++;
 	stats->get(this->id).TotalNumberOfBackedOffSlots += nrOfBackoffSlots;
+}
+
+void NodeEntry::OnTransmissionWillCrossRAWBoundary(std::string context, Time txDuration, Time remainingTimeInRawSlot) {
+	stats->get(this->id).NumberOfTransmissionsCancelledDueToCrossingRAWBoundary++;
 }
 
 void NodeEntry::OnMacTxRtsFailed(std::string context, Mac48Address address) {

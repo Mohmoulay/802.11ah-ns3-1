@@ -96,6 +96,8 @@ public:
 
   typedef void (* CollisionCallback)(uint32_t nrOfSlotsToBackOff);
 
+  typedef void (* TransmissionWillCrossRAWBoundaryCallback)(Time txDuration, Time remainingRawTime);
+
   uint16_t GetNrOfTransmissionsDuringRaw() { return nrOfTransmissionsDuringRaw; }
 
   static TypeId GetTypeId (void);
@@ -575,6 +577,7 @@ private:
   bool m_ampduExist;
     
   TracedCallback<uint32_t> m_collisionTrace;
+  TracedCallback<Time,Time> m_transmissionWillCrossRAWBoundary;
   
 };
 

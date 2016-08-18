@@ -157,7 +157,7 @@ void SimulationEventManager::onUpdateStatistics(Statistics& stats) {
 			std::to_string(stats.get(i).FirmwareTransferTime.GetMicroSeconds()),
 			std::to_string(stats.get(i).getIPCameraSendingRate()),
 			std::to_string(stats.get(i).getIPCameraAPReceivingRate()),
-
+			std::to_string(stats.get(i).NumberOfTransmissionsCancelledDueToCrossingRAWBoundary)
 		});
 	}
 }
@@ -281,9 +281,8 @@ void SimulationEventManager::onStatisticsHeader() {
 		"TotalNumberOfDrops",
 		"FirmwareTransferTime",
 		"IPCameraSendingRate",
-		"IPCameraReceivingRate"
-
-
+		"IPCameraReceivingRate",
+		"NumberOfTransmissionsCancelledDueToCrossingRAWBoundary"
 	});
 
 }

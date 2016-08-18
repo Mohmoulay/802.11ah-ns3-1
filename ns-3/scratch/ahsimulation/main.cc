@@ -229,6 +229,7 @@ void configureSTANodes(Ssid& ssid) {
     phy.Set("RxNoiseFigure", DoubleValue(3.0));
     phy.Set("LdpcEnabled", BooleanValue(true));
 
+
     // setup S1g MAC
     S1gWifiMacHelper mac = S1gWifiMacHelper::Default();
     mac.SetType("ns3::StaWifiMac",
@@ -364,6 +365,9 @@ void configureAPNode(Ssid& ssid) {
     phy.Set("TxPowerStart", DoubleValue(30.0));
     phy.Set("RxNoiseFigure", DoubleValue(5));
     phy.Set("LdpcEnabled", BooleanValue(true));
+    phy.Set("Transmitters", UintegerValue(1));
+    phy.Set("Receivers", UintegerValue(1));
+
 
     // create wifi
     WifiHelper wifi = WifiHelper::Default();
@@ -431,6 +435,7 @@ void configureNodes() {
 
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/$ns3::StaWifiMac/PacketDropped", MakeCallback(&NodeEntry::OnMacPacketDropped, n));
         Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/$ns3::StaWifiMac/Collision", MakeCallback(&NodeEntry::OnCollision, n));
+        Config::Connect("/NodeList/" + std::to_string(i) + "/DeviceList/0/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/$ns3::StaWifiMac/TransmissionWillCrossRAWBoundary", MakeCallback(&NodeEntry::OnTransmissionWillCrossRAWBoundary, n));
 
 
         // hook up TX

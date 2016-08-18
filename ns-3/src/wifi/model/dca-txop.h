@@ -72,6 +72,7 @@ public:
 
 
   typedef void (* CollisionCallback)(uint32_t nrOfSlotsToBackOff);
+  typedef void (* TransmissionWillCrossRAWBoundaryCallback)(Time txDuration, Time remainingRawTime);
 
 
   uint16_t GetNrOfTransmissionsDuringRaw() { return nrOfTransmissionsDuringRaw; }
@@ -363,6 +364,7 @@ private:
 
   TracedCallback<uint32_t> m_collisionTrace;
 
+  TracedCallback<Time,Time> m_transmissionWillCrossRAWBoundary;
   bool m_accessOngoing;
   Ptr<const Packet> m_currentPacket;
   WifiMacHeader m_currentHdr;

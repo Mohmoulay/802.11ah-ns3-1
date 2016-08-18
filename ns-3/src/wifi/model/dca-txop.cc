@@ -151,8 +151,14 @@ DcaTxop::GetTypeId (void)
 					  UintegerValue(),
 					  MakeUintegerAccessor(&DcaTxop::nrOfTransmissionsDuringRaw),
 					  MakeUintegerChecker<uint16_t> ())
+
 	.AddTraceSource("Collision", "Fired when a collision occurred",
 			MakeTraceSourceAccessor(&DcaTxop::m_collisionTrace), "ns3::DcaTxop::CollisionCallback")
+
+	.AddTraceSource("TransmissionWillCrossRAWBoundary", "Fired when a transmission is held off because it won't fit inside the RAW slot",
+				MakeTraceSourceAccessor(&DcaTxop::m_transmissionWillCrossRAWBoundary), "ns3::DcaTxop::TransmissionWillCrossRAWBoundaryCallback")
+
+
   ;
   return tid;
 }
@@ -552,6 +558,7 @@ DcaTxop::NotifyAccessGranted (void)
 
 	  if(txDuration > remainingRawTime) {  // don't transmit if it can't be done inside RAW window, the ACK won't be received anyway
 		  NS_LOG_DEBUG("TX will take longer (" << txDuration << ") than the remaining RAW time (" << remainingRawTime << "), not transmitting");
+		  m_transmissionWillCrossRAWBoundary(txDuration, remainingRawTime);
 		  return;
 	  }
 
@@ -593,6 +600,7 @@ DcaTxop::NotifyAccessGranted (void)
           Time txDuration = Low()->CalculateTransmissionTime(fragment, &hdr, params);
 		  if(txDuration > remainingRawTime) {  // don't transmit if it can't be done inside RAW window, the ACK won't be received anyway
 			  NS_LOG_DEBUG("TX will take longer (" << txDuration << ") than the remaining RAW time (" << remainingRawTime << "), not transmitting");
+			  m_transmissionWillCrossRAWBoundary(txDuration, remainingRawTime);
 			  return;
 		  }
 
@@ -619,6 +627,7 @@ DcaTxop::NotifyAccessGranted (void)
           Time txDuration = Low()->CalculateTransmissionTime(m_currentPacket, &m_currentHdr, params);
           if(txDuration > remainingRawTime) {
         	  NS_LOG_DEBUG("TX will take longer (" << txDuration << ") than the remaining RAW time (" << remainingRawTime << "), not transmitting");
+        	  m_transmissionWillCrossRAWBoundary(txDuration, remainingRawTime);
         	  return;
           }
 

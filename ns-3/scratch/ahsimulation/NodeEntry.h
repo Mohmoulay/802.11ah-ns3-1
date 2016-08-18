@@ -91,6 +91,7 @@ public:
 
 
     void OnCollision(std::string context, uint32_t nrOfBackoffSlots);
+    void OnTransmissionWillCrossRAWBoundary(std::string context, Time txDuration, Time remainingTimeInRawSlot);
 
     void OnPhyStateChange(std::string context, const Time start, const Time duration, const WifiPhy::State state);
 
