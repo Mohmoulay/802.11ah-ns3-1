@@ -259,7 +259,7 @@ namespace SimulationBuilder
             {
                 FileName = ConfigurationManager.AppSettings["simulation"],
                 Arguments = "\"" + argsStr.Replace("\"", "\\\"") + "\"",
-                UseShellExecute = System.Environment.OSVersion.Platform == PlatformID.Unix ? false : true,
+                UseShellExecute = false, // System.Environment.OSVersion.Platform == PlatformID.Unix ? false : true,
                 RedirectStandardError = true
             };
 
