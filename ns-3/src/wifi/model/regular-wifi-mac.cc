@@ -86,6 +86,7 @@ RegularWifiMac::OnCollision(std::string context, uint32_t nrOfBackOffSlots) {
 
 void
 RegularWifiMac::OnTransmissionWillCrossRAWBoundary(std::string context, Time txDuration, Time remainingTimeInRAWSlot) {
+	//std::cout << "TRANSMISSION WILL CROSS RAW BOUNDARY" << std::endl;
 	m_transmissionWillCrossRAWBoundary(txDuration, remainingTimeInRAWSlot);
 }
 
@@ -178,6 +179,7 @@ RegularWifiMac::SetupEdcaQueue (enum AcIndex ac)
 
   edca->GetEdcaQueue()->TraceConnect("PacketDropped", "", MakeCallback(&RegularWifiMac::OnQueuePacketDropped, this));
   edca->TraceConnect("Collision", "", MakeCallback(&RegularWifiMac::OnCollision, this));
+  edca->TraceConnect("TransmissionWillCrossRAWBoundary", "", MakeCallback(&RegularWifiMac::OnTransmissionWillCrossRAWBoundary, this));
 }
 
 void

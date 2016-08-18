@@ -606,6 +606,8 @@ void NodeEntry::OnCollision(std::string context, uint32_t nrOfBackoffSlots) {
 }
 
 void NodeEntry::OnTransmissionWillCrossRAWBoundary(std::string context, Time txDuration, Time remainingTimeInRawSlot) {
+	cout << "Transmission cancelled, tx duration " << txDuration << ", remaining time " << remainingTimeInRawSlot << endl;
+
 	stats->get(this->id).NumberOfTransmissionsCancelledDueToCrossingRAWBoundary++;
 }
 
