@@ -220,6 +220,8 @@ namespace SimulationBuilder
 
         private static void RunSimulation(Dictionary<string, string> args)
         {
+
+
             // use a tmp file on the local disk to store the simulation in
             // due to the huge number of appending done in the simulation it's verrrrrrrrrrry slow 
             // when done over the network
@@ -229,6 +231,13 @@ namespace SimulationBuilder
 
             Console.WriteLine("Changing nss file location to " + tmpFile);
             string originalDestination = args["--NSSFile"].Replace("\"", "");
+
+            if (System.IO.File.Exists(originalDestination))
+            {
+                Console.WriteLine("File already exists, skipping");
+                return;
+            }
+
             args["--NSSFile"] = "\"" + tmpFile + "\"";
 
             var argsStr = string.Join(" ", args.Select(p => p.Key + "=" + p.Value));
