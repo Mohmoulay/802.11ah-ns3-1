@@ -95,7 +95,10 @@ namespace SimulationBuilder.HostProxy {
     public interface ISimulationHost {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ISimulationHost/GetSimulationJob", ReplyAction="http://tempuri.org/ISimulationHost/GetSimulationJobResponse")]
-        SimulationBuilder.HostProxy.SimulationJob GetSimulationJob();
+        SimulationBuilder.HostProxy.SimulationJob GetSimulationJob(string hostname);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ISimulationHost/SimulationJobDone", ReplyAction="http://tempuri.org/ISimulationHost/SimulationJobDoneResponse")]
+        void SimulationJobDone(string hostname, int index);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -125,8 +128,12 @@ namespace SimulationBuilder.HostProxy {
                 base(binding, remoteAddress) {
         }
         
-        public SimulationBuilder.HostProxy.SimulationJob GetSimulationJob() {
-            return base.Channel.GetSimulationJob();
+        public SimulationBuilder.HostProxy.SimulationJob GetSimulationJob(string hostname) {
+            return base.Channel.GetSimulationJob(hostname);
+        }
+        
+        public void SimulationJobDone(string hostname, int index) {
+            base.Channel.SimulationJobDone(hostname, index);
         }
     }
 }

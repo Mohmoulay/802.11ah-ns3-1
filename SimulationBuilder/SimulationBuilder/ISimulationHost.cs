@@ -11,7 +11,10 @@ namespace SimulationBuilder
     public interface ISimulationHost
     {
         [OperationContract]
-        SimulationJob GetSimulationJob();
+        SimulationJob GetSimulationJob(string hostname);
+
+        [OperationContract]
+        void SimulationJobDone(string hostname, int index);
     }
 
     public class SimulationJob

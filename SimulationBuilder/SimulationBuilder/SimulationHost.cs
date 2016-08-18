@@ -19,6 +19,8 @@ namespace SimulationBuilder
 
         private int curJob = 0;
 
+        private int pendingJobs = 0;
+
         public SimulationHost(string nssFolder, Dictionary<string, string> baseArgs, List<Dictionary<string, string>> combos)
         {
             this.nssFolder = nssFolder;
@@ -26,7 +28,7 @@ namespace SimulationBuilder
             this.combos = combos;
         }
 
-        public SimulationJob GetSimulationJob()
+        public SimulationJob GetSimulationJob(string hostname)
         {
             lock (lockObj)
             {
@@ -34,16 +36,8 @@ namespace SimulationBuilder
                     return null;
                 else
                 {
-                    OperationContext context = OperationContext.Current;
-                    MessageProperties prop = context.IncomingMessageProperties;
-                    RemoteEndpointMessageProperty endpoint =
-                        prop[RemoteEndpointMessageProperty.Name] as RemoteEndpointMessageProperty;
-                    string ip = endpoint.Address;
-
-                    Console.WriteLine("Simulation " + curJob + "/" + combos.Count + " claimed by " + ip);
-
-                    
-
+                  
+                    Console.WriteLine("Simulation " + curJob + "/" + combos.Count + " claimed by " + hostname + ", currently " + (pendingJobs+1) + " jobs active");
 
                     var finalArguments = Merge(baseArgs, combos[curJob]);
                     var name = string.Join("", combos[curJob].Select(p => p.Key.Replace("--", "") + p.Value)).Replace("\"", "");
@@ -58,10 +52,19 @@ namespace SimulationBuilder
                         FinalArguments = finalArguments
                     };
                     curJob++;
+                    pendingJobs++;
                     return simJob;
                 }
             }
         }
+
+
+        public void SimulationJobDone(string hostname, int index)
+        {
+            pendingJobs--;
+            Console.WriteLine("Simulation " + index + "/" + combos.Count + " finished on " + hostname + ", currently " + pendingJobs + " jobs active" );
+        }
+
 
         private static Dictionary<string, string> Merge(Dictionary<string, string> baseArgs, Dictionary<string, string> customArgs)
         {

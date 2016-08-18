@@ -3,7 +3,9 @@
   <xs:import namespace="http://schemas.datacontract.org/2004/07/SimulationBuilder" />
   <xs:element name="GetSimulationJob">
     <xs:complexType>
-      <xs:sequence />
+      <xs:sequence>
+        <xs:element minOccurs="0" name="hostname" nillable="true" type="xs:string" />
+      </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:element name="GetSimulationJobResponse">
@@ -11,6 +13,19 @@
       <xs:sequence>
         <xs:element xmlns:q1="http://schemas.datacontract.org/2004/07/SimulationBuilder" minOccurs="0" name="GetSimulationJobResult" nillable="true" type="q1:SimulationJob" />
       </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SimulationJobDone">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="hostname" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="index" type="xs:int" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="SimulationJobDoneResponse">
+    <xs:complexType>
+      <xs:sequence />
     </xs:complexType>
   </xs:element>
 </xs:schema>

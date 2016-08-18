@@ -14,8 +14,8 @@ namespace SimulationBuilder
 
         static void Main(string[] args)
         {
-            //if (System.Diagnostics.Debugger.IsAttached)
-            //args = new string[] { "--slave", "http://localhost:12345/SimulationHost/" };
+            if (System.Diagnostics.Debugger.IsAttached)
+            args = new string[] { "--slave", "http://localhost:12345/SimulationHost/" };
             if (args.Any(a => a.Contains("--slave")))
             {
                 MainSlave(args);
@@ -47,20 +47,30 @@ namespace SimulationBuilder
                         DateTime cur = DateTime.MinValue;
                         while (true)
                         {
-                            if ((DateTime.UtcNow - cur).TotalSeconds > 10)
+                            if ((DateTime.UtcNow - cur).TotalSeconds > 1)
                             {
                                 try
                                 {
-                                    var simJob = proxy.GetSimulationJob();
-                                    if (simJob != null)
+                                    var simJob = proxy.GetSimulationJob(Environment.MachineName);
+                                    try
                                     {
-                                        Console.WriteLine("Received simulation job " + simJob.Index + ", running simulation");
-                                        RunSimulation(simJob.FinalArguments);
+
+                                        if (simJob != null)
+                                        {
+                                            Console.WriteLine("Received simulation job " + simJob.Index + ", running simulation");
+                                            RunSimulation(simJob.FinalArguments);
+                                            proxy.SimulationJobDone(Environment.MachineName, simJob.Index);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+
+                                        Console.WriteLine("Error: " + ex.GetType().FullName + " - " + ex.Message);
                                     }
                                 }
                                 catch (Exception ex)
                                 {
-                                    Console.WriteLine("Error: " + ex.GetType().FullName + " - " + ex.Message);
+                                    // don't spam not able to connect
                                 }
 
                                 cur = DateTime.UtcNow;
@@ -85,15 +95,13 @@ namespace SimulationBuilder
         {
             if (args.Length < 3)
             {
-                Console.WriteLine("USAGE: SimulationBuilder baseConfiguration buildConfiguration nssFolder");
+                Console.WriteLine("USAGE: SimulationBuilder baseConfiguration buildConfiguration nssFolder [--host]");
                 return;
             }
 
             string baseConfig = args[0];
             string buildConfig = args[1];
             string nssFolder = args[2];
-
-            Console.WriteLine("Args: " + Environment.NewLine + string.Join(Environment.NewLine, args));
 
             if (!System.IO.File.Exists(baseConfig))
             {
