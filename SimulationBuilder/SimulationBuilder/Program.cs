@@ -218,6 +218,13 @@ namespace SimulationBuilder
             }
         }
 
+        // file system is not thread safe:
+        /*
+         * Error: System.IO.FileNotFoundException - /tmp/tmp34cf82c2.tmp.nss does not exist
+        Error: System.IO.FileNotFoundException - /tmp/tmpe0919be.tmp.nss does not exist
+        Error: System.IO.FileNotFoundException - /tmp/tmp6f5fb534.tmp.nss does not exist
+        */
+        private static object fsLock = new object();
         private static void RunSimulation(Dictionary<string, string> args)
         {
 
@@ -227,17 +234,23 @@ namespace SimulationBuilder
             // when done over the network
             // If the nss file is saved as a local temporary file and moved in bulk to the destination 
             // when it's done it will be much MUCH faster
-            var tmpFile = System.IO.Path.GetTempFileName() + ".nss";
 
-            Console.WriteLine("Changing nss file location to " + tmpFile);
-            string originalDestination = args["--NSSFile"].Replace("\"", "");
-
-            if (System.IO.File.Exists(originalDestination))
+            string tmpFile;
+            string originalDestination;
+            lock (fsLock)
             {
-                Console.WriteLine("File already exists, skipping");
-                return;
+                tmpFile = System.IO.Path.GetTempFileName() + ".nss";
             }
 
+            Console.WriteLine("Changing nss file location to " + tmpFile);
+            originalDestination = args["--NSSFile"].Replace("\"", "");
+
+            if (System.IO.File.Exists(originalDestination))
+                {
+                    Console.WriteLine("File already exists, skipping");
+                    return;
+                }
+            
             args["--NSSFile"] = "\"" + tmpFile + "\"";
 
             var argsStr = string.Join(" ", args.Select(p => p.Key + "=" + p.Value));
@@ -247,15 +260,22 @@ namespace SimulationBuilder
                 FileName = ConfigurationManager.AppSettings["simulation"],
                 Arguments = "\"" + argsStr.Replace("\"", "\\\"") + "\"",
                 UseShellExecute = System.Environment.OSVersion.Platform == PlatformID.Unix ? false : true,
+                RedirectStandardError = true
             };
 
             Console.WriteLine("Starting process " + ps.FileName + " " + ps.Arguments);
+
             var proc = Process.Start(ps);
             if (proc != null)
             {
+                var error = proc.StandardError.ReadToEnd();
                 proc.WaitForExit();
 
                 Console.WriteLine("Process ended with exit code " + proc.ExitCode);
+                if(!string.IsNullOrEmpty(error))
+                {
+                    Console.WriteLine("Error: " + error);
+                }
                 proc.Dispose();
             }
 
