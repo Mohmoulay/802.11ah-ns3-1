@@ -190,16 +190,14 @@ namespace SimulationBuilder
         {
             Console.WriteLine("Running simulation " + (i + 1) + "/" + combos.Count);
 
-            // use a tmp file on the local disk to store the simulation in
-            // due to the huge number of appending done in the simulation it's verrrrrrrrrrry slow 
-            // when done over the network
-            // If the nss file is saved as a local temporary file and moved in bulk to the destination 
-            // when it's done it will be much MUCH faster
-            var tmpFile = System.IO.Path.GetTempFileName() + ".nss";
-            
+
+
             var finalArguments = Merge(baseArgs, combos[i]);
             var name = string.Join("", combos[i].Select(p => p.Key.Replace("--", "") + p.Value)).Replace("\"", "");
-            finalArguments["--NSSFile"] = "\"" + tmpFile + "\"";
+            var destinationPath = System.IO.Path.Combine(nssFolder, name + ".nss");
+
+
+            finalArguments["--NSSFile"] = "\"" + destinationPath + "\"";
             finalArguments["--Name"] = "\"" + name + "\"";
             // finalArguments["--VisualizerIP"] = "\"" + "\""; // no visualization 
 
@@ -211,9 +209,8 @@ namespace SimulationBuilder
                 sw.Stop();
                 Console.WriteLine("Simulation " + (i + 1) + " took " + sw.ElapsedMilliseconds + "ms");
 
-                var destinationPath = System.IO.Path.Combine(nssFolder, name + ".nss");
-                Console.WriteLine("Moving nss file to destination " + destinationPath);
-                System.IO.File.Move(tmpFile, destinationPath);
+
+
             }
             else
             {
@@ -223,6 +220,17 @@ namespace SimulationBuilder
 
         private static void RunSimulation(Dictionary<string, string> args)
         {
+            // use a tmp file on the local disk to store the simulation in
+            // due to the huge number of appending done in the simulation it's verrrrrrrrrrry slow 
+            // when done over the network
+            // If the nss file is saved as a local temporary file and moved in bulk to the destination 
+            // when it's done it will be much MUCH faster
+            var tmpFile = System.IO.Path.GetTempFileName() + ".nss";
+
+            Console.WriteLine("Changing nss file location to " + tmpFile);
+            string originalDestination = args["--NSSFile"].Replace("\"", "");
+            args["--NSSFile"] = "\"" + tmpFile + "\"";
+
             var argsStr = string.Join(" ", args.Select(p => p.Key + "=" + p.Value));
 
             ProcessStartInfo ps = new ProcessStartInfo()
@@ -241,6 +249,10 @@ namespace SimulationBuilder
                 Console.WriteLine("Process ended with exit code " + proc.ExitCode);
                 proc.Dispose();
             }
+
+            Console.WriteLine("Moving nss file to destination " + originalDestination);
+            System.IO.File.Move(tmpFile, originalDestination);
+
         }
 
         private static Dictionary<string, string> Merge(Dictionary<string, string> baseArgs, Dictionary<string, string> customArgs)
