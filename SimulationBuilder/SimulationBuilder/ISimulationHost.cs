@@ -15,6 +15,9 @@ namespace SimulationBuilder
 
         [OperationContract]
         void SimulationJobDone(string hostname, int index);
+
+        [OperationContract]
+        void SimulationJobFailed(string hostname, int index, string error);
     }
 
     public class SimulationJob

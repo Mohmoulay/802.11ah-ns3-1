@@ -20,6 +20,12 @@
   <wsdl:message name="ISimulationHost_SimulationJobDone_OutputMessage">
     <wsdl:part name="parameters" element="tns:SimulationJobDoneResponse" />
   </wsdl:message>
+  <wsdl:message name="ISimulationHost_SimulationJobFailed_InputMessage">
+    <wsdl:part name="parameters" element="tns:SimulationJobFailed" />
+  </wsdl:message>
+  <wsdl:message name="ISimulationHost_SimulationJobFailed_OutputMessage">
+    <wsdl:part name="parameters" element="tns:SimulationJobFailedResponse" />
+  </wsdl:message>
   <wsdl:portType name="ISimulationHost">
     <wsdl:operation name="GetSimulationJob">
       <wsdl:input wsaw:Action="http://tempuri.org/ISimulationHost/GetSimulationJob" message="tns:ISimulationHost_GetSimulationJob_InputMessage" />
@@ -28,6 +34,10 @@
     <wsdl:operation name="SimulationJobDone">
       <wsdl:input wsaw:Action="http://tempuri.org/ISimulationHost/SimulationJobDone" message="tns:ISimulationHost_SimulationJobDone_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/ISimulationHost/SimulationJobDoneResponse" message="tns:ISimulationHost_SimulationJobDone_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="SimulationJobFailed">
+      <wsdl:input wsaw:Action="http://tempuri.org/ISimulationHost/SimulationJobFailed" message="tns:ISimulationHost_SimulationJobFailed_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/ISimulationHost/SimulationJobFailedResponse" message="tns:ISimulationHost_SimulationJobFailed_OutputMessage" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="BasicHttpBinding_ISimulationHost" type="tns:ISimulationHost">
@@ -43,6 +53,15 @@
     </wsdl:operation>
     <wsdl:operation name="SimulationJobDone">
       <soap:operation soapAction="http://tempuri.org/ISimulationHost/SimulationJobDone" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SimulationJobFailed">
+      <soap:operation soapAction="http://tempuri.org/ISimulationHost/SimulationJobFailed" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>

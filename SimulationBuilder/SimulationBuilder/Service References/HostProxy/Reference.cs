@@ -99,6 +99,9 @@ namespace SimulationBuilder.HostProxy {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ISimulationHost/SimulationJobDone", ReplyAction="http://tempuri.org/ISimulationHost/SimulationJobDoneResponse")]
         void SimulationJobDone(string hostname, int index);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ISimulationHost/SimulationJobFailed", ReplyAction="http://tempuri.org/ISimulationHost/SimulationJobFailedResponse")]
+        void SimulationJobFailed(string hostname, int index, string error);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -134,6 +137,10 @@ namespace SimulationBuilder.HostProxy {
         
         public void SimulationJobDone(string hostname, int index) {
             base.Channel.SimulationJobDone(hostname, index);
+        }
+        
+        public void SimulationJobFailed(string hostname, int index, string error) {
+            base.Channel.SimulationJobFailed(hostname, index, error);
         }
     }
 }

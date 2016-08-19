@@ -66,6 +66,12 @@ namespace SimulationBuilder
 
                                         if (simJob != null)
                                         {
+                                            if(System.Diagnostics.Debugger.IsAttached)
+                                            {
+                                                if (rnd.Next() < 0.5)
+                                                    throw new Exception("Debugger fail");
+                                            }
+
                                             Console.WriteLine("Received simulation job " + simJob.Index + ", running simulation");
                                             RunSimulation(simJob.FinalArguments);
                                             lock (proxy)
@@ -74,6 +80,8 @@ namespace SimulationBuilder
                                     }
                                     catch (Exception ex)
                                     {
+                                        lock (proxy)
+                                            proxy.SimulationJobFailed(Environment.MachineName, simJob.Index, ex.Message);
 
                                         Console.WriteLine("Error: " + ex.GetType().FullName + " - " + ex.Message);
                                     }
@@ -218,12 +226,6 @@ namespace SimulationBuilder
             }
         }
 
-        // file system is not thread safe:
-        /*
-         * Error: System.IO.FileNotFoundException - /tmp/tmp34cf82c2.tmp.nss does not exist
-        Error: System.IO.FileNotFoundException - /tmp/tmpe0919be.tmp.nss does not exist
-        Error: System.IO.FileNotFoundException - /tmp/tmp6f5fb534.tmp.nss does not exist
-        */
         private static object fsLock = new object();
         private static void RunSimulation(Dictionary<string, string> args)
         {
@@ -237,7 +239,7 @@ namespace SimulationBuilder
 
             string tmpFile;
             string originalDestination;
-            lock (fsLock)
+            lock (fsLock) // prevent from claiming the same filename in concurrency
             {
                 tmpFile = System.IO.Path.GetTempFileName() + ".nss";
             }
@@ -260,7 +262,9 @@ namespace SimulationBuilder
                 FileName = ConfigurationManager.AppSettings["simulation"],
                 Arguments = "\"" + argsStr.Replace("\"", "\\\"") + "\"",
                 UseShellExecute = false, // System.Environment.OSVersion.Platform == PlatformID.Unix ? false : true,
-                RedirectStandardError = true
+                RedirectStandardError = true,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true
             };
 
             Console.WriteLine("Starting process " + ps.FileName + " " + ps.Arguments);
@@ -268,15 +272,19 @@ namespace SimulationBuilder
             var proc = Process.Start(ps);
             if (proc != null)
             {
-                var error = proc.StandardError.ReadToEnd();
-                proc.WaitForExit();
-
-                Console.WriteLine("Process ended with exit code " + proc.ExitCode);
-                if(!string.IsNullOrEmpty(error))
+                using (proc)
                 {
-                    Console.WriteLine("Error: " + error);
+                    var error = proc.StandardError.ReadToEnd();
+                    var output = proc.StandardOutput.ReadToEnd();
+                    proc.WaitForExit();
+
+                    Console.WriteLine("Process ended with exit code " + proc.ExitCode);
+                    if (!string.IsNullOrEmpty(error))
+                    {
+                        Console.WriteLine("Error: " + error);
+                        throw new Exception(error);
+                    }
                 }
-                proc.Dispose();
             }
 
             Console.WriteLine("Moving nss file to destination " + originalDestination);
