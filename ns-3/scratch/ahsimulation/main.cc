@@ -710,7 +710,8 @@ void configureTCPSensorClients() {
 		auto clientApp = ApplicationContainer(tcpClient);
 		wireTCPClient(clientApp,i);
 
-		clientApp.Start(MilliSeconds(config.trafficInterval));
+		double random = m_rv->GetValue(0, config.trafficInterval);
+		clientApp.Start(MilliSeconds(0+random));
 		clientApp.Stop(Seconds(config.simulationTime));
 	}
 }
