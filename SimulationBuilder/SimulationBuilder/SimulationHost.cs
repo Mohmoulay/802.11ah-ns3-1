@@ -45,6 +45,7 @@ namespace SimulationBuilder
                     int curJob = remainingJobs.First();
                     remainingJobs.Remove(curJob);
 
+                    pendingJobs++;
                     Console.WriteLine("Simulation " + curJob + "/" + combos.Count + " claimed by " + hostname + GetSuffix());
 
                     var finalArguments = Merge(baseArgs, combos[curJob]);
@@ -61,7 +62,7 @@ namespace SimulationBuilder
                     };
 
 
-                    pendingJobs++;
+                    
                     return simJob;
                 }
             }
@@ -69,7 +70,7 @@ namespace SimulationBuilder
 
         private string GetSuffix()
         {
-            return ", currently " + (pendingJobs + 1) + " jobs active. " + remainingJobs.Count + " remaining.";
+            return ", currently " + pendingJobs + " jobs active. " + remainingJobs.Count + " remaining.";
         }
 
 
