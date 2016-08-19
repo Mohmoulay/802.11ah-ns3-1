@@ -45,7 +45,7 @@ namespace SimulationBuilder
                     int curJob = remainingJobs.First();
                     remainingJobs.Remove(curJob);
 
-                    Console.WriteLine("Simulation " + curJob + "/" + combos.Count + " claimed by " + hostname + ", currently " + (pendingJobs + 1) + " jobs active");
+                    Console.WriteLine("Simulation " + curJob + "/" + combos.Count + " claimed by " + hostname + GetSuffix());
 
                     var finalArguments = Merge(baseArgs, combos[curJob]);
                     var name = string.Join("", combos[curJob].Select(p => p.Key.Replace("--", "") + p.Value)).Replace("\"", "");
@@ -67,13 +67,18 @@ namespace SimulationBuilder
             }
         }
 
+        private string GetSuffix()
+        {
+            return ", currently " + (pendingJobs + 1) + " jobs active. " + remainingJobs.Count + " remaining.";
+        }
+
 
         public void SimulationJobDone(string hostname, int index)
         {
             lock (lockObj)
             {
                 pendingJobs--;
-                Console.WriteLine("Simulation " + index + "/" + combos.Count + " finished on " + hostname + ", currently " + pendingJobs + " jobs active");
+                Console.WriteLine("Simulation " + index + "/" + combos.Count + " finished on " + hostname + GetSuffix());
             }
         }
 
@@ -83,7 +88,7 @@ namespace SimulationBuilder
             {
                 jobFailedCount[index]++;
                 pendingJobs--;
-                Console.WriteLine("Simulation " + index + "/" + combos.Count + " FAILED on " + hostname + ", error: " + error + ", currently " + pendingJobs + " jobs active");
+                Console.WriteLine("Simulation " + index + "/" + combos.Count + " FAILED on " + hostname + ", error: " + error + GetSuffix());
                 if (jobFailedCount[index] > 10)
                 {
                     Console.WriteLine("Simulation " + index + " failed too many times, it will not be queued anymore.");
