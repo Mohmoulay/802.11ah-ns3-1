@@ -66,7 +66,7 @@ namespace SimulationBuilder
 
                                         if (simJob != null)
                                         {
-                                            if(System.Diagnostics.Debugger.IsAttached)
+                                            if (System.Diagnostics.Debugger.IsAttached)
                                             {
                                                 if (rnd.Next() < 0.5)
                                                     throw new Exception("Debugger fail");
@@ -227,6 +227,7 @@ namespace SimulationBuilder
         }
 
         private static object fsLock = new object();
+     
         private static void RunSimulation(Dictionary<string, string> args)
         {
 
@@ -248,11 +249,11 @@ namespace SimulationBuilder
             originalDestination = args["--NSSFile"].Replace("\"", "");
 
             if (System.IO.File.Exists(originalDestination))
-                {
-                    Console.WriteLine("File already exists, skipping");
-                    return;
-                }
-            
+            {
+                Console.WriteLine("File already exists, skipping");
+                return;
+            }
+
             args["--NSSFile"] = "\"" + tmpFile + "\"";
 
             var argsStr = string.Join(" ", args.Select(p => p.Key + "=" + p.Value));
@@ -269,7 +270,14 @@ namespace SimulationBuilder
 
             Console.WriteLine("Starting process " + ps.FileName + " " + ps.Arguments);
 
-            var proc = Process.Start(ps);
+            Process proc;
+            lock (fsLock)
+            {
+                proc = Process.Start(ps);
+                System.Threading.Thread.Sleep(1000); // force 1sec between process starts or the .waf will get corrupted eventually. Sleep within the lock prevents other threads
+                // from entering the lock until the sleep has passed
+            }
+            
             if (proc != null)
             {
                 using (proc)
