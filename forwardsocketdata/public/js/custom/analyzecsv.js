@@ -317,7 +317,8 @@ function buildBoxPlotChart() {
         categories.push(sv.xValues[i]);
     $('#boxPlotContainer').highcharts({
         chart: {
-            type: 'boxplot'
+            type: 'boxplot',
+            zoomType: "xy"
         },
         title: {
             text: ''
@@ -339,7 +340,8 @@ function buildBoxPlotChart() {
         series: [{
                 name: '',
                 data: data
-            }]
+            }],
+        credits: false
     });
 }
 function initChart() {

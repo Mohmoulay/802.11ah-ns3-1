@@ -176,7 +176,7 @@ function dropdownChanged() {
             html += `<option value="">[Ignore]</option>`;
             for (let v of values)
                 html += `<option value="${v}">${v}</option>`;
-                
+
             ddl.html(html);
             if (values.length == 1)
                 ddl.closest(".form-group").hide();
@@ -393,7 +393,8 @@ function buildBoxPlotChart() {
 
     $('#boxPlotContainer').highcharts({
         chart: {
-            type: 'boxplot'
+            type: 'boxplot',
+             zoomType: "xy"
         },
         title: {
             text: ''
@@ -415,14 +416,9 @@ function buildBoxPlotChart() {
         series: [{
             name: '',
             data: data
-            /*[
-                [760, 801, 848, 895, 965],
-                [733, 853, 939, 980, 1080],
-                [714, 762, 817, 870, 918],
-                [724, 802, 806, 871, 950],
-                [834, 836, 864, 882, 910]
-            ]*/
-        }]
+        }],
+        credits:false
+
     });
 }
 
