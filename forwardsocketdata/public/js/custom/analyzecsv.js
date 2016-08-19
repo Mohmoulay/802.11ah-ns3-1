@@ -132,12 +132,11 @@ function dropdownChanged() {
             var values = getDistinctValuesFor(h);
             var html = "";
             html += "<option value=\"\">[Ignore]</option>";
-            //ddl.append($('<option></option>').val("").html("[Ignore]"));
             for (var _e = 0; _e < values.length; _e++) {
                 var v = values[_e];
                 html += "<option value=\"" + v + "\">" + v + "</option>";
             }
-            ddl.append(html);
+            ddl.html(html);
             if (values.length == 1)
                 ddl.closest(".form-group").hide();
         }

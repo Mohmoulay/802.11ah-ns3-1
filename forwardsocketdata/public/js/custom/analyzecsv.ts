@@ -174,13 +174,10 @@ function dropdownChanged() {
 
             let html = "";
             html += `<option value="">[Ignore]</option>`;
-            //ddl.append($('<option></option>').val("").html("[Ignore]"));
-            for (let v of values) {
+            for (let v of values)
                 html += `<option value="${v}">${v}</option>`;
-
-                //ddl.append($('<option></option>').val(v).html(v));
-            }
-            ddl.append(html);
+                
+            ddl.html(html);
             if (values.length == 1)
                 ddl.closest(".form-group").hide();
         }
