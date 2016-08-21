@@ -47,6 +47,8 @@
   <ItemGroup>
     <Compile Include="ISimulationHost.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="ProgramHost.cs" />
+    <Compile Include="ProgramSlave.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Service References\HostProxy\Reference.cs">
       <AutoGen>True</AutoGen>
@@ -54,6 +56,7 @@
       <DependentUpon>Reference.svcmap</DependentUpon>
     </Compile>
     <Compile Include="SimulationHost.cs" />
+    <Compile Include="SimulationManager.cs" />
     <Compile Include="TaskFactory.cs" />
   </ItemGroup>
   <ItemGroup>
