@@ -32,8 +32,12 @@ function getAsText(fileToRead) {
     reader.onload = ev => {
         var csv = (<any>ev).target.result;
         processData(csv);
+        distinctValueCache = {}; // clear the distinct value cache
+
         fillDropdowns();
-        loadConfigurationFromHash();
+        let isLoaded = loadConfigurationFromHash();
+        if(!isLoaded)
+            dropdownChanged();
 
     };
 
@@ -49,7 +53,7 @@ class Entry {
 
         this.isNumber = /^[-+]?(\d+|\d+\.\d*|\d*\.\d+)$/.test(parts[0]);
         if (this.isNumber)
-            this.value = Math.round(parseFloat(parts[0]) * 100) / 100;
+            this.value = Math.round(parseFloat(parts[0]) * 10) / 10;
         else
             this.value = parts[0];
 
@@ -123,8 +127,6 @@ function fillDropdowns() {
     if (headers.indexOf("Name") != -1) {
         $("#ddlTag").val("Name");
     }
-
-    dropdownChanged();
 }
 
 function dropdownChanged() {
@@ -171,13 +173,15 @@ function dropdownChanged() {
 
             var ddl = $("#ddlFixedProp" + h);
             var values = getDistinctValuesFor(h);
+            if(values.length > 200) // way too many
+                values = [ "Too many to list" ];
 
             let html = "";
             html += `<option value="">[Ignore]</option>`;
             for (let v of values)
                 html += `<option value="${v}">${v}</option>`;
 
-            ddl.html(html);
+            ddl.get(0).innerHTML = html; //.html(html);
             if (values.length == 1)
                 ddl.closest(".form-group").hide();
         }
@@ -196,11 +200,19 @@ function dropdownChanged() {
 }
 
 
+var distinctValueCache = {};
 function getDistinctValuesFor(header: string): any[] {
+    if(typeof distinctValueCache[header] != "undefined")
+        return distinctValueCache[header];
+    
+
+    let isNumeric:boolean = false;
     let distinctValues = {};
     for (let l of lines) {
-        if(typeof l[header] != "undefined")
+        if(typeof l[header] != "undefined") {
             distinctValues[l[header].value] = true;
+            isNumeric = l[header].isNumber;
+        }
     }
 
     let arr: any[] = [];
@@ -209,10 +221,15 @@ function getDistinctValuesFor(header: string): any[] {
             arr.push(p);
         }
     }
-    return arr.sort();
+    if(isNumeric)
+        distinctValueCache[header] = arr.sort((a,b) => { return a-b; });
+    else
+        distinctValueCache[header] = arr.sort();
+    return distinctValueCache[header];
 }
 
-function matchesFixedValues(line: Line) {
+function getFixedValues() {
+    var fixedVals = {};
 
     var fixedProps = $(".ddlFixedProp");
 
@@ -223,10 +240,19 @@ function matchesFixedValues(line: Line) {
 
             var fixedValue;
             if (/^[-+]?(\d+|\d+\.\d*|\d*\.\d+)$/.test(prop.val()))
-                fixedValue = Math.round(parseFloat(prop.val()) * 100) / 100;
+                fixedValue = Math.round(parseFloat(prop.val()) * 10) / 10;
             else
                 fixedValue = prop.val();
-            if (line[header].value != fixedValue)
+
+            fixedVals[header] = fixedValue;
+        }
+    }
+    return fixedVals;
+}
+function matchesFixedValues(line: Line, fixedVals:any) {
+    for(let p in fixedVals) {
+        if(fixedVals.hasOwnProperty(p)) {
+            if(line[p].value != fixedVals[p])
                 return false;
         }
     }
@@ -266,6 +292,8 @@ $(document).on("click", "#btnRender", ev => {
 
     var selectedTagIdx = $("#ddlTag").val();
 
+    var fixedValues = getFixedValues();
+
     var sortedLines = lines.sort((a, b) => { return a[selectedXValueIdx].compareTo(b[selectedXValueIdx]); });
     for (let l of sortedLines) {
 
@@ -294,7 +322,7 @@ $(document).on("click", "#btnRender", ev => {
                 sv = seriesValues[key];
             }
 
-            if (matchesFixedValues(l)) {
+            if (matchesFixedValues(l,fixedValues)) {
                 sv.xValues.push(l[selectedXValueIdx].value);
                 sv.yValues.push(l[selectedYValueIdx].value);
                 sv.tags.push(l[selectedTagIdx].value);
@@ -363,7 +391,7 @@ $(document).on("click", "#btnRender", ev => {
 
     $("#ddlBoxPlotSeries").empty();
     for (let serieValue of seriesKeys.sort(function (a, b) { return seriesValues[a].name == seriesValues[b].name ? 0 : (seriesValues[a].name > seriesValues[b].name ? 1 : -1); }))
-        $("#ddlBoxPlotSeries").append($('<option></option>').val(serieValue).html(serieValue));
+        $("#ddlBoxPlotSeries").append($('<option></option>').val(serieValue).html(seriesValues[serieValue].name));
 });
 
 
@@ -379,12 +407,15 @@ function buildBoxPlotChart() {
     var sv: SeriesValues = seriesValues[selectedSeries];
 
     var data = [];
+    var avgData = [];
     for (let i = 0; i < sv.lines.length; i++) {
         let entry = sv.lines[i][selectedYValueIdx];
         if(entry.hasDetails)
             data.push([entry.min, entry.q1, entry.median, entry.q3, entry.max]);
         else
             data.push([]);
+
+        avgData.push([ i, sv.lines[i][selectedYValueIdx].value]);
     }
 
     var categories = [];
@@ -416,9 +447,21 @@ function buildBoxPlotChart() {
         series: [{
             name: '',
             data: data
+        }, <any> {
+            name: 'Average',
+            
+            type: 'scatter',
+            data: avgData,
+            marker: {
+                fillColor: 'red',
+                lineWidth: 1,
+                lineColor: Highcharts.getOptions().colors[0]
+            },
+            tooltip: {
+                pointFormat: 'Average: {point.y}'
+            }
         }],
         credits:false
-
     });
 }
 
@@ -428,7 +471,8 @@ function initChart() {
         chart: {
             type: 'scatter',
             renderTo: "chartContainer",
-            zoomType: "xy"
+            zoomType: "xy",
+            animation:false
         },
         title: "",
         plotOptions: {
@@ -436,7 +480,8 @@ function initChart() {
                 lineWidth: $("#chkConnectPoints").prop("checked") ? 2 : 0
             },
             series: {
-                turboThreshold: 10000
+                turboThreshold: 10000,
+                animation:false
             }
         },
         colors: ["#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#888888", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#000000"],
@@ -510,7 +555,7 @@ var QueryStringToHash = function QueryStringToHash(query) {
     return query_string;
 };
 
-function loadConfigurationFromHash() {
+function loadConfigurationFromHash():boolean {
     if (window.location.hash != "") {
         let obj: any = QueryStringToHash(window.location.hash.substr(1));
         if (obj.XValues) $("#ddlXValues").val(obj.XValues);
@@ -525,7 +570,9 @@ function loadConfigurationFromHash() {
                 $(".ddlFixedProp[data-prop='" + p + "']").val(obj[p]);
             }
         }
+        return true;
     }
+    return false;
 }
 
 
