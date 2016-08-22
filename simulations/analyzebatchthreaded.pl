@@ -80,6 +80,10 @@ for(my $i = 0; $i < scalar @statsIdx; $i++) {
 	}
 }
 
+
+## NOTE: Each thread leaks about 2mb memory, so a Thread pool (queue) is obviously the better thing to use here
+## but for a quick and dirty fast analysis this will have to do for now.
+
 my $sem = Thread::Semaphore->new(8);
 
 my $count = 0;
