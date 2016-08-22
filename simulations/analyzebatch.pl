@@ -3,7 +3,7 @@ use strict;
 use List::Util qw( min max );
 
 if(scalar @ARGV == 0) {
-	print "Usage: analyzebatch.pl nssfolder config=(idx|name),(idx|name),... stats=(idx|name),(idx|name),(idx|name),... \n";
+	print "Usage: analyzebatch.pl nssfolder config=(idx|name),(idx|name),... stats=(idx|name),(idx|name),(idx|name),... [continuefrom=file.csv]\n";
 	exit();
 }
 
@@ -16,12 +16,60 @@ my @configIdx;
 my @configparts = split('=',$ARGV[1]);
 @configIdx = split(',', $configparts[1]);
 
-#print "Config idx: " . join(" ", @configIdx);
 my @statsIdx;
 my @statsparts = split('=', $ARGV[2]);
 @statsIdx = split(',', $statsparts[1]);
 
-#print "Stats idx: " . join(" ", @statsIdx);
+my $skipTimeUntil=999000000;
+
+
+# no buffering of stdout so lines are force flushed immediately
+my $old_fh = select(STDOUT);
+$| = 1;
+select($old_fh); 
+
+
+# if continuing determine which files were already done
+my %alreadyReadFiles = {};
+my $hasContinuationFile = 0;
+if(scalar @ARGV > 3) {
+	my @parts = split("=", $ARGV[3]);
+	if($parts[0] == "continuefrom") {
+		# read the file and accumulate already read files
+		print STDERR "Reading existing analysis from $parts[1]\n";
+		open my $f, $parts[1] or die "Unable to continue from file\n";
+
+		my $nameIdx = -1;
+		while(my $line = <$f>) {
+			chomp $line;
+			my @lineparts = split(";", $line);
+
+			if($. == 1) {
+				for(my $i; $i < scalar @lineparts; $i++) {
+					if($lineparts[$i] eq "Name") {
+						$nameIdx = $i;
+						last;
+					}
+				}
+			}
+			else {
+				if($nameIdx != -1) {
+					$alreadyReadFiles{$lineparts[$nameIdx] . ".nss"} = 1;
+					$hasContinuationFile = 1;
+				}
+				else {
+					die "Unable to determine Name column in continuefrom file\n";
+				}
+			}
+		}
+		close $f;
+	}
+
+	print STDERR "Continuation file read, " . (scalar keys %alreadyReadFiles) . " already read\n";
+}
+else {
+	print STDERR "No continuation file specified, reading all nss files\n";
+}
 
 for(my $i = 0; $i < scalar @statsIdx; $i++) {
 	if($statsIdx[$i] eq "DropTCPTxBufferExceeded") {
@@ -35,9 +83,16 @@ for my $f (@files) {
 
         if($f =~ /^.*?\.nss$/) {
 
-		my $printHeaders = $count == 0;
-		analyzeFile($f, $printHeaders);
-                $count++;
+		my @pathParts = split("/", $f);
+		print STDERR "Processing file " . $pathParts[-1] . "\n";
+		if(!exists $alreadyReadFiles{$pathParts[-1]}) {
+			my $printHeaders = $count == 0 && !$hasContinuationFile; #only on the first line AND if there's no continuation from a file
+			analyzeFile($f, $printHeaders);
+	                $count++;
+		}
+		else {
+			print STDERR "Already read $f in continuefrom file, skipping\n";
+		}
         }
 }
 
@@ -49,6 +104,8 @@ my @configHeaders;
 
 
 sub analyzeFile {
+   my $hasNodeStats=0;
+
    my $f = $ARGV[0] . "/" . @_[0];
    my $printHeaders = @_[1];
 
@@ -85,7 +142,8 @@ sub analyzeFile {
 
 			resolveIdxNames();
 		}
-		elsif($parts[1] eq "nodestats") {
+		elsif($parts[1] eq "nodestats" && $parts[0] >= $skipTimeUntil) {
+			$hasNodeStats = 1;
 			if($parts[2] == 0) {
 				# start of new nodestats batch
 				@statParts = ();
@@ -144,10 +202,15 @@ sub analyzeFile {
          print "\n";
      }
 
-     print join(";", @configParts);
-     print ";";
-     print join(";", map { getStatData($_) } @statParts);
-     print "\n";
+     if($hasNodeStats) {
+	     print join(";", @configParts);
+	     print ";";
+	     print join(";", map { getStatData($_) } @statParts);
+	     print "\n";
+     }
+     else {
+	print STDERR "ERROR: File $f does not have node stats!\n";
+    }
 }
 
 sub getStatData {
