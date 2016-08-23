@@ -10,7 +10,7 @@ if(scalar @ARGV == 0) {
 }
 
 opendir my $dir, $ARGV[0] or die "Cannot open directory: $!";
-my @files;
+my @files :shared;
 @files = readdir $dir;
 
 
@@ -32,8 +32,8 @@ select($old_fh);
 
 
 # if continuing determine which files were already done
-my %alreadyReadFiles = {};
-my $hasContinuationFile = 0;
+my %alreadyReadFiles :shared = {};
+my $hasContinuationFile :shared = 0;
 if(scalar @ARGV > 3) {
 	my @parts = split("=", $ARGV[3]);
 	if($parts[0] == "continuefrom") {
@@ -86,52 +86,58 @@ for(my $i = 0; $i < scalar @statsIdx; $i++) {
 
 my $sem = Thread::Semaphore->new(8);
 
-my $count = 0;
+my $count :shared = 0;
 my $nrProcessed :shared = 0;
 
 my @threads = ();
-for my $f (@files) {
 
-        if($f =~ /^.*?\.nss$/) {
+for(my $t=0; $t < 8; $t++) {
 
-		my @pathParts = split("/", $f);
-		print STDERR "Processing file " . $pathParts[-1] . "\n";
-		if(!exists $alreadyReadFiles{$pathParts[-1]}) {
-			my $printHeaders = $count == 0 && !$hasContinuationFile; #only on the first line AND if there's no continuation from a file
+	my $thr = threads->create(sub {
 
-			my @params = ($f, $printHeaders);
-			$sem->down();
-			my $t = threads->create(\&analyzeFile, @params);
-			$t->detach();
-			push @threads, $t;
-	                $count++;
+		while(1) {
+			my $f = "";
+			{
+				lock(@files);
+				if(scalar @files > 0) {
+					$f = shift @files;
+				}
+				else {
+					last;
+				}
+			}
+			if($f ne "" && $f =~ /^.*?\.nss$/) {
+				 my @pathParts = split("/", $f);
+		                print STDERR "Processing file " . $pathParts[-1] . "\n";
+
+		                if(!exists $alreadyReadFiles{$pathParts[-1]}) {
+					my $printHeaders;
+               			        {
+		                	        lock($count);
+	               			        $printHeaders = $count == 0 && !$hasContinuationFile; #only on the first line AND if there's no continuation from a file
+		                        }
+	
+					analyzeFile($f, $printHeaders);
+	
+					{
+						lock($count);
+		        	                $count++;
+					}
+		                }
+		                else {
+		                        print STDERR "Already read $f in continuefrom file, skipping\n";
+		                }		
+			}
 		}
-		else {
-			print STDERR "Already read $f in continuefrom file, skipping\n";
-		}
-        }
+		
+	});
+	push @threads, $thr;
 }
 
-while(1) {
 
-	my $nr;
-	{
-		lock($nrProcessed);
-		$nr = $nrProcessed;
-	}
-	if($nr == $count) { # done , nr processed equals nr started
-		exit(0);
-	}
-	else {
-		print STDERR "Waiting for threads to finish $nr/$count";
-		sleep 1;
-	}
+for my $t (@threads) {
+	$t->join();
 }
-
-#for my $t (@threads) {
-#	my $result = $t->join();
-#	print "Result of thread is " . $result;
-#}
 
 
 my @statHeaders;
