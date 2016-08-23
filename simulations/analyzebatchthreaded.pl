@@ -95,7 +95,8 @@ for(my $t=0; $t < 8; $t++) {
 
 	my $thr = threads->create(sub {
 
-		while(1) {
+		my $stop = 0;
+		while(!$stop) {
 			my $f = "";
 			{
 				lock(@files);
@@ -103,7 +104,7 @@ for(my $t=0; $t < 8; $t++) {
 					$f = shift @files;
 				}
 				else {
-					last;
+					$stop = 1;
 				}
 			}
 			if($f ne "" && $f =~ /^.*?\.nss$/) {
@@ -152,7 +153,12 @@ sub analyzeFile {
    my $printHeaders = @_[1];
 
   # print "Checking file $f \n";
-    open my $info, $f or die "Could not open $f: $!";
+    open my $info, $f;
+
+    if(!$info) {
+       print STDERR "Could not open file $f!\n";
+       return;
+    }
    
      my @configParts;
      my @statParts;
