@@ -13,6 +13,8 @@
     <!--<script src="/js/libs/highcharts/offline-exporting.js"></script>-->
     <script src="/js/libs/select2.min.js"></script>
 
+    <script src="/js/libs/sql.js"></script>
+
     <script src="/js/custom/analyzecsv.js"></script>
 
     <link rel="stylesheet" href="/css/bootstrap.css" />
@@ -114,6 +116,12 @@
                                 <div class="form-group">
                                     <div class="col-sm-offset-2 col-sm-10">
                                         <button type="button" id="btnRender" class="btn btn-default">Generate</button>
+                                        <button type="button" id="btnCreateDB" class="btn btn-default">Create sqlite file</button>
+                                    </div>
+                                    <div id="sqlGenerateProgressBar" class="progress" style="display:none;width:100%">
+                                        <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+                                              <span class="sr-only"></span>
+                                        </div>
                                     </div>
                                 </div>
                             </form>

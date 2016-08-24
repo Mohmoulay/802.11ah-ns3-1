@@ -1,3 +1,5 @@
+/// <reference path="../../../typings/globals/sql.js/index.d.ts" />
+
 var headers: string[];
 
 interface Line {
@@ -36,7 +38,7 @@ function getAsText(fileToRead) {
 
         fillDropdowns();
         let isLoaded = loadConfigurationFromHash();
-        if(!isLoaded)
+        if (!isLoaded)
             dropdownChanged();
 
     };
@@ -71,9 +73,9 @@ class Entry {
     }
 
     compareTo(e: Entry): number {
-        if(typeof e == "undefined")
+        if (typeof e == "undefined")
             return -1;
-            
+
         if (e.isNumber) {
             return this.value - e.value;
         }
@@ -173,8 +175,8 @@ function dropdownChanged() {
 
             var ddl = $("#ddlFixedProp" + h);
             var values = getDistinctValuesFor(h);
-            if(values.length > 200) // way too many
-                values = [ "Too many to list" ];
+            if (values.length > 200) // way too many
+                values = ["Too many to list"];
 
             let html = "";
             html += `<option value="">[Ignore]</option>`;
@@ -202,14 +204,14 @@ function dropdownChanged() {
 
 var distinctValueCache = {};
 function getDistinctValuesFor(header: string): any[] {
-    if(typeof distinctValueCache[header] != "undefined")
+    if (typeof distinctValueCache[header] != "undefined")
         return distinctValueCache[header];
-    
 
-    let isNumeric:boolean = false;
+
+    let isNumeric: boolean = false;
     let distinctValues = {};
     for (let l of lines) {
-        if(typeof l[header] != "undefined") {
+        if (typeof l[header] != "undefined") {
             distinctValues[l[header].value] = true;
             isNumeric = l[header].isNumber;
         }
@@ -221,8 +223,8 @@ function getDistinctValuesFor(header: string): any[] {
             arr.push(p);
         }
     }
-    if(isNumeric)
-        distinctValueCache[header] = arr.sort((a,b) => { return a-b; });
+    if (isNumeric)
+        distinctValueCache[header] = arr.sort((a, b) => { return a - b; });
     else
         distinctValueCache[header] = arr.sort();
     return distinctValueCache[header];
@@ -249,10 +251,10 @@ function getFixedValues() {
     }
     return fixedVals;
 }
-function matchesFixedValues(line: Line, fixedVals:any) {
-    for(let p in fixedVals) {
-        if(fixedVals.hasOwnProperty(p)) {
-            if(line[p].value != fixedVals[p])
+function matchesFixedValues(line: Line, fixedVals: any) {
+    for (let p in fixedVals) {
+        if (fixedVals.hasOwnProperty(p)) {
+            if (line[p].value != fixedVals[p])
                 return false;
         }
     }
@@ -322,7 +324,7 @@ $(document).on("click", "#btnRender", ev => {
                 sv = seriesValues[key];
             }
 
-            if (matchesFixedValues(l,fixedValues)) {
+            if (matchesFixedValues(l, fixedValues)) {
                 sv.xValues.push(l[selectedXValueIdx].value);
                 sv.yValues.push(l[selectedYValueIdx].value);
                 sv.tags.push(l[selectedTagIdx].value);
@@ -410,12 +412,12 @@ function buildBoxPlotChart() {
     var avgData = [];
     for (let i = 0; i < sv.lines.length; i++) {
         let entry = sv.lines[i][selectedYValueIdx];
-        if(entry.hasDetails)
+        if (entry.hasDetails)
             data.push([entry.min, entry.q1, entry.median, entry.q3, entry.max]);
         else
             data.push([]);
 
-        avgData.push([ i, sv.lines[i][selectedYValueIdx].value]);
+        avgData.push([i, sv.lines[i][selectedYValueIdx].value]);
     }
 
     var categories = [];
@@ -425,7 +427,7 @@ function buildBoxPlotChart() {
     $('#boxPlotContainer').highcharts({
         chart: {
             type: 'boxplot',
-             zoomType: "xy"
+            zoomType: "xy"
         },
         title: {
             text: ''
@@ -445,11 +447,11 @@ function buildBoxPlotChart() {
             }
         },
         series: [{
-            name: '',
+            name: $("#ddlBoxPlotSeries option:selected").text(),
             data: data
-        }, <any> {
+        }, <any>{
             name: 'Average',
-            
+
             type: 'scatter',
             data: avgData,
             marker: {
@@ -461,7 +463,7 @@ function buildBoxPlotChart() {
                 pointFormat: 'Average: {point.y}'
             }
         }],
-        credits:false
+        credits: false
     });
 }
 
@@ -472,7 +474,7 @@ function initChart() {
             type: 'scatter',
             renderTo: "chartContainer",
             zoomType: "xy",
-            animation:false
+            animation: false
         },
         title: "",
         plotOptions: {
@@ -481,7 +483,7 @@ function initChart() {
             },
             series: {
                 turboThreshold: 10000,
-                animation:false
+                animation: false
             }
         },
         colors: ["#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#888888", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#000000"],
@@ -555,7 +557,7 @@ var QueryStringToHash = function QueryStringToHash(query) {
     return query_string;
 };
 
-function loadConfigurationFromHash():boolean {
+function loadConfigurationFromHash(): boolean {
     if (window.location.hash != "") {
         let obj: any = QueryStringToHash(window.location.hash.substr(1));
         if (obj.XValues) $("#ddlXValues").val(obj.XValues);
@@ -595,6 +597,130 @@ $(document).on("change", ".ddlFixedProp", function (ev) {
 $(document).on("change", "#ddlBoxPlotSeries", function (ev) {
     buildBoxPlotChart();
 });
+
+$(document).on("click", "#btnCreateDB", function (ev) {
+    //Create the database
+    var suffix = ["_max", "_min", "_median", "_q1", "_q3", "_avg"];
+
+    var colnames = [];
+    if (lines.length > 0) {
+        let db = new SQL.Database();
+
+        let cols: string[] = [];
+        for (let i = 0; i < headers.length; i++) {
+            let name = headers[i];
+            let type = lines[0][name].isNumber ? "double" : "char";
+
+            if (type == "char" || !lines[0][name].hasDetails) {
+                cols.push(name + " " + type);
+                colnames.push(name);
+            }
+            else {
+                for (let s of suffix) {
+                    cols.push(name + s + " " + type);
+                    colnames.push(name + s);
+                }
+            }
+        }
+
+        var colStr = "(" + cols.join(", ") + ")";
+        db.exec("CREATE TABLE results " + colStr);
+
+
+        var headerStr = "(" + colnames.join(", ") + ")";
+
+
+        $("#sqlGenerateProgressBar").show();
+
+        doFor<Line>(lines, l => {
+            //for (let l of lines) {
+            var values = [];
+
+
+
+            for (let h of headers) {
+                let isDetailed = lines[0][h].isNumber && lines[0][h].hasDetails;
+
+                if (!isDetailed) {
+                    if (lines[0][h].isNumber)
+                        values.push(typeof l[h].value != "undefined" && !isNaN(l[h].value) ? l[h].value : "NULL");
+                    else
+                        values.push("'" + l[h].value + "'"); // don't be a dick and add "'" in the strings now
+                }
+                else {
+                    for (let s of suffix) {
+                        switch (s) {
+                            case "_max":
+                                values.push(typeof l[h].max != "undefined" && !isNaN(l[h].max) ? l[h].max : "NULL");
+                                break;
+                            case "_min":
+                                values.push(typeof l[h].min != "undefined" && !isNaN(l[h].min) ? l[h].min : "NULL");
+                                break;
+                            case "_median":
+                                values.push(typeof l[h].median != "undefined" && !isNaN(l[h].median) ? l[h].median : "NULL");
+                                break;
+                            case "_q1":
+                                values.push(typeof l[h].q1 != "undefined" && !isNaN(l[h].q1) ? l[h].q1 : "NULL");
+                                break;
+                            case "_q3":
+                                values.push(typeof l[h].q3 != "undefined" && !isNaN(l[h].q3) ? l[h].q3 : "NULL");
+                                break;
+                            case "_avg":
+                                values.push(typeof l[h].value != "undefined" && !isNaN(l[h].value) ? l[h].value : "NULL");
+                                break;
+
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+            // while normally statements should be prepared, it's probably faster to just write this sql inject prone query
+            var valueStr = "(" + values.join(",") + ")";
+
+            let query = "INSERT INTO results " + headerStr + " VALUES " + valueStr;
+            console.log("Running query " + query)
+            db.exec(query);
+        }, progress => {
+            $("#sqlGenerateProgressBar .progress-bar").attr("aria-valuenow", Math.round(progress * 100));
+            $("#sqlGenerateProgressBar .progress-bar").attr("style", "width: " + Math.round(progress * 100) + "%");
+        }, () => {
+            // done
+            var binaryArray = db.export();
+            var blob = new Blob([binaryArray], { type: "octet/stream" });
+
+            var a = document.createElement("a");
+            document.body.appendChild(a);
+            var url = window.URL.createObjectURL(blob);
+            a.href = url;
+            (<any>a).download = "results.db";
+            a.click();
+            window.URL.revokeObjectURL(url);
+        });
+
+    }
+});
+
+function doFor<T>(arr: T[], func: (itm: T) => void, onProgress: (progress: number) => void, onDone: () => void) {
+    let cur = 0;
+
+    var f = () => {
+        for (let i = 0; i < 10; i++) {
+
+            if (cur >= arr.length) {
+                onDone();
+                return;
+            }
+            else {
+                func(arr[cur]);
+                cur++;
+            }
+        }
+        onProgress(cur / arr.length);
+        window.setTimeout(f, 1);
+    };
+    f();
+}
 
 $(document).ready(function () {
     $(".ddl").select2();

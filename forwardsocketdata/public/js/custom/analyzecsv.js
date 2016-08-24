@@ -1,3 +1,4 @@
+/// <reference path="../../../typings/globals/sql.js/index.d.ts" />
 var headers;
 var lines;
 var SeriesValues = (function () {
@@ -364,7 +365,7 @@ function buildBoxPlotChart() {
             }
         },
         series: [{
-                name: '',
+                name: $("#ddlBoxPlotSeries option:selected").text(),
                 data: data
             }, {
                 name: 'Average',
@@ -496,6 +497,112 @@ $(document).on("change", ".ddlFixedProp", function (ev) {
 $(document).on("change", "#ddlBoxPlotSeries", function (ev) {
     buildBoxPlotChart();
 });
+$(document).on("click", "#btnCreateDB", function (ev) {
+    //Create the database
+    var suffix = ["_max", "_min", "_median", "_q1", "_q3", "_avg"];
+    var colnames = [];
+    if (lines.length > 0) {
+        var db = new SQL.Database();
+        var cols = [];
+        for (var i = 0; i < headers.length; i++) {
+            var name_1 = headers[i];
+            var type = lines[0][name_1].isNumber ? "double" : "char";
+            if (type == "char" || !lines[0][name_1].hasDetails) {
+                cols.push(name_1 + " " + type);
+                colnames.push(name_1);
+            }
+            else {
+                for (var _i = 0; _i < suffix.length; _i++) {
+                    var s = suffix[_i];
+                    cols.push(name_1 + s + " " + type);
+                    colnames.push(name_1 + s);
+                }
+            }
+        }
+        var colStr = "(" + cols.join(", ") + ")";
+        db.exec("CREATE TABLE results " + colStr);
+        var headerStr = "(" + colnames.join(", ") + ")";
+        $("#sqlGenerateProgressBar").show();
+        doFor(lines, function (l) {
+            //for (let l of lines) {
+            var values = [];
+            for (var _i = 0; _i < headers.length; _i++) {
+                var h = headers[_i];
+                var isDetailed = lines[0][h].isNumber && lines[0][h].hasDetails;
+                if (!isDetailed) {
+                    if (lines[0][h].isNumber)
+                        values.push(typeof l[h].value != "undefined" && !isNaN(l[h].value) ? l[h].value : "NULL");
+                    else
+                        values.push("'" + l[h].value + "'"); // don't be a dick and add "'" in the strings now
+                }
+                else {
+                    for (var _a = 0; _a < suffix.length; _a++) {
+                        var s = suffix[_a];
+                        switch (s) {
+                            case "_max":
+                                values.push(typeof l[h].max != "undefined" && !isNaN(l[h].max) ? l[h].max : "NULL");
+                                break;
+                            case "_min":
+                                values.push(typeof l[h].min != "undefined" && !isNaN(l[h].min) ? l[h].min : "NULL");
+                                break;
+                            case "_median":
+                                values.push(typeof l[h].median != "undefined" && !isNaN(l[h].median) ? l[h].median : "NULL");
+                                break;
+                            case "_q1":
+                                values.push(typeof l[h].q1 != "undefined" && !isNaN(l[h].q1) ? l[h].q1 : "NULL");
+                                break;
+                            case "_q3":
+                                values.push(typeof l[h].q3 != "undefined" && !isNaN(l[h].q3) ? l[h].q3 : "NULL");
+                                break;
+                            case "_avg":
+                                values.push(typeof l[h].value != "undefined" && !isNaN(l[h].value) ? l[h].value : "NULL");
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+            // while normally statements should be prepared, it's probably faster to just write this sql inject prone query
+            var valueStr = "(" + values.join(",") + ")";
+            var query = "INSERT INTO results " + headerStr + " VALUES " + valueStr;
+            console.log("Running query " + query);
+            db.exec(query);
+        }, function (progress) {
+            $("#sqlGenerateProgressBar .progress-bar").attr("aria-valuenow", Math.round(progress * 100));
+            $("#sqlGenerateProgressBar .progress-bar").attr("style", "width: " + Math.round(progress * 100) + "%");
+        }, function () {
+            // done
+            var binaryArray = db.export();
+            var blob = new Blob([binaryArray], { type: "octet/stream" });
+            var a = document.createElement("a");
+            document.body.appendChild(a);
+            var url = window.URL.createObjectURL(blob);
+            a.href = url;
+            a.download = "results.db";
+            a.click();
+            window.URL.revokeObjectURL(url);
+        });
+    }
+});
+function doFor(arr, func, onProgress, onDone) {
+    var cur = 0;
+    var f = function () {
+        for (var i = 0; i < 10; i++) {
+            if (cur >= arr.length) {
+                onDone();
+                return;
+            }
+            else {
+                func(arr[cur]);
+                cur++;
+            }
+        }
+        onProgress(cur / arr.length);
+        window.setTimeout(f, 1);
+    };
+    f();
+}
 $(document).ready(function () {
     $(".ddl").select2();
     initChart();
