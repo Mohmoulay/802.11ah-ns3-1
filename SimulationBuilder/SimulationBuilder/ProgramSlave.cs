@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -50,16 +51,19 @@ namespace SimulationBuilder
 
                                         if (simJob != null)
                                         {
+                                            Stopwatch sw = new Stopwatch();
+                                            sw.Start();
                                             Console.WriteLine("Received simulation job " + simJob.Index + ", running simulation");
                                             SimulationManager.RunSimulation(simJob.FinalArguments);
+                                            sw.Stop();
                                             lock (proxy)
-                                                proxy.SimulationJobDone(Environment.MachineName, simJob.Index);
+                                                proxy.SimulationJobDone(simJob.SimulationBatchGUID, Environment.MachineName, simJob.Index, sw.ElapsedTicks);
                                         }
                                     }
                                     catch (Exception ex)
                                     {
                                         lock (proxy)
-                                            proxy.SimulationJobFailed(Environment.MachineName, simJob.Index, ex.Message);
+                                            proxy.SimulationJobFailed(simJob.SimulationBatchGUID, Environment.MachineName, simJob.Index, ex.Message);
 
                                         Console.WriteLine("Error: " + ex.GetType().FullName + " - " + ex.Message);
                                     }

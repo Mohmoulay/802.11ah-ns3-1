@@ -22,12 +22,14 @@ namespace SimulationBuilder
         private int pendingJobs = 0;
         private HashSet<int> remainingJobs = new HashSet<int>();
         private Dictionary<int, int> jobFailedCount = new Dictionary<int, int>();
+        private string GUID;
 
         public SimulationHost(string nssFolder, Dictionary<string, string> baseArgs, List<Dictionary<string, string>> combos)
         {
             this.nssFolder = nssFolder;
             this.baseArgs = baseArgs;
             this.combos = combos;
+            this.GUID = System.Guid.NewGuid().ToString();
 
             remainingJobs = new HashSet<int>(Enumerable.Range(0, combos.Count));
             jobFailedCount = remainingJobs.ToDictionary(p => p, p => 0);
@@ -56,13 +58,14 @@ namespace SimulationBuilder
 
                     var simJob = new SimulationJob()
                     {
+                        SimulationBatchGUID = GUID,
                         Index = curJob,
                         TotalNrOfSimulations = combos.Count,
                         FinalArguments = finalArguments
                     };
 
 
-                    
+
                     return simJob;
                 }
             }
@@ -74,29 +77,45 @@ namespace SimulationBuilder
         }
 
 
-        public void SimulationJobDone(string hostname, int index)
+        public void SimulationJobDone(string simulationBatchGUID, string hostname, int index, long elapsedTicks)
         {
             lock (lockObj)
             {
-                pendingJobs--;
-                Console.WriteLine("Simulation " + index + "/" + combos.Count + " finished on " + hostname + GetSuffix());
-            }
-        }
 
-        public void SimulationJobFailed(string hostname, int index, string error)
-        {
-            lock (lockObj)
-            {
-                jobFailedCount[index]++;
-                pendingJobs--;
-                Console.WriteLine("Simulation " + index + "/" + combos.Count + " FAILED on " + hostname + ", error: " + error + GetSuffix());
-                if (jobFailedCount[index] > 10)
+                var ts = TimeSpan.FromTicks(elapsedTicks);
+                if (simulationBatchGUID == GUID)
                 {
-                    Console.WriteLine("Simulation " + index + " failed too many times, it will not be queued anymore.");
+                    pendingJobs--;
+                    Console.WriteLine("Simulation " + index + "/" + combos.Count + " finished in " + ts.ToString() + " on " + hostname + GetSuffix());
                 }
                 else
                 {
-                    remainingJobs.Add(index);
+                    Console.WriteLine("Simulation " + index + " from previous batch finished in " + ts.ToString() + " on " + hostname + GetSuffix());
+                }
+            }
+        }
+
+        public void SimulationJobFailed(string simulationBatchGUID, string hostname, int index, string error)
+        {
+            lock (lockObj)
+            {
+                if (simulationBatchGUID == GUID)
+                {
+                    jobFailedCount[index]++;
+                    pendingJobs--;
+                    Console.WriteLine("Simulation " + index + "/" + combos.Count + " FAILED on " + hostname + ", error: " + error + GetSuffix());
+                    if (jobFailedCount[index] > 10)
+                    {
+                        Console.WriteLine("Simulation " + index + " failed too many times, it will not be queued anymore.");
+                    }
+                    else
+                    {
+                        remainingJobs.Add(index);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Simulation " + index + " failed from a previous batch on " + hostname + ", error: " + error + GetSuffix());
                 }
             }
         }

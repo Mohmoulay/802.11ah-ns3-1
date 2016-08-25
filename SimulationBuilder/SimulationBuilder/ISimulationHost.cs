@@ -14,14 +14,16 @@ namespace SimulationBuilder
         SimulationJob GetSimulationJob(string hostname);
 
         [OperationContract]
-        void SimulationJobDone(string hostname, int index);
+        void SimulationJobDone(string simulationBatchGUID, string hostname, int index, long elapsedTicks);
 
         [OperationContract]
-        void SimulationJobFailed(string hostname, int index, string error);
+        void SimulationJobFailed(string simulationBatchGUID, string hostname, int index, string error);
     }
 
     public class SimulationJob
     {
+        public string SimulationBatchGUID { get; set; }
+
         public int Index { get; set; }
 
         public int TotalNrOfSimulations { get; set; }

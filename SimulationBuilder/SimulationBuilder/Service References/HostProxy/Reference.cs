@@ -29,6 +29,9 @@ namespace SimulationBuilder.HostProxy {
         private int IndexField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private string SimulationBatchGUIDField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
         private int TotalNrOfSimulationsField;
         
         [global::System.ComponentModel.BrowsableAttribute(false)]
@@ -68,6 +71,19 @@ namespace SimulationBuilder.HostProxy {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
+        public string SimulationBatchGUID {
+            get {
+                return this.SimulationBatchGUIDField;
+            }
+            set {
+                if ((object.ReferenceEquals(this.SimulationBatchGUIDField, value) != true)) {
+                    this.SimulationBatchGUIDField = value;
+                    this.RaisePropertyChanged("SimulationBatchGUID");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
         public int TotalNrOfSimulations {
             get {
                 return this.TotalNrOfSimulationsField;
@@ -98,10 +114,10 @@ namespace SimulationBuilder.HostProxy {
         SimulationBuilder.HostProxy.SimulationJob GetSimulationJob(string hostname);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ISimulationHost/SimulationJobDone", ReplyAction="http://tempuri.org/ISimulationHost/SimulationJobDoneResponse")]
-        void SimulationJobDone(string hostname, int index);
+        void SimulationJobDone(string simulationBatchGUID, string hostname, int index, long elapsedTicks);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/ISimulationHost/SimulationJobFailed", ReplyAction="http://tempuri.org/ISimulationHost/SimulationJobFailedResponse")]
-        void SimulationJobFailed(string hostname, int index, string error);
+        void SimulationJobFailed(string simulationBatchGUID, string hostname, int index, string error);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -135,12 +151,12 @@ namespace SimulationBuilder.HostProxy {
             return base.Channel.GetSimulationJob(hostname);
         }
         
-        public void SimulationJobDone(string hostname, int index) {
-            base.Channel.SimulationJobDone(hostname, index);
+        public void SimulationJobDone(string simulationBatchGUID, string hostname, int index, long elapsedTicks) {
+            base.Channel.SimulationJobDone(simulationBatchGUID, hostname, index, elapsedTicks);
         }
         
-        public void SimulationJobFailed(string hostname, int index, string error) {
-            base.Channel.SimulationJobFailed(hostname, index, error);
+        public void SimulationJobFailed(string simulationBatchGUID, string hostname, int index, string error) {
+            base.Channel.SimulationJobFailed(simulationBatchGUID, hostname, index, error);
         }
     }
 }

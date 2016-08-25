@@ -18,8 +18,10 @@
   <xs:element name="SimulationJobDone">
     <xs:complexType>
       <xs:sequence>
+        <xs:element minOccurs="0" name="simulationBatchGUID" nillable="true" type="xs:string" />
         <xs:element minOccurs="0" name="hostname" nillable="true" type="xs:string" />
         <xs:element minOccurs="0" name="index" type="xs:int" />
+        <xs:element minOccurs="0" name="elapsedTicks" type="xs:long" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -31,6 +33,7 @@
   <xs:element name="SimulationJobFailed">
     <xs:complexType>
       <xs:sequence>
+        <xs:element minOccurs="0" name="simulationBatchGUID" nillable="true" type="xs:string" />
         <xs:element minOccurs="0" name="hostname" nillable="true" type="xs:string" />
         <xs:element minOccurs="0" name="index" type="xs:int" />
         <xs:element minOccurs="0" name="error" nillable="true" type="xs:string" />
