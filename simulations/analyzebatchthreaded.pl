@@ -91,7 +91,7 @@ my $nrProcessed :shared = 0;
 
 my @threads = ();
 
-for(my $t=0; $t < 8; $t++) {
+for(my $t=0; $t < 16; $t++) {
 
 	my $thr = threads->create(sub {
 
