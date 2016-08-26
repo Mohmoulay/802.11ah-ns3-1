@@ -18,7 +18,7 @@ namespace SimulationBuilder
 
 
             var finalArguments = Merge(baseArgs, combos[i]);
-            string name = GetName(finalArguments);
+            string name = GetName(combos[i]);
             var destinationPath = System.IO.Path.Combine(nssFolder, name + ".nss");
 
 
@@ -46,16 +46,16 @@ namespace SimulationBuilder
 
         public static string GetName(Dictionary<string, string> combo)
         {
-            if (combo["--TrafficType"].Replace("\"", "") == "tcpsensor" && ConfigurationManager.AppSettings["legacyNamingScheme"] == "1")
-            {
-                // forgot to sort before, be compatible with sensor results
-                return string.Join("", "SensorMeasurementSize" + combo["--SensorMeasurementSize"].Replace("\"", "") +
-                                "NRawSlotNum" + combo["--NRawSlotNum"].Replace("\"", "") +
-                                "ContentionPerRAWSlot" + combo["--ContentionPerRAWSlot"].Replace("\"", "") +
-                                "NGroup" + combo["--NGroup"].Replace("\"", "") +
-                                "TrafficInterval" + combo["--TrafficInterval"].Replace("\"", ""));
-            }
-            else
+            //if (combo["--TrafficType"].Replace("\"", "") == "tcpsensor" && ConfigurationManager.AppSettings["legacyNamingScheme"] == "1")
+            //{
+            //    // forgot to sort before, be compatible with sensor results
+            //    return string.Join("", "SensorMeasurementSize" + combo["--SensorMeasurementSize"].Replace("\"", "") +
+            //                    "NRawSlotNum" + combo["--NRawSlotNum"].Replace("\"", "") +
+            //                    "ContentionPerRAWSlot" + combo["--ContentionPerRAWSlot"].Replace("\"", "") +
+            //                    "NGroup" + combo["--NGroup"].Replace("\"", "") +
+            //                    "TrafficInterval" + combo["--TrafficInterval"].Replace("\"", ""));
+            //}
+            //else
                 return string.Join("", combo.OrderBy(p => p.Key).Select(p => p.Key.Replace("--", "") + p.Value)).Replace("\"", "");
         }
 

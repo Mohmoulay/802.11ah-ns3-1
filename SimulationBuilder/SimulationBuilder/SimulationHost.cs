@@ -62,7 +62,7 @@ namespace SimulationBuilder
                     Console.WriteLine("Simulation " + curJob + "/" + combos.Count + " claimed by " + hostname + GetSuffix());
 
                     var finalArguments = Merge(baseArgs, combos[curJob]);
-                    var name = SimulationManager.GetName(finalArguments);
+                    var name = SimulationManager.GetName(combos[curJob]);
                     finalArguments["--NSSFile"] = "\"" + System.IO.Path.Combine(nssFolder, name + ".nss") + "\"";
                     finalArguments["--Name"] = "\"" + name + "\"";
                     // finalArguments["--VisualizerIP"] = "\"" + "\""; // no visualization 
