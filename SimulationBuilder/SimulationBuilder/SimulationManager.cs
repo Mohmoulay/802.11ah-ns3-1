@@ -18,7 +18,7 @@ namespace SimulationBuilder
 
 
             var finalArguments = Merge(baseArgs, combos[i]);
-            var name = string.Join("", combos[i].Select(p => p.Key.Replace("--", "") + p.Value)).Replace("\"", "");
+            string name = GetName(finalArguments);
             var destinationPath = System.IO.Path.Combine(nssFolder, name + ".nss");
 
 
@@ -41,6 +41,22 @@ namespace SimulationBuilder
             {
                 Console.WriteLine("Skipping simulation " + (i + 1) + " because the nss file was already present");
             }
+        }
+
+
+        public static string GetName(Dictionary<string, string> combo)
+        {
+            if (combo["--TrafficType"].Replace("\"", "") == "tcpsensor" && ConfigurationManager.AppSettings["legacyNamingScheme"] == "1")
+            {
+                // forgot to sort before, be compatible with sensor results
+                return string.Join("", "SensorMeasurementSize" + combo["--SensorMeasurementSize"].Replace("\"", "") +
+                                "NRawSlotNum" + combo["--NRawSlotNum"].Replace("\"", "") +
+                                "ContentionPerRAWSlot" + combo["--ContentionPerRAWSlot"].Replace("\"", "") +
+                                "NGroup" + combo["--NGroup"].Replace("\"", "") +
+                                "TrafficInterval" + combo["--TrafficInterval"].Replace("\"", ""));
+            }
+            else
+                return string.Join("", combo.OrderBy(p => p.Key).Select(p => p.Key.Replace("--", "") + p.Value)).Replace("\"", "");
         }
 
 
