@@ -14,8 +14,8 @@ namespace SimulationBuilder
 
         static void Main(string[] args)
         {
-            if (System.Diagnostics.Debugger.IsAttached)
-                args = new string[] { "--slave", "http://localhost:12345/SimulationHost/" };
+            //if (System.Diagnostics.Debugger.IsAttached)
+            //    args = new string[] { "--slave", "http://localhost:12345/SimulationHost/" };
             if (args.Any(a => a.Contains("--slave")))
             {
                 ProgramSlave.MainSlave(args);

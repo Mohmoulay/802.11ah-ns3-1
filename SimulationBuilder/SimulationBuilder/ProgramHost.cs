@@ -55,6 +55,17 @@ namespace SimulationBuilder
             Console.WriteLine("Building combinations");
             var combos = GetCombinations(customArgs, customArgs.Keys.ToList()).ToList();
 
+            if (ConfigurationManager.AppSettings["randomizeCombos"] == "0")
+            {
+                // don't randomize
+            }
+            else
+            {
+                // shuffle combos so larger ones are mixed with shorter simulations, this way even though
+                // the large ones will take huge amounts of time all servers won't work on all these large ones at the same time
+                Shuffle(combos);
+            }
+
             if (args.Any(a => a.Contains("--host")))
             {
                 Console.WriteLine(combos.Count + " combinations build, hosting WCF");
@@ -73,6 +84,20 @@ namespace SimulationBuilder
                 RunCombinations(nssFolder, baseArgs, combos);
             }
         }
+
+        private static void Shuffle<T>(List<T> array)
+        {
+            var rnd = new Random();
+            int n = array.Count;
+            for (int i = 0; i < n; i++)
+            {
+                int r = i + (int)(rnd.NextDouble() * (n - i));
+                T t = array[r];
+                array[r] = array[i];
+                array[i] = t;
+            }
+        }
+
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {

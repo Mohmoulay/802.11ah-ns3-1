@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
+using System.ServiceModel.Web;
 using System.Text;
 
 namespace SimulationBuilder
@@ -17,19 +21,24 @@ namespace SimulationBuilder
 
         private object lockObj = new object();
 
-        //    private int curJob = 0;
-
         private int pendingJobs = 0;
         private HashSet<int> remainingJobs = new HashSet<int>();
         private Dictionary<int, int> jobFailedCount = new Dictionary<int, int>();
-        private string GUID;
 
+        private Status status;
         public SimulationHost(string nssFolder, Dictionary<string, string> baseArgs, List<Dictionary<string, string>> combos)
         {
             this.nssFolder = nssFolder;
             this.baseArgs = baseArgs;
             this.combos = combos;
-            this.GUID = System.Guid.NewGuid().ToString();
+
+            status = new SimulationBuilder.Status();
+            for (int i = 0; i < combos.Count; i++)
+                this.status.JobStatus.Add(Status.JobStatusEnum.Pending);
+
+            status.SimulationBatchGUID = System.Guid.NewGuid().ToString();
+            status.StartedOn = DateTime.Now;
+            status.TotalNrOfSimulations = combos.Count;
 
             remainingJobs = new HashSet<int>(Enumerable.Range(0, combos.Count));
             jobFailedCount = remainingJobs.ToDictionary(p => p, p => 0);
@@ -48,6 +57,8 @@ namespace SimulationBuilder
                     remainingJobs.Remove(curJob);
 
                     pendingJobs++;
+                    status.JobStatus[curJob] = Status.JobStatusEnum.Running;
+
                     Console.WriteLine("Simulation " + curJob + "/" + combos.Count + " claimed by " + hostname + GetSuffix());
 
                     var finalArguments = Merge(baseArgs, combos[curJob]);
@@ -58,7 +69,7 @@ namespace SimulationBuilder
 
                     var simJob = new SimulationJob()
                     {
-                        SimulationBatchGUID = GUID,
+                        SimulationBatchGUID = status.SimulationBatchGUID,
                         Index = curJob,
                         TotalNrOfSimulations = combos.Count,
                         FinalArguments = finalArguments
@@ -76,16 +87,19 @@ namespace SimulationBuilder
             return ", currently " + pendingJobs + " jobs active. " + remainingJobs.Count + " remaining.";
         }
 
-
         public void SimulationJobDone(string simulationBatchGUID, string hostname, int index, long elapsedTicks)
         {
             lock (lockObj)
             {
 
                 var ts = TimeSpan.FromTicks(elapsedTicks);
-                if (simulationBatchGUID == GUID)
+                if (simulationBatchGUID == status.SimulationBatchGUID)
                 {
                     pendingJobs--;
+                    status.JobStatus[index] = Status.JobStatusEnum.Finished;
+                    status.TotalTime.Add(ts);
+                    status.NrOfSimulationsDone++;
+
                     Console.WriteLine("Simulation " + index + "/" + combos.Count + " finished in " + ts.ToString() + " on " + hostname + GetSuffix());
                 }
                 else
@@ -99,10 +113,11 @@ namespace SimulationBuilder
         {
             lock (lockObj)
             {
-                if (simulationBatchGUID == GUID)
+                if (simulationBatchGUID == status.SimulationBatchGUID)
                 {
                     jobFailedCount[index]++;
                     pendingJobs--;
+                    status.JobStatus[index] = Status.JobStatusEnum.Failed;
                     Console.WriteLine("Simulation " + index + "/" + combos.Count + " FAILED on " + hostname + ", error: " + error + GetSuffix());
                     if (jobFailedCount[index] > 10)
                     {
@@ -120,6 +135,17 @@ namespace SimulationBuilder
             }
         }
 
+        public Status GetStatus()
+        {
+            return status;
+        }
+
+
+        public Stream StatusPage()
+        {
+            WebOperationContext.Current.OutgoingResponse.ContentType = "text/html";
+            return System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("SimulationBuilder.simulationstatuspage.html");
+        }
 
 
         private static Dictionary<string, string> Merge(Dictionary<string, string> baseArgs, Dictionary<string, string> customArgs)
