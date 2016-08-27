@@ -54,7 +54,7 @@ namespace SimulationBuilder
                 if (NrOfSimulationsDone == 0)
                     return "";
                 else
-                    return TimeSpan.FromTicks(TotalTime.Ticks / NrOfSimulationsDone).ToString();
+                    return TimeSpan.FromTicks((int)(TotalTime.Ticks / (float)NrOfSimulationsDone)).ToString();
             }
             set { } // required to be picked up by WCF
         }
@@ -67,7 +67,7 @@ namespace SimulationBuilder
                 else
                 {
                     var remaining = TotalNrOfSimulations - NrOfSimulationsDone;
-                    var ts = TimeSpan.FromTicks(TotalTime.Ticks / NrOfSimulationsDone * remaining);
+                    var ts = TimeSpan.FromTicks((int)(TotalTime.Ticks / (float)NrOfSimulationsDone * remaining));
                     return ts.ToString();
                 }
             }

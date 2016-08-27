@@ -59,7 +59,7 @@ namespace SimulationBuilder
                     pendingJobs++;
                     status.JobStatus[curJob] = Status.JobStatusEnum.Running;
 
-                    Console.WriteLine("Simulation " + curJob + "/" + combos.Count + " claimed by " + hostname + GetSuffix());
+                    Console.WriteLine(GetPrefix() + "Simulation " + curJob + "/" + combos.Count + " claimed by " + hostname + GetSuffix());
 
                     var finalArguments = Merge(baseArgs, combos[curJob]);
                     var name = SimulationManager.GetName(combos[curJob]);
@@ -87,6 +87,11 @@ namespace SimulationBuilder
             return ", currently " + pendingJobs + " jobs active. " + remainingJobs.Count + " remaining.";
         }
 
+        private string GetPrefix()
+        {
+            return "[" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "] ";
+        }
+
         public void SimulationJobDone(string simulationBatchGUID, string hostname, int index, long elapsedTicks)
         {
             lock (lockObj)
@@ -97,14 +102,14 @@ namespace SimulationBuilder
                 {
                     pendingJobs--;
                     status.JobStatus[index] = Status.JobStatusEnum.Finished;
-                    status.TotalTime.Add(ts);
+                    status.TotalTime = status.TotalTime.Add(ts);
                     status.NrOfSimulationsDone++;
 
-                    Console.WriteLine("Simulation " + index + "/" + combos.Count + " finished in " + ts.ToString() + " on " + hostname + GetSuffix());
+                    Console.WriteLine(GetPrefix() + "Simulation " + index + "/" + combos.Count + " finished in " + ts.ToString() + " on " + hostname + GetSuffix());
                 }
                 else
                 {
-                    Console.WriteLine("Simulation " + index + " from previous batch finished in " + ts.ToString() + " on " + hostname + GetSuffix());
+                    Console.WriteLine(GetPrefix() + "Simulation " + index + " from previous batch (" + simulationBatchGUID + ") finished in " + ts.ToString() + " on " + hostname + GetSuffix());
                 }
             }
         }
@@ -118,10 +123,10 @@ namespace SimulationBuilder
                     jobFailedCount[index]++;
                     pendingJobs--;
                     status.JobStatus[index] = Status.JobStatusEnum.Failed;
-                    Console.WriteLine("Simulation " + index + "/" + combos.Count + " FAILED on " + hostname + ", error: " + error + GetSuffix());
+                    Console.WriteLine(GetPrefix() + "Simulation " + index + "/" + combos.Count + " FAILED on " + hostname + ", error: " + error + GetSuffix());
                     if (jobFailedCount[index] > 10)
                     {
-                        Console.WriteLine("Simulation " + index + " failed too many times, it will not be queued anymore.");
+                        Console.WriteLine(GetPrefix() + "Simulation " + index + " failed too many times, it will not be queued anymore.");
                     }
                     else
                     {
@@ -130,7 +135,7 @@ namespace SimulationBuilder
                 }
                 else
                 {
-                    Console.WriteLine("Simulation " + index + " failed from a previous batch on " + hostname + ", error: " + error + GetSuffix());
+                    Console.WriteLine(GetPrefix() + "Simulation " + index + " failed from a previous batch (" + simulationBatchGUID + ") on " + hostname + ", error: " + error + GetSuffix());
                 }
             }
         }
